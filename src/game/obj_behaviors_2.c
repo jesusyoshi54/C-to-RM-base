@@ -942,7 +942,7 @@ void obj_spit_fire(s16 relativePosX, s16 relativePosY, s16 relativePosZ, f32 sca
                                                            scale, o, model, bhvSmallPiranhaFlame);
 
     if (obj != NULL) {
-		if(configBE){
+		if(!configBE){
 			obj->oSmallPiranhaFlameStartSpeed = startSpeed*FIRE_SPEED_MULTIPLIER;
 			obj->oSmallPiranhaFlameEndSpeed = endSpeed*FIRE_SPEED_MULTIPLIER;
 			obj->oSmallPiranhaFlameModel = model;
