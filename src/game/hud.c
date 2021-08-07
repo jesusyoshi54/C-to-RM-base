@@ -308,7 +308,7 @@ void render_hud_stars(void) {
 
     print_text(HUD_STARS_X, HUD_STARS_Y, "-"); // 'Star' glyph
     if (showX == 1) {
-        print_text(HUD_STARS_CROSS_X, HUD_STARS_CROSS_Y, "*"); // 'X' glyph
+        print_text(HUD_STARS_X+16, HUD_STARS_Y, "*"); // 'X' glyph
     }
     print_text_fmt_int((showX * 14) + HUD_STARS_NUM_X,
                        HUD_STARS_NUM_Y, "%d", gHudDisplay.stars);

@@ -177,8 +177,17 @@ s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str){
 		case 0xA2:
 			Loop = TE_function_response(CurEng,str);
 			break;
+		case 0xA6:
+			Loop = TE_set_mario_action(CurEng,str);
+			break;
 		case 0xAA:
 			Loop = TE_box_transition(CurEng,str);
+			break;
+		case 0xAC:
+			Loop = TE_jump_link_str(CurEng,str);
+			break;
+		case 0xAD:
+			Loop = TE_pop_str(CurEng,str);
 			break;
 		case 0xFE:
 			Loop = TE_line_break(CurEng,str);
@@ -304,17 +313,12 @@ s8 TE_text_moving(struct TEState *CurEng,u8 *str){
 }
 //4C cmd works
 s8 TE_en_A_spd_incr(struct TEState *CurEng,u8 *str){
-	if(gPlayer1Controller->buttonDown&A_BUTTON){
-		CurEng->NewSpeed = CurEng->VIpChar;
-		CurEng->VIpChar = TE_get_s16(str);
-	}
+	CurEng->NewSpeed = TE_get_s16(str);
 	return TE_advBlen(CurEng,3);
 }
 //4D cmd works
 s8 TE_dis_A_spd_incr(struct TEState *CurEng,u8 *str){
-	if(CurEng->NewSpeed != 0x1234){
-		CurEng->VIpChar = CurEng->NewSpeed;
-	}
+	CurEng->NewSpeed = 0x1234;
 	return TE_advBlen(CurEng,1);
 }
 //4E cmd works
@@ -350,6 +354,7 @@ s8 TE_make_keyboard(struct TEState *CurEng,u8 *str){
 	CurEng->UserInput = 0;
 	CurEng->IntendedLetter = 0;
 	CurEng->ShiftPressed = 0;
+	CurEng->PlainText = 0;
 	CurEng->PreKeyboardStr = str;
 	u8 ind = str[1];
 	u8 i;
@@ -363,10 +368,10 @@ s8 TE_make_keyboard(struct TEState *CurEng,u8 *str){
 }
 s8 TE_add_usr_str(struct TEState *CurEng,u8 *str){
 	CurEng->KeyboardState = 3;
-	str[2] = 0x43;
-	str[3] = CurEng->CurUsrStr;
-	return TE_advBlen(CurEng,2);
+	str[1] = CurEng->CurUsrStr;
+	return TE_display_usr_str(CurEng,str);
 }
+//cringer
 s8 TE_draw_keyboard(struct TEState *CurEng,u8 *str){
 	//draw user input
 	//draw keyboard
@@ -376,9 +381,9 @@ s8 TE_draw_keyboard(struct TEState *CurEng,u8 *str){
 	}else{
 		CurEng->TempStr = &TE_KEYBOARD_lower;
 	}
-	if(gNumVblanks != CurEng->KeyboardTimer){
+	if(gNumVblanks > CurEng->KeyboardTimer){
 		if(gPlayer1Controller->buttonPressed&A_BUTTON){
-			CurEng->KeyboardTimer = gNumVblanks;
+			CurEng->KeyboardTimer = gNumVblanks+2;
 			//handle shift, end and backspace
 			switch(CurEng->SelLetter){
 				//shift
@@ -410,13 +415,12 @@ s8 TE_draw_keyboard(struct TEState *CurEng,u8 *str){
 					break;
 			}
 		}else if(gPlayer1Controller->buttonPressed&B_BUTTON && CurEng->UserInput>0){
-			CurEng->KeyboardTimer = gNumVblanks;
+			CurEng->KeyboardTimer = gNumVblanks+2;
 			UserInputs[CurEng->state][CurEng->CurUsrStr][CurEng->UserInput-1] = 0x9F;
 			CurEng->UserInput-=1;
 		}
-	}
-	if(gNumVblanks - CurEng->KeyboardTimer>0x2){
-		CurEng->KeyboardTimer = gNumVblanks;
+	}if(gNumVblanks%4==2 && CurEng->KeyboardTimerScroll<gNumVblanks){
+		CurEng->KeyboardTimerScroll = gNumVblanks;
 		//for overflow
 		s8 vert = 0;
 		handle_menu_scrolling(MENU_SCROLL_VERTICAL,&vert,-1,1);
@@ -463,14 +467,12 @@ s8 TE_next_box(struct TEState *CurEng,u8 *str){
 		CurEng->TrStart.TransVI = gNumVblanks;
 	}
 	CurEng->OgStr = CurEng->CurPos+CurEng->TempStr+1;
+	CurEng->StackLocked = CurEng->StackDepth;
 	CurEng->CurPos = 0;
 	CurEng->StrEnd = 0;
 	CurEng->TransX = 0;
 	CurEng->TransY = 0;
 	TE_clear_box_tr(CurEng);
-	if(CurEng->NewSpeed != 0x1234){
-		CurEng->VIpChar = CurEng->NewSpeed;
-	}
 	StrBuffer[CurEng->state][0] = 0xFF;
 	return -1;
 }
@@ -552,7 +554,7 @@ s8 TE_btn_check_start(struct TEState *CurEng,u8 *str){
 }
 //74 cmd works
 s8 TE_pause_time(struct TEState *CurEng,u8 *str){
-	if(CurEng->VIpChar == 0){
+	if(getTEspd(CurEng) == 0){
 		PauseDone:
 			CurEng->PauseTimer = 0;
 			TE_add_to_cmd_buffer(CurEng,str,3);
@@ -598,7 +600,7 @@ s8 TE_change_music(struct TEState *CurEng,u8 *str){
 	}
 	CurEng->NewSeqID = str[1];
 	gCurrentArea->musicParam = str[1];
-	play_music(SEQ_PLAYER_LEVEL,str[1],0);
+	play_music(SEQ_PLAYER_LEVEL,str[1],15);
 	return TE_advBlen(CurEng,2);
 }
 //7a cmd works
@@ -624,7 +626,8 @@ s8 TE_end_str(struct TEState *CurEng){
 //reset everything back to 0
 s8 TE_reset_str(struct TEState *CurEng){
 	if(CurEng->NewSeqID != CurEng->OgSeqID){
-		play_music(SEQ_PLAYER_LEVEL,CurEng->OgSeqID,0);
+		stop_background_music(CurEng->NewSeqID);
+		gCurrentArea->musicParam = CurEng->OgSeqID;
 	}
 	TE_flush_buffers(CurEng);
 	return -2;
@@ -824,13 +827,14 @@ s8 TE_scale_text(struct TEState *CurEng,u8 *str){
 s8 TE_enable_dialog_options(struct TEState *CurEng,u8 *str){
 	u8 arrow = 0x9E;
 	TE_print(CurEng);
-	CurEng->TempY -= 0xD;
-	CurEng->TempYOrigin -= 0xD;
+	CurEng->TempY -= ((u16) 0xD*CurEng->ScaleF[1]);
+	CurEng->TempYOrigin = CurEng->TempY;
 	CurEng->TempXOrigin -= 1;
 	CurEng->NumDialogs = str[1];
 	if(CurEng->DialogEnd != 0){
 		if(gPlayer1Controller->buttonPressed&A_BUTTON){
 			CurEng->OgStr = CurEng->DialogEnd;
+			CurEng->StackLocked = CurEng->StackDepth;
 			CurEng->DialogEnd = 0;
 			CurEng->CurPos = 0;
 			CurEng->StrEnd = 0;
@@ -858,21 +862,29 @@ s8 TE_enable_dialog_options(struct TEState *CurEng,u8 *str){
 //86 cmd works
 s8 TE_dialog_response(struct TEState *CurEng,u8 *str){
 	if(CurEng->ReturnedDialog == str[1]){
-		return TE_advBlen(CurEng,2);
+		TE_print(CurEng);
+		return TE_print_adv(CurEng,2);
 	}else{
+		u16 off = 0;
 		str += 2;
-		CurEng->TempStr += 2;
+		off += 2;
 		while(str[0] != 0x86 || str[1] != CurEng->ReturnedDialog){
 			if(str[0] == 0x95){
 				str = TE_mask_nested_dialog_option(CurEng,str);
 			}else if(str[0] == 0x87){
-				return TE_advBlen(CurEng,1);
+				TE_print(CurEng);
+				CurEng->TempStr+=off;
+				CurEng->CurPos=0;
+				return TE_print_adv(CurEng,1);
 			}else{
 				str += 1;
-				CurEng->TempStr += 1;
+				off += 1;
 			}
 		}
-		TE_advBlen(CurEng,2);
+		TE_print(CurEng);
+		CurEng->TempStr+=off;
+		CurEng->CurPos=0;
+		return TE_print_adv(CurEng,2);
 	}
 }
 //88 cmd works
@@ -907,7 +919,7 @@ s8 TE_start_bracket(struct TEState *CurEng,u8 *str){
 	return 1;
 }
 //95 cmd works
-u8 * TE_mask_nested_dialog_option(struct TEState *CurEng,u8 *str){
+u8 *TE_mask_nested_dialog_option(struct TEState *CurEng,u8 *str){
 	u8 key = str[1];
 	str += 2;
 	CurEng->TempStr += 2;
@@ -930,14 +942,12 @@ s8 TE_goto_return(struct TEState *CurEng,u8 *str){
 		return TE_advBlen(CurEng,2);
 	}else{
 		CurEng->OgStr = CurEng->ReturnStr[str[1]];
+		CurEng->StackLocked = CurEng->StackDepth;
 		CurEng->StrEnd = 0;
-		if(CurEng->NewSpeed != 0x1234){
-			CurEng->VIpChar = CurEng->NewSpeed;
-		}
 		return -1;
 	}
 }
-//99 cmd works
+//99 cmd
 s8 TE_enable_plaintext(struct TEState *CurEng,u8 *str){
 	TE_print(CurEng);
 	CurEng->PlainText = 1;
@@ -997,7 +1007,7 @@ s8 TE_call_loop(struct TEState *CurEng,u8 *str){
 //a2 cmd works
 s8 TE_function_response(struct TEState *CurEng,u8 *str){
 	u32 key = FunctionReturns[CurEng->state][str[1]];
-	if(key == TE_get_u32(str+2)){
+	if(key == TE_get_u32(str+1)){
 		return TE_advBlen(CurEng,6);
 	}else{
 		str += 6;
@@ -1010,8 +1020,8 @@ s8 TE_function_response(struct TEState *CurEng,u8 *str){
 				CurEng->TempStr += 1;
 			}else{
 				key = FunctionReturns[CurEng->state][str[1]];
-				if(key == TE_get_u32(str+2)){
-					return TE_advBlen(CurEng,2);
+				if(key == TE_get_u32(str+1)){
+					return TE_advBlen(CurEng,6);
 				}else{
 					str += 6;
 					CurEng->TempStr += 6;
@@ -1020,13 +1030,42 @@ s8 TE_function_response(struct TEState *CurEng,u8 *str){
 		}
 	}
 }
-//aa cmd works
+//a6 cmd works
+s8 TE_set_mario_action(struct TEState *CurEng,u8 *str){
+	gMarioState->action = TE_get_ptr(str,str);
+	return TE_advBlen(CurEng,5);
+}
 s8 TE_box_transition(struct TEState *CurEng,u8 *str){
 	CurEng->BoxTrXi = (s16) (TE_get_s16(str)*CurEng->TrPct);
 	CurEng->BoxTrXf = (s16) (TE_get_s16(str+2)*CurEng->TrPct);
 	CurEng->BoxTrYi = (s16) (TE_get_s16(str+4)*CurEng->TrPct);
 	CurEng->BoxTrYf = (s16) (TE_get_s16(str+6)*CurEng->TrPct);
 	return TE_advBlen(CurEng,9);
+}
+//ac cmd works
+s8 TE_jump_link_str(struct TEState *CurEng,u8 *str){
+	TE_print(CurEng);
+	CurEng->TempStr = segmented_to_virtual(TE_get_ptr(str,str));
+	CurEng->StrStack[CurEng->StackDepth] = str+5;
+	CurEng->StackDepth++;
+	CurEng->CurPos = 0;
+	return 1;
+}
+//ad cmd works
+s8 TE_pop_str(struct TEState *CurEng,u8 *str){
+	TE_print(CurEng);
+	CurEng->TempStr = CurEng->StrStack[CurEng->StackDepth-1];
+	CurEng->StackDepth--;
+	//if you pop after a new box, you will lose  your jump and break
+	//the chain of jump/pop, therefore you have to start a new box
+	if(CurEng->StackDepth<CurEng->StackLocked){
+		CurEng->OgStr = CurEng->TempStr;
+		CurEng->StackLocked = CurEng->StackDepth;
+		CurEng->StrEnd = 0;
+		return -1;
+	}
+	CurEng->CurPos = 0;
+	return 1;
 }
 //fe cmd works
 s8 TE_line_break(struct TEState *CurEng,u8 *str){
@@ -1046,6 +1085,7 @@ s8 TE_line_break(struct TEState *CurEng,u8 *str){
 	TE_flush_str_buff(CurEng);
 	CurEng->TempX = CurEng->TempXOrigin-1;
 	CurEng->TempY -= ((u16) 0xD*CurEng->ScaleF[1]);
+	CurEng->TempYOrigin -= ((u16) 0xD*CurEng->ScaleF[1]);
 	CurEng->TotalXOff = 0;
 	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
@@ -1061,7 +1101,8 @@ s8 TE_terminator(struct TEState *CurEng,u8 *str){
 	}
 	CurEng->DisplayingDialog += 1;
 	CurEng->TempX = CurEng->TempXOrigin-1;
-	CurEng->TempY = CurEng->TempYOrigin-0xD;
+	CurEng->TempY -= ((u16) 0xD*CurEng->ScaleF[1]);
+	CurEng->TempYOrigin -= ((u16) 0xD*CurEng->ScaleF[1]);
 	if(CurEng->HoveredDialog == CurEng->DisplayingDialog){
 		StrBuffer[CurEng->state][0] = 0x53;
 		StrBuffer[CurEng->state][1] = 0xFF;

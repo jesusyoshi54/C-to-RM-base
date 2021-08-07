@@ -18,6 +18,7 @@
 #include "game_init.h"
 #include "object_helpers.h"
 
+
 extern u8 gDialogCharWidths[256];
 extern struct MarioState *gMarioState;
 extern s16 sDelayedWarpOp;
@@ -31,14 +32,37 @@ u32 TimerBuffer[NumEngines][64];
 u8 UserInputs[NumEngines][16][16]; //16 length 16 strings
 //object array
 u32 FunctionReturns[NumEngines][8];
-
+static struct TEState *AccessEngine; //for outside functions to access
+//during callback functions
 
 //my char and ptr arrays
 #include "src/game/Keyboard_te.py"
+#include "src/game/TE_strings.inc.h"
+#include "text_engine_cmds.inc.h"
+#include "text_engine_helpers.inc.h"
 
+//SR11 specific funcs
+u32 PrintAnswer(void){
+	return gCurrentArea->index;
+}
+u32 DetermineAnswer(u8 answer){
+	if(AccessEngine->ReturnedDialog == answer)
+		return 1;
+	else
+		return 0;
+}
+u32 DamageAnswer(u8 answer){
+	if(AccessEngine->ReturnedDialog == answer)
+		return 1;
+	else{
+		gMarioState->health-=0x0300;
+		return 0;
+	}
+}
 
 void SetupTextEngine(s16 x, s16 y, u8 *str, u8 state){
 	TE_flush_eng(&TE_Engines[state]);
+	str = segmented_to_virtual(str);
 	TE_Engines[state].state = state;
 	TE_Engines[state].LastVI = gNumVblanks;
 	TE_Engines[state].OgStr = str;
@@ -48,6 +72,8 @@ void SetupTextEngine(s16 x, s16 y, u8 *str, u8 state){
 	TE_Engines[state].StartY = y;
 	TE_Engines[state].OgSeqID = -1;
 	TE_Engines[state].NewSeqID = -1;
+	TE_Engines[state].StackDepth = 0;
+	TE_Engines[state].NewSpeed = 0x1234;
 }
 
 void RunTextEngine(void){
@@ -60,6 +86,7 @@ void RunTextEngine(void){
 	u8 *str;
 	for(i=0;i<NumEngines;i++){
 		CurEng = &TE_Engines[i];
+		AccessEngine = CurEng;
 		if (CurEng->OgStr==0){
 			continue;
 		}
@@ -74,6 +101,9 @@ void RunTextEngine(void){
 		//init TE state vars
 		CharsThisFrame = 1;
 		TE_frame_init(CurEng);
+		#if TE_DEBUG
+		TE_debug_print(CurEng);
+		#endif
 		//run until either the string ends or you need to wait to draw more chars.
 		loop:
 			CurChar = CurEng->TempStr[CurEng->CurPos];
@@ -93,10 +123,6 @@ void RunTextEngine(void){
 				goto loopswitch;
 			}
 			if(!(CurChar<0x40||(CurChar>0x4F&&CurChar<0x70)||(CurChar>0xCF&&CurChar<0xFE)||CurChar==0x9E||CurChar==0x9F)){
-				static char buf[32];
-				sprintf(buf,"%d",CurChar);
-				// print_text(32,96,buf);
-				//parse cmds and use switch
 				loop = TE_jump_cmds(CurEng,CurChar,str);
 				loopswitch:
 					if (loop==1)
@@ -128,6 +154,8 @@ void RunTextEngine(void){
 					loop = TE_keyboard_sel(CurEng,str,0);
 					goto loopswitch;
 				}
+				TE_add_char2buf(CurEng);
+				goto loop;
 			}
 			//normal character is detected
 			if(CurEng->TempStrEnd!=CurEng->CurPos){
@@ -137,19 +165,20 @@ void RunTextEngine(void){
 			//now I have to check if a new character has to be drawn
 			else{
 				//check char speed for neg
-				if(CurEng->VIpChar<0){
-					if(((CurVI<<absi(CurEng->VIpChar)))>((CurEng->LastVI<<absi(CurEng->VIpChar))+CharsThisFrame)){
+				s16 TEspd = getTEspd(CurEng);
+				if(TEspd<0){
+					if(((CurVI*absi(TEspd)))>=((CurEng->LastVI*absi(TEspd))+CharsThisFrame)){
 						//draw a new char
-						TE_add_new_char(CurEng,CurVI);
+						TE_add_new_char(CurEng,CurEng->LastVI);
+						CharsThisFrame++;
 						goto loop;
-					}else{
+					}else if(CharsThisFrame>1){
 						CurEng->LastVI = CurVI;
 					}
-					CharsThisFrame++;
 				}else{
-					if(CurVI>=(CurEng->LastVI+CurEng->VIpChar)){
+					if(CurVI>=(CurEng->LastVI+TEspd)){
 						//draw a new char
-						TE_add_new_char(CurEng,CurVI+CurEng->VIpChar);
+						TE_add_new_char(CurEng,CurVI+TEspd);
 						goto loop;
 					}
 				}
@@ -158,7 +187,7 @@ void RunTextEngine(void){
 		nonewchar:
 		TE_print(CurEng);
 		printnone:
-		CurEng->PlainText = 0;
+		// CurEng->PlainText = 0;
 		if(CurEng->ScissorSet){
 			gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 			CurEng->ScissorSet = 0;
@@ -174,7 +203,6 @@ void RunTextEngine(void){
 		// end:
 	}
 }
-#include "text_engine_cmds.inc.h"
 
 //inits the variables needed at the start of a frame
 void TE_frame_init(struct TEState *CurEng){
@@ -189,7 +217,7 @@ void TE_frame_init(struct TEState *CurEng){
 	CurEng->ScaleF[0] = 1.0f;
 	CurEng->ScaleF[1] = 1.0f;
 	CurEng->EnvColorWord =- 1;
-	CurEng->NewSpeed = 0x1234;
+	CurEng->StackDepth = CurEng->StackLocked;
 	CurEng->ShakeScreen = 0;
 	StrBuffer[CurEng->state][0] = 0xFF;
 }
@@ -264,23 +292,26 @@ void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 }
 
 void TE_print(struct TEState *CurEng){
-	//print shadow with plaintext
-	if(CurEng->PlainText){
-		u32 Env = CurEng->EnvColorWord;
-		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
-		CurEng->TempX += 1;
-		CurEng->TempY -= 1;
+	//deal with case where buffer is empty
+	if(!(StrBuffer[CurEng->state][0] == 0x9E && StrBuffer[CurEng->state][1] == 0xFF)){
+		//print shadow with plaintext
+		if(CurEng->PlainText){
+			u32 Env = CurEng->EnvColorWord;
+			CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
+			CurEng->TempX += 1;
+			CurEng->TempY -= 1;
+			TE_transition_print(CurEng);
+			CurEng->TempX -= 1;
+			CurEng->TempY += 1;
+			CurEng->EnvColorWord = Env;
+		}
 		TE_transition_print(CurEng);
-		CurEng->TempX -= 1;
-		CurEng->TempY += 1;
-		CurEng->EnvColorWord = Env;
+		TE_flush_str_buff(CurEng);
+		TE_reset_Xpos(CurEng);
+		gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+		create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
+		TE_fix_scale_Xpos(CurEng);
 	}
-	TE_transition_print(CurEng);
-	TE_flush_str_buff(CurEng);
-	TE_reset_Xpos(CurEng);
-	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
-	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-	TE_fix_scale_Xpos(CurEng);
 }
 
 void TE_add_new_char(struct TEState *CurEng,u32 VI_inc){
@@ -379,7 +410,14 @@ void TE_flush_str_buff(struct TEState *CurEng){
 	StrBuffer[CurEng->state][0]=0x9E;
 	StrBuffer[CurEng->state][1]=0xFF;
 }
-
+s16 getTEspd(struct TEState *CurEng){
+	if(gPlayer1Controller->buttonDown&A_BUTTON && CurEng->NewSpeed!=0x1234){
+		return CurEng->NewSpeed;
+	}else{
+		return CurEng->VIpChar;
+	}
+	
+}
 void TE_set_env(struct TEState *CurEng){
 	gDPSetEnvColor(gDisplayListHead++, CurEng->EnvColorByte[0], CurEng->EnvColorByte[1], CurEng->EnvColorByte[2], CurEng->EnvColorByte[3]);
 }
@@ -428,9 +466,28 @@ u32 TE_get_u32(u8 *str){
 
 u32 TE_get_ptr(u8 *strArgs,u8 *str){
 	u16 pos = TE_get_u16(strArgs);
-	u16 ptr = TE_get_u16(strArgs+2);
+	u16 ptrID = TE_get_u16(strArgs+2);
 	str = (u32)str-4-pos;
 	u32 **Ptrptr = str;
-	return (*Ptrptr)[ptr];
+	u32 *ptr =  segmented_to_virtual(*Ptrptr);
+	return ptr[ptrID];
 }
+
+#if TE_DEBUG
+extern uintptr_t sSegmentTable[32];
+void TE_debug_print(struct TEState *CurEng){
+	u8 buf[32];
+	if (gPlayer1Controller->buttonDown&L_TRIG){
+		sprintf(buf,"new %d",CurEng->NewSeqID);
+		print_text(32,64,buf);
+		sprintf(buf,"og %d",CurEng->OgSeqID);
+		print_text(32,128,buf);
+		sprintf(buf,"param %d",gCurrentArea->musicParam);
+		print_text(32,96,buf);
+	}
+	
+}
+#endif
+
+
 #endif

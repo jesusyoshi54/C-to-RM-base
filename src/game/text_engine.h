@@ -2,7 +2,7 @@
 #define TEXT_ENGINE_H
 
 #include <PR/ultratypes.h>
-
+#define TE_DEBUG 0
 #define NumEngines 3
 struct Transition{
 	/* 0xD0 */ s32 TransVI; //the start of the transition, for the end of a box
@@ -65,6 +65,7 @@ struct TEState{
 	/* 0x46 */ s8 IntendedLetter;
 	/* 0x47 */ u8 SelLetter; //the letter thats currently hovered over
 	/* 0x48 */ u32 KeyboardTimer;
+	/* 0x48 */ u32 KeyboardTimerScroll;
 	/* 0x4C */ u8 *PreKeyboardStr;
 	/* 0x50 */ u8 *InputStr;
 	/* 0x54 */ u32 TotalXOff; //X offset from current line origin
@@ -78,6 +79,9 @@ struct TEState{
 	/* 0x64 */ Gfx *TextEndDL; //gDisplayListHead of last text. In place due to some jank might not keep
 	/* 0x68 */ u8 *BufferStrPtr; //Used so buffer knows where to go back and clear
 	/* 0x6C */ s16 NewSpeed;
+	/* NEW  */ u8 StackDepth;
+	/* NEW  */ u8 StackLocked;
+	/* NEW  */ u8 *StrStack[10];
 	//camera cmds
 	
 	//callback cmds
@@ -104,18 +108,23 @@ union WordByte{
 	u32 w0;
 	char col[4];
 };
-
-extern const Texture sky_09000000[];
+#include "text_engine_helpers.h"
+extern u32 gDorrieState;
+u32 PrintAnswer(void);
+u32 DamageAnswer(u8 answer);
+u32 DetermineAnswer(u8 answer);
+extern u16 sCurrentMusic;
 extern const Gfx dl_draw_text_bg_box_TE[];
-extern char te_test[];
 extern char TE_KEYBOARD_lower[];
 extern char TE_KEYBOARD_upper[];
+extern char *TE_Strings[];
 extern u8 StrBuffer[NumEngines][0x100];
 extern volatile struct TEState TE_Engines[NumEngines];
 void SetupTextEngine(s16 x, s16 y, u8 *str, u8 state);
 void RunTextEngine(void);
 void TE_setup_ia8(void);
 void TE_end_ia8(void);
+s16 getTEspd(struct TEState *CurEng);
 void TE_flush_str_buff(struct TEState *CurEng);
 void TE_frame_init(struct TEState *CurEng);
 void TE_set_env(struct TEState *CurEng);
@@ -206,6 +215,14 @@ s8 TE_box_transition(struct TEState *CurEng,u8 *str);
 s8 TE_call_once(struct TEState *CurEng,u8 *str);
 s8 TE_call_loop(struct TEState *CurEng,u8 *str);
 s8 TE_function_response(struct TEState *CurEng,u8 *str);
+s8 TE_set_mario_action(struct TEState *CurEng,u8 *str);
+s8 TE_jump_link_str(struct TEState *CurEng,u8 *str);
+s8 TE_pop_str(struct TEState *CurEng,u8 *str);
 s8 TE_line_break(struct TEState *CurEng,u8 *str);
 s8 TE_terminator(struct TEState *CurEng,u8 *str);
+
+#if TE_DEBUG
+void TE_debug_print(struct TEState *CurEng);
+#endif
+
 #endif
