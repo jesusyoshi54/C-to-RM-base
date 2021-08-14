@@ -1022,11 +1022,7 @@ s32 play_mode_normal(void) {
 
     initiate_painting_warp();
     initiate_delayed_warp();
-	#ifdef TE
-	if (gPlayer1Controller->buttonPressed&L_TRIG){
-        SetupTextEngine(32,32,&te_test,0);
-	}
-	#endif
+
     // If either initiate_painting_warp or initiate_delayed_warp initiated a
     // warp, change play mode accordingly.
     if (sCurrPlayMode == PLAY_MODE_NORMAL) {
