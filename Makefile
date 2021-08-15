@@ -30,7 +30,7 @@ COMPILER_N64 ?= gcc
 # Accept RM2C level folder output
 RM2C ?= 0
 #add in text engine
-TE ?= 1
+TE ?= 0
 #Debug stuff to make testing easier
 #inside pause menu of levels
 LEVEL_SELECT ?= 0
