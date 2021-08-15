@@ -31,8 +31,6 @@ COMPILER_N64 ?= gcc
 RM2C ?= 0
 #add in text engine
 TE ?= 1
-#add in a cpu Z sort I wrote. Completely breaks skinning
-Zsort ?= 1
 #Debug stuff to make testing easier
 #inside pause menu of levels
 LEVEL_SELECT ?= 0
@@ -663,10 +661,6 @@ endif
 ifeq ($(TE),1)
   CC_CHECK += -DTE
   CFLAGS += -DTE
-endif
-ifeq ($(Zsort),1)
-  CC_CHECK += -DZsort
-  CFLAGS += -DZsort
 endif
 
 ifeq ($(LEVEL_SELECT),1)

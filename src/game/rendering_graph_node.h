@@ -13,17 +13,6 @@ extern struct GraphNodeObject *gCurGraphNodeObject;
 extern struct GraphNodeHeldObject *gCurGraphNodeHeldObject;
 extern u16 gAreaUpdateCounter;
 
-#ifdef Zsort
-struct ZdlNode{
-	struct ZdlNode *Front; //Z value is greater
-	struct ZdlNode *Behind; //Z value is less or equal
-	struct DisplayListNode *DL;
-	f32 Z;
-	u16 layer;
-};
-#define ZdlNodePool 500 //The number of DLs you can have. Ideally equal to the size of the GFX_POOL_SIZE/384
-#endif
-
 // after processing an object, the type is reset to this
 #define ANIM_TYPE_NONE                  0
 

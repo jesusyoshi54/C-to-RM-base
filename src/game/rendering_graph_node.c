@@ -126,9 +126,6 @@ struct GraphNodeObject *gCurGraphNodeObject = NULL;
 struct GraphNodeHeldObject *gCurGraphNodeHeldObject = NULL;
 u16 gAreaUpdateCounter = 0;
 
-struct ZdlNode sZdlNodePool[ZdlNodePool];
-u32 sZnodesAlloc;
-
 #ifdef F3DEX_GBI_2
 LookAt lookAt;
 #endif
@@ -172,71 +169,7 @@ static void geo_process_master_list_sub(struct GraphNodeMasterList *node) {
         gSPClearGeometryMode(gDisplayListHead++, G_ZBUFFER);
     }
 }
-#ifdef Zsort
-static void AddtoMasterList(struct DisplayListNode *listNode,s16 layer){
-	// return;
-	if (gCurGraphNodeMasterList->listHeads[layer] == 0) {
-		gCurGraphNodeMasterList->listHeads[layer] = listNode;
-	} else {
-		gCurGraphNodeMasterList->listTails[layer]->next = listNode;
-	}
-	gCurGraphNodeMasterList->listTails[layer] = listNode;
-}
 
-static void AssembleMasterList(struct ZdlNode *Init){
-	//The goal is to sort the insertion by the Z transform from the camera from lowest to highest.
-	if(Init->Behind){
-		AssembleMasterList(Init->Behind);
-		if(Init->DL){
-			AddtoMasterList(Init->DL,Init->layer);
-			Init->DL = NULL;
-		}
-	}
-	if(Init->Front){
-		//You cannot go left anymore, the current listnode is the furthest back
-		if(Init->DL){
-			AddtoMasterList(Init->DL,Init->layer);
-			Init->DL = NULL;
-		}
-		AssembleMasterList(Init->Front);
-	}else if((!(Init->Front))&&(!(Init->Behind))){
-		//You're at a leaf, add the current listnode
-		if(Init->DL){
-			AddtoMasterList(Init->DL,Init->layer);
-			Init->DL = NULL;
-		}
-	}
-}
-
-static void AppendZdlNode(struct DisplayListNode *listNode, f32 NewZ, s16 layer){
-	struct ZdlNode *NewZdl = &sZdlNodePool[sZnodesAlloc];
-	struct ZdlNode *Init = sZdlNodePool;
-	sZnodesAlloc++;
-	NewZdl->DL = listNode;
-	NewZdl->Z = NewZ;
-	NewZdl->layer = layer;
-	//Parse Binary Tree
-	while(1){
-		if(Init->Z<NewZ){
-			if(Init->Front){
-				Init = Init->Front;
-				continue;
-			}else{
-				Init->Front = NewZdl;
-				break;
-			}
-		}else{
-			if(Init->Behind){
-				Init = Init->Behind;
-				continue;
-			}else{
-				Init->Behind = NewZdl;
-				break;
-			}
-		}
-	}
-}
-#endif
 /**
  * Appends the display list to one of the master lists based on the layer
  * parameter. Look at the RenderModeContainer struct to see the corresponding
@@ -248,23 +181,18 @@ static void geo_append_display_list(void *displayList, s16 layer) {
     gSPLookAt(gDisplayListHead++, &lookAt);
 #endif
     if (gCurGraphNodeMasterList != 0) {
-        
-		struct DisplayListNode *listNode =
+        struct DisplayListNode *listNode =
             alloc_only_pool_alloc(gDisplayListHeap, sizeof(struct DisplayListNode));
-		
+
         listNode->transform = gMatStackFixed[gMatStackIndex];
         listNode->displayList = displayList;
         listNode->next = 0;
-		#ifdef Zsort
-		AppendZdlNode(listNode, -gMatStack[gMatStackIndex][3][2],layer);
-		#else
         if (gCurGraphNodeMasterList->listHeads[layer] == 0) {
             gCurGraphNodeMasterList->listHeads[layer] = listNode;
         } else {
             gCurGraphNodeMasterList->listTails[layer]->next = listNode;
         }
         gCurGraphNodeMasterList->listTails[layer] = listNode;
-		#endif
     }
 }
 
@@ -276,17 +204,12 @@ static void geo_process_master_list(struct GraphNodeMasterList *node) {
     UNUSED s32 sp1C;
 
     if (gCurGraphNodeMasterList == NULL && node->node.children != NULL) {
-		sZnodesAlloc = 1;
-		bzero(&sZdlNodePool, sizeof(sZdlNodePool));
-		gCurGraphNodeMasterList = node;
+        gCurGraphNodeMasterList = node;
         for (i = 0; i < GFX_NUM_MASTER_LISTS; i++) {
             node->listHeads[i] = NULL;
         }
         geo_process_node_and_siblings(node->node.children);
-		#ifdef Zsort
-        AssembleMasterList(sZdlNodePool);
-		#endif
-		geo_process_master_list_sub(node);
+        geo_process_master_list_sub(node);
         gCurGraphNodeMasterList = NULL;
     }
 	#ifdef TE
