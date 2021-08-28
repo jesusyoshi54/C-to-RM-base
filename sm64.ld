@@ -189,6 +189,8 @@ SECTIONS
       BUILD_DIR/src/game/hud.o(.text);
       BUILD_DIR/src/game/obj_behaviors.o(.text);
       BUILD_DIR/src/game/obj_behaviors_2.o(.text);
+      BUILD_DIR/src/game/puppyprint.o(.text);
+      BUILD_DIR/src/game/debug_box.o(.text);
 #if TE
 	  BUILD_DIR/src/game/text_engine.o(.text);
 #endif
@@ -520,6 +522,8 @@ SECTIONS
       BUILD_DIR/src/game/hud.o(.data*);
       BUILD_DIR/src/game/obj_behaviors.o(.data*);
       BUILD_DIR/src/game/obj_behaviors_2.o(.data*);
+      BUILD_DIR/src/game/puppyprint.o(.data*);
+      BUILD_DIR/src/game/debug_box.o(.data*);
 #if TE
 	  BUILD_DIR/src/game/text_engine.o(.data*);
 #endif
@@ -638,6 +642,8 @@ SECTIONS
       BUILD_DIR/src/game/hud.o(.rodata*);
       BUILD_DIR/src/game/obj_behaviors.o(.rodata*);
       BUILD_DIR/src/game/obj_behaviors_2.o(.rodata*);
+      BUILD_DIR/src/game/puppyprint.o(.rodata*);
+      BUILD_DIR/src/game/debug_box.o(.rodata*);
 #if TE
 	  BUILD_DIR/src/game/text_engine.o(.rodata*);
 #endif
@@ -745,6 +751,8 @@ SECTIONS
       BUILD_DIR/src/game/hud.o(.bss*);
       BUILD_DIR/src/game/obj_behaviors.o(.bss*);
       BUILD_DIR/src/game/obj_behaviors_2.o(.bss*);
+      BUILD_DIR/src/game/puppyprint.o(.bss*);
+      BUILD_DIR/src/game/debug_box.o(.bss*);
 #if TE
 	  BUILD_DIR/src/game/text_engine.o(.bss*);
 #endif

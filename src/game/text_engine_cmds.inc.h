@@ -94,7 +94,7 @@ s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str){
 			Loop = TE_mosaic_bg_box(CurEng,str);
 			break;
 		case 0x7E:
-			Loop = TE_moving_textured_bg_box(CurEng,str);
+			Loop = TE_print_DL(CurEng,str);
 			break;
 		case 0x7F:
 			Loop = TE_shaded_bg_box(CurEng,str);
@@ -156,7 +156,7 @@ s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str){
 			Loop = TE_enable_plaintext(CurEng,str);
 			break;
 		case 0x9A:
-			Loop = TE_disable_plaintext(CurEng,str);
+			Loop = TE_enable_wobble(CurEng,str);
 			break;
 		case 0x9B:
 			Loop = TE_enable_end_transition(CurEng,str);
@@ -188,6 +188,12 @@ s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str){
 			break;
 		case 0xAD:
 			Loop = TE_pop_str(CurEng,str);
+			break;
+		case 0xAE:
+			Loop = TE_enable_shake(CurEng,str);
+			break;
+		case 0xAF:
+			Loop = TE_print_glyph(CurEng,str);
 			break;
 		case 0xFE:
 			Loop = TE_line_break(CurEng,str);
@@ -691,12 +697,14 @@ void TE_bg_box_setup(struct TEState *CurEng){
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
 		CurEng->TempX += 1;
 		CurEng->TempY -= 1;
-		TE_transition_print(CurEng);
+		if(!(StrBuffer[CurEng->state][0] == 0xFF))
+			TE_transition_print(CurEng);
 		CurEng->TempX -= 1;
 		CurEng->TempY += 1;
 		CurEng->EnvColorWord = Env;
 	}
-	TE_transition_print(CurEng);
+	if(!(StrBuffer[CurEng->state][0] == 0xFF))
+		TE_transition_print(CurEng);
 	TE_flush_str_buff(CurEng);
 	TE_reset_Xpos(CurEng);
 	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
@@ -714,26 +722,34 @@ s8 TE_mosaic_bg_box(struct TEState *CurEng,u8 *str){
 	u8 i;
 	u8 j;
 	TE_bg_box_setup(CurEng);
+	gDPSetTexturePersp(gDisplayListHead++, G_TP_NONE);
 	f32 x1 = (f32) (TE_get_u16(str)+CurEng->BoxTrXi);
 	f32 y1 = (f32) (TE_get_u16(str+4)+CurEng->BoxTrYi);
 	f32 x2 = (f32) (TE_get_u16(str+2)+CurEng->BoxTrXf);
 	f32 y2 = (f32) (TE_get_u16(str+6)+CurEng->BoxTrYf);
-	f32 lenX = (f32) str[13];
-	f32 lenY = (f32) str[14];
+	u16 lenX = str[13];
+	u16 lenY = str[14];
 	u32 *ptr = segmented_to_virtual(TE_get_ptr(str+8,str));
 	f32 W = (x2-x1)/lenX;
 	f32 H = (y2-y1)/lenY;
 	f32 xOff;
 	f32 yOff;
-	for(j=0;j<str[14];j++){
-		for(i=0;i<str[13];i++){
-			xOff = i*130.0f;
-			yOff = j*80.0f;
-			create_dl_scale_matrix(MENU_MTX_PUSH, W/130.0f,H/80.0f, 1.0f);
-			create_dl_translation_matrix(MENU_MTX_NOPUSH, xOff+(130.0f*x1/W),(80.0f*y2/H)-yOff, 1.0f);
-			gDPLoadTextureBlock(gDisplayListHead++,ptr+(i*0x200)+(str[13]*j*0x200),G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 0,G_TX_CLAMP, G_TX_CLAMP, 5, 5, G_TX_NOLOD, G_TX_NOLOD);
-			gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box_TE);
-			gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+	for(j=0;j<lenY;j++){
+		for(i=0;i<lenX;i++){
+			// xOff = i*130.0f;
+			// yOff = j*80.0f;
+			// create_dl_scale_matrix(MENU_MTX_PUSH, W/130.0f,H/80.0f, 1.0f);
+			// create_dl_translation_matrix(MENU_MTX_NOPUSH, xOff+(130.0f*x1/W),(80.0f*y2/H)-yOff, 1.0f);
+			// gDPLoadTextureBlock(gDisplayListHead++,ptr+(i*0x200)+(str[13]*j*0x200),G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 0,G_TX_CLAMP, G_TX_CLAMP, 5, 5, G_TX_NOLOD, G_TX_NOLOD);
+			// gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box_TE);
+			// gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+			u16 ULx = (u16) x1+W*i;
+			u16 ULy = (u16) y1+H*(lenY-j-1)+H;
+			u16 LRx = (u16) x1+W*i+W;
+			u16 LRy = (u16) y1+H*(lenY-j-1);
+			gDPLoadSync(gDisplayListHead++);
+			gDPLoadTextureTile(gDisplayListHead++, ptr, G_IM_FMT_RGBA, G_IM_SIZ_16b, 32*lenX, 32*lenY, 32*i, 32*j, 32*i+31, 32*j+31, 0,  G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, 5, 5, 0, 0);
+			gSPScisTextureRectangle(gDisplayListHead++, (ULx) << 2, (SCREEN_HEIGHT-ULy) << 2, (LRx) << 2,(SCREEN_HEIGHT-LRy) << 2, G_TX_RENDERTILE, 0, 0, (u32)((32.0f/W)*1024.0f), (u32)((32.0f/H)*1024.0f));
 		}
 	}
 	TE_reset_Xpos(CurEng);
@@ -743,17 +759,140 @@ s8 TE_mosaic_bg_box(struct TEState *CurEng,u8 *str){
 	TE_clear_box_tr(CurEng);
 	return TE_print_adv(CurEng,15);
 }
-//7e cmd not done
-s8 TE_moving_textured_bg_box(struct TEState *CurEng,u8 *str){
-	TE_bg_box_setup(CurEng);
-	TE_bg_coords(CurEng,str);
-	u32 *ptr = segmented_to_virtual(TE_get_ptr(str+8,str));
+void PushTransform(u8 Type,f32 x,f32 y, f32 z){
+	switch(Type){
+		case 0:
+			create_dl_translation_matrix(MENU_MTX_PUSH, x, y, z);
+			break;
+		case 1:
+			create_dl_scale_matrix(MENU_MTX_PUSH, x,y,z);
+			break;
+		case 2:; //can't declare after label
+			Mat4 mtxf;
+			Mtx *mtx = alloc_display_list(sizeof(*mtx));
+			Vec3f translation;
+			Vec3s rotation;
+			//Can be optmized?
+			translation[0]=0;
+			translation[1]=0;
+			translation[2]=0;
+			rotation[0]=(u16)x*(32768.0f/180.0f);
+			rotation[1]=(u16)y*(32768.0f/180.0f);
+			rotation[2]=(u16)z*(32768.0f/180.0f);
+			mtxf_rotate_zxy_and_translate(mtxf,translation,rotation);
+			mtxf_to_mtx(mtx, mtxf);
+			gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(mtx), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
+			break;
+	}
+}
+void Process_Transformation(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSize, u8 *PushCnt,u16 Timer,u8 Type){
+	f32 x,y,z;
+	u32 Counter = TimerBuffer[CurEng->state][Timer+1];
+	u32 *CountInc = &TimerBuffer[CurEng->state][Timer+1];
+	switch(TE_get_ptr(str+*CmdLoc-1,str)){
+		case DL_TRAN_CONST:
+			x = (f32) (TE_get_ptr(str+*CmdLoc+3,str));
+			y = (f32) (TE_get_ptr(str+*CmdLoc+7,str));
+			z = (f32) (TE_get_ptr(str+*CmdLoc+11,str));
+			PushTransform(Type,x/256.0f,y/256.0f,z/256.0f);
+			*CmdSize += 16;
+			*CmdLoc += 16;
+			*PushCnt += 1;
+			break;
+		case DL_TRAN_VEL:
+			x = (f32) (TE_get_ptr(str+*CmdLoc+3,str))*Counter;
+			y = (f32) (TE_get_ptr(str+*CmdLoc+7,str))*Counter;
+			z = (f32) (TE_get_ptr(str+*CmdLoc+11,str))*Counter;
+			PushTransform(Type,x/256.0f,y/256.0f,z/256.0f);
+			*CmdSize += 16;
+			*CmdLoc += 16;
+			*PushCnt += 1;
+			break;
+		case DL_TRAN_CYCLE:
+			x = (f32) (TE_get_ptr(str+*CmdLoc+3,str));
+			y = (f32) (TE_get_ptr(str+*CmdLoc+7,str));
+			z = (f32) (TE_get_ptr(str+*CmdLoc+11,str));
+			u32 CycleTime = TE_get_ptr(str+*CmdLoc+15,str);
+			u32 CycleType = TE_get_ptr(str+*CmdLoc+19,str);
+			switch(CycleType){
+				case CYCLE_LOOP:
+					if (Counter>CycleTime){
+						*CountInc = 0;
+					}
+					x=Counter*(x/(f32)CycleTime);
+					y=Counter*(y/(f32)CycleTime);
+					z=Counter*(z/(f32)CycleTime);
+					break;
+				case CYCLE_REVERSE:
+					if (Counter>(CycleTime*2)){
+						*CountInc = 0;
+					}
+					else if (Counter>(CycleTime)){
+						x=2*x-Counter*(x/(f32)CycleTime);
+						y=2*y-Counter*(y/(f32)CycleTime);
+						z=2*z-Counter*(z/(f32)CycleTime);
+					}
+					else{
+						x=Counter*(x/(f32)CycleTime);
+						y=Counter*(y/(f32)CycleTime);
+						z=Counter*(z/(f32)CycleTime);
+					}
+					break;
+				case CYCLE_SINE:
+					if (Counter>CycleTime){
+						*CountInc = 0;
+					}
+					x+=x*sinf(6.28f*((f32)Counter/(f32)CycleTime));
+					y+=y*sinf(6.28f*((f32)Counter/(f32)CycleTime));
+					z+=z*sinf(6.28f*((f32)Counter/(f32)CycleTime));
+					break;
+			}
+			PushTransform(Type,x/256.0f,y/256.0f,z/256.0f);
+			*CmdSize += 24;
+			*CmdLoc += 24;
+			*PushCnt += 1;
+			break;
+		default:
+			*CmdSize += 4;
+			*CmdLoc += 4;
+			break;
+	}
+	*CountInc += 1;
+}
+//7e cmd works
+s8 TE_print_DL(struct TEState *CurEng,u8 *str){
+	TE_print(CurEng);
+	u32 *ptr = segmented_to_virtual(TE_get_ptr(str+3,str));
+	u16 Timer = TE_get_u16(str+1);
+	u8 z=0;
+	if (!Timer){
+		str[0] = CurEng->BufferTimeBytes[0];
+		str[1] = CurEng->BufferTimeBytes[1];
+		for(z=0;z<3;z++){
+			TimerBuffer[CurEng->state][CurEng->BufferTimePtr] = str;
+			TimerBuffer[CurEng->state][CurEng->BufferTimePtr+1] = 0;
+			CurEng->BufferTimePtr+=2;
+		}
+	}
+	u8 PushCnt = 0;
+	u8 CmdSize = 8;
+	u8 CmdLoc = 8;
+	u8 layer = str[3];
+	//Translation
+	Process_Transformation(CurEng,str,&CmdLoc,&CmdSize,&PushCnt,Timer,0);
+	//Scale
+	Process_Transformation(CurEng,str,&CmdLoc,&CmdSize,&PushCnt,Timer+2,1);
+	//Rotation
+	Process_Transformation(CurEng,str,&CmdLoc,&CmdSize,&PushCnt,Timer+4,2);
+	//set layer
+	gDPSetRenderMode(gDisplayListHead++, renderModeTable_1Cycle->modes[layer], renderModeTable_2Cycle->modes[layer]);
+	gDPSetTexturePersp(gDisplayListHead++, G_TP_PERSP);
+	gSPDisplayList(gDisplayListHead++, ptr);
+	for(z=0;z<PushCnt;z++){
+		gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+	}
 	gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
-	//pkt, timg, fmt, siz, width, height, pal, cms, cmt, masks, maskt, shifts, shiftt
-	gDPLoadTextureBlock(gDisplayListHead++,ptr,G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 0,G_TX_CLAMP, G_TX_CLAMP, 5, 5, G_TX_NOLOD, G_TX_NOLOD);
-	gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box_TE);
-	TE_bg_box_finish(CurEng);
-	return TE_print_adv(CurEng,13);
+	return TE_print_adv(CurEng,CmdSize);
 }
 //7f cmd works
 s8 TE_shaded_bg_box(struct TEState *CurEng,u8 *str){
@@ -774,6 +913,7 @@ s8 TE_textured_bg_box(struct TEState *CurEng,u8 *str){
 	u32 *ptr = segmented_to_virtual(TE_get_ptr(str+8,str));
 	//pkt, timg, fmt, siz, width, height, pal, cms, cmt, masks, maskt, shifts, shiftt
 	gDPLoadTextureBlock(gDisplayListHead++,ptr,G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 0,G_TX_CLAMP, G_TX_CLAMP, 5, 5, G_TX_NOLOD, G_TX_NOLOD);
+	gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
 	gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box_TE);
 	TE_bg_box_finish(CurEng);
 	return TE_print_adv(CurEng,13);
@@ -808,12 +948,14 @@ s8 TE_scale_text(struct TEState *CurEng,u8 *str){
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
 		CurEng->TempX += 1;
 		CurEng->TempY -= 1;
-		TE_transition_print(CurEng);
+		if(!(StrBuffer[CurEng->state][0] == 0xFF))
+			TE_transition_print(CurEng);
 		CurEng->TempX -= 1;
 		CurEng->TempY += 1;
 		CurEng->EnvColorWord = Env;
 	}
-	TE_transition_print(CurEng);
+	if(!(StrBuffer[CurEng->state][0] == 0xFF))
+		TE_transition_print(CurEng);
 	TE_flush_str_buff(CurEng);
 	TE_reset_Xpos(CurEng);
 	CurEng->ScaleU[0] = TE_get_u32(str);
@@ -950,14 +1092,14 @@ s8 TE_goto_return(struct TEState *CurEng,u8 *str){
 //99 cmd
 s8 TE_enable_plaintext(struct TEState *CurEng,u8 *str){
 	TE_print(CurEng);
-	CurEng->PlainText = 1;
-	return TE_print_adv(CurEng,1);
+	CurEng->PlainText = str[1];
+	return TE_print_adv(CurEng,2);
 }
 //9a cmd works
-s8 TE_disable_plaintext(struct TEState *CurEng,u8 *str){
+s8 TE_enable_wobble(struct TEState *CurEng,u8 *str){
 	TE_print(CurEng);
-	CurEng->PlainText = 0;
-	return TE_print_adv(CurEng,1);
+	waveToggle = str[1];
+	return TE_print_adv(CurEng,2);
 }
 //9b cmd works
 s8 TE_enable_end_transition(struct TEState *CurEng,u8 *str){
@@ -1067,6 +1209,32 @@ s8 TE_pop_str(struct TEState *CurEng,u8 *str){
 	CurEng->CurPos = 0;
 	return 1;
 }
+//ae cmd works
+s8 TE_enable_shake(struct TEState *CurEng,u8 *str){
+	TE_print(CurEng);
+	shakeToggle = str[1];
+	return TE_print_adv(CurEng,2);
+}
+//af cmd works
+s8 TE_print_glyph(struct TEState *CurEng,u8 *str){
+	TE_bg_box_setup(CurEng);
+	/*bg box coords*/
+	f32 x1 = (f32) (CurEng->TempX+CurEng->TransX);
+	f32 y1 = (f32) (CurEng->TempY+CurEng->TransY);
+	f32 x2 = x1+12*CurEng->ScaleF[0];
+	f32 y2 = y1+12*CurEng->ScaleF[1];
+	create_dl_scale_matrix(MENU_MTX_PUSH, (x2-x1)/130.0f,(y2-y1)/80.0f, 1.0f);
+	create_dl_translation_matrix(MENU_MTX_NOPUSH, 130.0f*(x1/(x2-x1)),80.0f*y2/(y2-y1), 1.0f);
+	/* end bg box cords*/
+	u32 *ptr = segmented_to_virtual(TE_get_ptr(str,str));
+	//pkt, timg, fmt, siz, width, height, pal, cms, cmt, masks, maskt, shifts, shiftt
+	gDPLoadTextureBlock(gDisplayListHead++,ptr,G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 0,G_TX_CLAMP, G_TX_CLAMP, 5, 5, G_TX_NOLOD, G_TX_NOLOD);
+	gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+	gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box_TE);
+	CurEng->TotalXOff+=14;
+	TE_bg_box_finish(CurEng);
+	return TE_print_adv(CurEng,5);
+}
 //fe cmd works
 s8 TE_line_break(struct TEState *CurEng,u8 *str){
 	//modified print function to make printing not fuck with X pos
@@ -1076,12 +1244,14 @@ s8 TE_line_break(struct TEState *CurEng,u8 *str){
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
 		CurEng->TempX += 1;
 		CurEng->TempY -= 1;
-		TE_transition_print(CurEng);
+		if(!(StrBuffer[CurEng->state][0] == 0xFF))
+			TE_transition_print(CurEng);
 		CurEng->TempX -= 1;
 		CurEng->TempY += 1;
 		CurEng->EnvColorWord = Env;
 	}
-	TE_transition_print(CurEng);
+	if(!(StrBuffer[CurEng->state][0] == 0xFF))
+		TE_transition_print(CurEng);
 	TE_flush_str_buff(CurEng);
 	CurEng->TempX = CurEng->TempXOrigin-1;
 	CurEng->TempY -= ((u16) 0xD*CurEng->ScaleF[1]);

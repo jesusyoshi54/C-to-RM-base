@@ -22,7 +22,10 @@ def z(args):
 def Pack(*Bytes):
 	return b''.join(*Bytes)
 def Ret(Funcs,MSB,*args):
-	return Pack([bytes([MSB])]+[l(b) for l,b in zip(Funcs,args)])
+	if type(MSB)==int:
+		return Pack([bytes([MSB])]+[l(b) for l,b in zip(Funcs,args)])
+	else:
+		return Pack([bytes(MSB)]+[l(b) for l,b in zip(Funcs,args)])
 def Make(MSB,*Funcs):
 	return functools.partial(Ret,[*Funcs],MSB)
 def SF(s):
@@ -60,7 +63,7 @@ Funcs = {
 	'TimeEndStr':(0x7C,H),
 	'MosaicBGBox':(0x7D,H,H,H,H,p,B,B),
 	#needs editing
-	'MovingTexBGBox':(0x7E,H,H,H,H,p),
+	'PrintDL':([0x7E,0,0],B,p,z),
 	'ShadedBGBox':(0x7F,H,H,H,H,B,B,B,B),
 	'TexBGBox':(0x80,H,H,H,H,p),
 	#needs editing
@@ -81,8 +84,8 @@ Funcs = {
 	'EndDialogBracket':(0x96,B),
 	'SetRtrn':(0x97,B),
 	'GotoRtrn':(0x98,B),
-	'EnShadow':(0x99,),
-	'DisShadow':(0x9A,),
+	'ShadowText':(0x99,B),
+	'WobbleText':(0x9A,B),
 	'EndBoxTransition':(0x9B,B,B,B,B),
 	'StartBoxTransition':(0x9C,B,B,B,B),
 	'CallOnce':(0xA0,B,p,B,z),
@@ -91,6 +94,8 @@ Funcs = {
 	'MarioAction':(0xA6,p),
 	'JumpLink':(0xAC,p),
 	'Pop':(0xAD,),
+	'ShakeText':(0xAE,B),
+	'PrintGlyph':(0xAF,p),
 }
 def FindEnd(string):
 	cnt=0
@@ -192,7 +197,11 @@ if __name__ == "__main__":
 		s = [[f.__dict__.get(a),a] for a in s]
 		h.write('#include "src/game/text_engine.h"\n')
 		for a in s:
-			if type(a)==list and a[0]:
+			if a[1]=='externs':
+				[h.write(b+'\n') for b in a[0]]
+			elif a[1]=='headers':
+				[o.write(b+'\n') for b in a[0]]
+			elif type(a[0])==list or type(a[0])==tuple and a[0]:
 				Place = 0
 				Ptrs = []
 				Write(o,h,*a)

@@ -68,9 +68,7 @@ s16 *gCurAnimData;
 
 struct AllocOnlyPool *gDisplayListHeap;
 
-struct RenderModeContainer {
-    u32 modes[8];
-};
+
 
 /* Rendermode settings for cycle 1 for all 8 layers. */
 struct RenderModeContainer renderModeTable_1Cycle[2] = { { {

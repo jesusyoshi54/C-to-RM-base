@@ -17,7 +17,8 @@
 #include "segment2.h"
 #include "game_init.h"
 #include "object_helpers.h"
-
+#include "puppyprint.h"
+#include "rendering_graph_node.h"
 
 extern u8 gDialogCharWidths[256];
 extern struct MarioState *gMarioState;
@@ -28,7 +29,7 @@ extern s16 sSourceWarpNodeId;
 volatile struct TEState TE_Engines[NumEngines];
 u8 StrBuffer[NumEngines][0x100];
 u8 CmdBuffer[NumEngines][0x400];
-u32 TimerBuffer[NumEngines][64];
+u32 TimerBuffer[NumEngines][64]; //stores timers necessary for certain cmds with their own cycles and stuff
 u8 UserInputs[NumEngines][16][16]; //16 length 16 strings
 //object array
 u32 FunctionReturns[NumEngines][8];
@@ -74,6 +75,7 @@ void SetupTextEngine(s16 x, s16 y, u8 *str, u8 state){
 	TE_Engines[state].NewSeqID = -1;
 	TE_Engines[state].StackDepth = 0;
 	TE_Engines[state].NewSpeed = 0x1234;
+	TE_Engines[state].EnvColorWord =- 1;
 }
 
 void RunTextEngine(void){
@@ -84,6 +86,8 @@ void RunTextEngine(void){
 	u8 CurChar;
 	s8 loop;
 	u8 *str;
+	//for puppyprint
+	asciiToggle = 1;
 	for(i=0;i<NumEngines;i++){
 		CurEng = &TE_Engines[i];
 		AccessEngine = CurEng;
@@ -202,6 +206,8 @@ void RunTextEngine(void){
 		CurEng->CurPos = 0;
 		// end:
 	}
+	//for puppyprint
+	asciiToggle = 0;
 }
 
 //inits the variables needed at the start of a frame
@@ -216,7 +222,6 @@ void TE_frame_init(struct TEState *CurEng){
 	CurEng->SfxArg = 0;
 	CurEng->ScaleF[0] = 1.0f;
 	CurEng->ScaleF[1] = 1.0f;
-	CurEng->EnvColorWord =- 1;
 	CurEng->StackDepth = CurEng->StackLocked;
 	CurEng->ShakeScreen = 0;
 	StrBuffer[CurEng->state][0] = 0xFF;
@@ -227,7 +232,8 @@ void TE_transition_print(struct TEState *CurEng){
 		CurEng->LastVI = gNumVblanks;
 		if(CurEng->TrEnd.TransLength == 0){
 			TE_set_env(CurEng);
-			print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
+			// print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY, &StrBuffer[CurEng->state]);
+			print_small_text(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY, &StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 			return;
 		}else{
 			TE_transition_active(CurEng,&CurEng->TrEnd,0);
@@ -237,7 +243,8 @@ void TE_transition_print(struct TEState *CurEng){
 	if(CurEng->TrStart.TransVI != 0){
 		if(CurEng->TrStart.TransLength == 0){
 			TE_set_env(CurEng);
-			print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
+			// print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
+			print_small_text(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 			return;
 		}else{
 			TE_transition_active(CurEng,&CurEng->TrStart,1);
@@ -245,7 +252,8 @@ void TE_transition_print(struct TEState *CurEng){
 		}
 	}
 	TE_set_env(CurEng);
-	print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
+	// print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
+	print_small_text(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 	return;
 }
 void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
@@ -288,12 +296,13 @@ void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 	}else{
 		CurEng->TrPct = Pct;
 	}
-	print_generic_string(CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state]);
+	// print_generic_string(CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state]);
+	print_small_text(CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 }
 
 void TE_print(struct TEState *CurEng){
 	//deal with case where buffer is empty
-	if(!(StrBuffer[CurEng->state][0] == 0x9E && StrBuffer[CurEng->state][1] == 0xFF)){
+	if(!(StrBuffer[CurEng->state][0] == 0xFF)){
 		//print shadow with plaintext
 		if(CurEng->PlainText){
 			u32 Env = CurEng->EnvColorWord;
@@ -332,20 +341,13 @@ void TE_add_char2buf(struct TEState *CurEng){
 	//get char
 	CharWrite = CurEng->TempStr[CurEng->CurPos];
 	//increase X pos
-	CurEng->TotalXOff+=gDialogCharWidths[CharWrite];
+	s32 textX, textY, offsetY, spaceX;
+	get_char_from_byte_sm64(CharWrite,&textX, &textY, &spaceX, &offsetY);
+	CurEng->TotalXOff+=spaceX+1;
 	//write char to buffer
 	StrBuffer[CurEng->state][CurEng->CurPos] = CharWrite;
 	StrBuffer[CurEng->state][CurEng->CurPos+1] = 0xFF;
 	CurEng->CurPos+=1;
-	//check wobbly text
-	if(CurEng->WobbleHeight){
-		TE_set_env(CurEng);
-		//calc pos
-		//write str to screen
-		//flush str
-		CurEng->CurPos=0;
-		CurEng->TempStrEnd--;
-	}
 }
 
 void TE_add_to_cmd_buffer(struct TEState *CurEng,u8 *str,u8 len){
@@ -365,13 +367,27 @@ void TE_add_to_cmd_buffer(struct TEState *CurEng,u8 *str,u8 len){
 
 void TE_flush_buffers(struct TEState *CurEng){
 	TE_clear_cmd_buffer(CurEng);
+	TE_clear_timer_buffer(CurEng);
 	TE_flush_eng(CurEng);
 	TE_flush_str_buff(CurEng);
-	//VI buffer
 }
 
 void TE_flush_eng(struct TEState *CurEng){
 	bzero(CurEng, sizeof(*CurEng));
+}
+
+void TE_clear_timer_buffer(struct TEState *CurEng){
+	u32 i;
+	u32 *T = TimerBuffer[CurEng->state];
+	u8 *str;
+	for(i=0;i<CurEng->BufferTimePtr;i+=2){
+		str = T[i];
+		str[0] = 0;
+		str[1] = 0;
+		*(T+i) = 0;
+		*(T+i+1) = 0;
+	}
+	CurEng->BufferTimePtr = 0;
 }
 
 void TE_clear_cmd_buffer(struct TEState *CurEng){
@@ -407,8 +423,7 @@ void TE_flush_str_buff(struct TEState *CurEng){
 		}
 		StrBuffer[CurEng->state][i] = 0;
 	}
-	StrBuffer[CurEng->state][0]=0x9E;
-	StrBuffer[CurEng->state][1]=0xFF;
+	StrBuffer[CurEng->state][0]=0xFF;
 }
 s16 getTEspd(struct TEState *CurEng){
 	if(gPlayer1Controller->buttonDown&A_BUTTON && CurEng->NewSpeed!=0x1234){
@@ -419,7 +434,7 @@ s16 getTEspd(struct TEState *CurEng){
 	
 }
 void TE_set_env(struct TEState *CurEng){
-	gDPSetEnvColor(gDisplayListHead++, CurEng->EnvColorByte[0], CurEng->EnvColorByte[1], CurEng->EnvColorByte[2], CurEng->EnvColorByte[3]);
+	print_set_envcolour(CurEng->EnvColorByte[0], CurEng->EnvColorByte[1], CurEng->EnvColorByte[2], CurEng->EnvColorByte[3]);
 }
 
 void TE_reset_Xpos(struct TEState *CurEng){
@@ -478,7 +493,7 @@ extern uintptr_t sSegmentTable[32];
 void TE_debug_print(struct TEState *CurEng){
 	u8 buf[32];
 	if (gPlayer1Controller->buttonDown&L_TRIG){
-		sprintf(buf,"new %d",CurEng->NewSeqID);
+		sprintf(buf,"col %d",CurEng->EnvColorWord);
 		print_text(32,64,buf);
 		sprintf(buf,"og %d",CurEng->OgSeqID);
 		print_text(32,128,buf);

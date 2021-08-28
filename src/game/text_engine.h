@@ -2,8 +2,9 @@
 #define TEXT_ENGINE_H
 
 #include <PR/ultratypes.h>
-#define TE_DEBUG 0
-#define NumEngines 3
+
+#include "TE_defines.h"
+
 struct Transition{
 	/* 0xD0 */ s32 TransVI; //the start of the transition, for the end of a box
 	/* 0xD4 */ u8 TransLength;
@@ -23,7 +24,7 @@ struct TEState{
 	/* 0x0A */ u8  KeyboardState;
 	/* NEW  */ s8  KeyboardChar; //which letter is being drawn on the keyboard
 	/* NEW  */ s8  KeyboardReset; //also used to keep track of box ends
-	/* 0x0B */ u8  WobbleHeight;
+	/* 0x0B */ u8  Unused; //wobble but deprecated because puppyprint supports it now
 	/* 0x0C */ u8 *TempStr;
 	/* 0x10 */ s16 TempX;
 	/* 0x12 */ s16 TempY;
@@ -76,7 +77,10 @@ struct TEState{
 	/* 0x5B */ u8 HoveredDialog;
 	/* 0x5C */ u8 *DialogEnd;
 	/* 0x62 */ u32 VICounter;
-	/* 0x64 */ Gfx *TextEndDL; //gDisplayListHead of last text. In place due to some jank might not keep
+	union{
+	/* NEW  */ u16 BufferTimePtr; //ptr to the current place in the timer buffer
+	/* NEW  */ u8 BufferTimeBytes[2]; //ptr to the current place in the timer buffer
+	};
 	/* 0x68 */ u8 *BufferStrPtr; //Used so buffer knows where to go back and clear
 	/* 0x6C */ s16 NewSpeed;
 	/* NEW  */ u8 StackDepth;
@@ -109,7 +113,6 @@ union WordByte{
 	char col[4];
 };
 #include "text_engine_helpers.h"
-extern u32 gDorrieState;
 u32 PrintAnswer(void);
 u32 DamageAnswer(u8 answer);
 u32 DetermineAnswer(u8 answer);
@@ -125,6 +128,7 @@ void RunTextEngine(void);
 void TE_setup_ia8(void);
 void TE_end_ia8(void);
 s16 getTEspd(struct TEState *CurEng);
+void TE_clear_timer_buffer(struct TEState *CurEng);
 void TE_flush_str_buff(struct TEState *CurEng);
 void TE_frame_init(struct TEState *CurEng);
 void TE_set_env(struct TEState *CurEng);
@@ -149,6 +153,8 @@ void TE_clear_box_tr(struct TEState *CurEng);
 void TE_bg_box_finish(struct TEState *CurEng);
 void TE_bg_box_setup(struct TEState *CurEng);
 void TE_bg_coords(struct TEState *CurEng,u8 *str);
+void PushTransform(u8 Type,f32 x,f32 y, f32 z);
+void Process_Transformation(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSize, u8 *PushCnt,u16 Timer,u8 Type);
 void TE_flush_buffers(struct TEState *CurEng);
 void TE_flush_eng(struct TEState *CurEng);
 void TE_add_to_cmd_buffer(struct TEState *CurEng,u8 *str,u8 len);
@@ -188,7 +194,7 @@ s8 TE_Abtn_end_string(struct TEState *CurEng,u8 *str);
 s8 TE_time_end_string(struct TEState *CurEng,u8 *str);
 //bg box cmds
 s8 TE_mosaic_bg_box(struct TEState *CurEng,u8 *str);
-s8 TE_moving_textured_bg_box(struct TEState *CurEng,u8 *str);
+s8 TE_print_DL(struct TEState *CurEng,u8 *str);
 s8 TE_shaded_bg_box(struct TEState *CurEng,u8 *str);
 s8 TE_textured_bg_box(struct TEState *CurEng,u8 *str);
 s8 TE_moving_shaded_bg_box(struct TEState *CurEng,u8 *str);
@@ -207,7 +213,7 @@ u8 * TE_mask_nested_dialog_option(struct TEState *CurEng,u8 *str);
 s8 TE_set_return(struct TEState *CurEng,u8 *str);
 s8 TE_goto_return(struct TEState *CurEng,u8 *str);
 s8 TE_enable_plaintext(struct TEState *CurEng,u8 *str);
-s8 TE_disable_plaintext(struct TEState *CurEng,u8 *str);
+s8 TE_enable_wobble(struct TEState *CurEng,u8 *str);
 //transitions
 s8 TE_enable_end_transition(struct TEState *CurEng,u8 *str);
 s8 TE_enable_start_transition(struct TEState *CurEng,u8 *str);
@@ -218,6 +224,8 @@ s8 TE_function_response(struct TEState *CurEng,u8 *str);
 s8 TE_set_mario_action(struct TEState *CurEng,u8 *str);
 s8 TE_jump_link_str(struct TEState *CurEng,u8 *str);
 s8 TE_pop_str(struct TEState *CurEng,u8 *str);
+s8 TE_enable_shake(struct TEState *CurEng,u8 *str);
+s8 TE_print_glyph(struct TEState *CurEng,u8 *str);
 s8 TE_line_break(struct TEState *CurEng,u8 *str);
 s8 TE_terminator(struct TEState *CurEng,u8 *str);
 

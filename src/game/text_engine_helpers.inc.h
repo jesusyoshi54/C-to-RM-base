@@ -1,4 +1,3 @@
-u32 gDorrieState=0;
 s32 TE_inc_state(s32 *state){
 	s32 a = *state;
 	++*state;
@@ -11,6 +10,7 @@ s32 TE_dec_state(s32 *state){
 }
 s32 TE_mod_state(s32 *state,s32 mod){
 	s32 a = *state;
+	*state = a%mod;
 	return a%mod;
 }
 s32 TE_get_state(s32 *state){

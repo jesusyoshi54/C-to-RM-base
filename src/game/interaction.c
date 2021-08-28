@@ -1710,6 +1710,28 @@ u32 check_read_sign(struct MarioState *m, struct Object *o) {
     return FALSE;
 }
 
+#include "text_engine.h"
+u32 check_read_sign_TE(struct MarioState *m, struct Object *o) {
+    if ((m->input & READ_MASK) && mario_can_talk(m, 0) && object_facing_mario(m, o, SIGN_RANGE)) {
+        s16 facingDYaw = (s16)(o->oMoveAngleYaw + 0x8000) - m->faceAngle[1];
+        if (facingDYaw >= -SIGN_RANGE && facingDYaw <= SIGN_RANGE) {
+            f32 targetX = o->oPosX + 105.0f * sins(o->oMoveAngleYaw);
+            f32 targetZ = o->oPosZ + 105.0f * coss(o->oMoveAngleYaw);
+
+            m->marioObj->oMarioReadingSignDYaw = facingDYaw;
+            m->marioObj->oMarioReadingSignDPosX = targetX - m->pos[0];
+            m->marioObj->oMarioReadingSignDPosZ = targetZ - m->pos[2];
+			SetupTextEngine(32,60,TE_Strings[o->oBehParams2ndByte],TE_STATE_MAIN);
+
+            m->interactObj = o;
+            m->usedObj = o;
+            return set_mario_action(m, ACT_WAITING_FOR_DIALOG, 0);
+        }
+    }
+
+    return FALSE;
+}
+
 u32 check_npc_talk(struct MarioState *m, struct Object *o) {
     if ((m->input & READ_MASK) && mario_can_talk(m, 1)) {
         s16 facingDYaw = mario_obj_angle_to_object(m, o) - m->faceAngle[1];
@@ -1733,6 +1755,8 @@ u32 interact_text(struct MarioState *m, UNUSED u32 interactType, struct Object *
 
     if (o->oInteractionSubtype & INT_SUBTYPE_SIGN) {
         interact = check_read_sign(m, o);
+    } else if (o->oInteractionSubtype & INT_SUBTYPE_TE) {
+        interact = check_read_sign_TE(m, o);
     } else if (o->oInteractionSubtype & INT_SUBTYPE_NPC) {
         interact = check_npc_talk(m, o);
     } else {

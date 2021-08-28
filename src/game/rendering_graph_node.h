@@ -4,7 +4,11 @@
 #include <PR/ultratypes.h>
 
 #include "engine/graph_node.h"
-
+struct RenderModeContainer {
+    u32 modes[8];
+};
+extern struct RenderModeContainer renderModeTable_1Cycle[];
+extern struct RenderModeContainer renderModeTable_2Cycle[];
 extern struct GraphNodeRoot *gCurGraphNodeRoot;
 extern struct GraphNodeMasterList *gCurGraphNodeMasterList;
 extern struct GraphNodePerspective *gCurGraphNodeCamFrustum;

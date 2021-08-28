@@ -10,6 +10,10 @@
 
 // SM64 (US/JP/EU/SH) Segment 02
 
+ALIGNED8 const Texture small_font[] = {
+#include "textures/segment2/custom_text.i4.inc.c"
+};
+
 ALIGNED8 static const Texture texture_hud_char_0[] = {
 #include "textures/segment2/segment2.00000.rgba16.inc.c"
 };
@@ -2226,7 +2230,7 @@ const Gfx dl_ia_text_begin[] = {
     gsDPSetTexturePersp(G_TP_NONE),
     gsDPSetCombineMode(G_CC_FADEA, G_CC_FADEA),
     gsDPSetEnvColor(255, 255, 255, 255),
-    gsDPSetRenderMode(G_RM_XLU_SURF, G_RM_XLU_SURF2),
+    gsDPSetRenderMode(G_RM_XLU_SURF, G_RM_XLU_SURF),
     gsDPSetTextureFilter(G_TF_POINT),
     gsSPEndDisplayList(),
 };
@@ -2255,7 +2259,7 @@ const Gfx dl_ia_text_end[] = {
 #elif defined(VERSION_US)
 const Gfx dl_ia_text_begin[] = {
     gsDPPipeSync(),
-    gsSPClearGeometryMode(G_LIGHTING),
+    // gsSPClearGeometryMode(G_LIGHTING),
     gsDPSetCombineMode(G_CC_FADEA, G_CC_FADEA),
     gsDPSetEnvColor(255, 255, 255, 255),
     gsDPSetRenderMode(G_RM_XLU_SURF, G_RM_XLU_SURF2),
@@ -2279,7 +2283,7 @@ const Gfx dl_ia_text_tex_settings[] = {
 // 0x0200EE68 - 0x0200EEA8
 const Gfx dl_ia_text_begin[] = {
     gsDPPipeSync(),
-    gsSPClearGeometryMode(G_LIGHTING),
+    // gsSPClearGeometryMode(G_LIGHTING),
     gsDPSetCombineMode(G_CC_FADEA, G_CC_FADEA),
     gsDPSetEnvColor(255, 255, 255, 255),
     gsDPSetRenderMode(G_RM_XLU_SURF, G_RM_XLU_SURF2),
@@ -2305,6 +2309,7 @@ const Gfx dl_ia_text_tex_settings[] = {
 // 0x0200EEF0 - 0x0200EF30
 const Gfx dl_ia_text_end[] = {
     gsDPPipeSync(),
+	gsDPSetTexturePersp(G_TP_PERSP),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
     gsDPSetCombineMode(G_CC_SHADE, G_CC_SHADE),
     gsDPSetEnvColor(255, 255, 255, 255),
