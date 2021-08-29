@@ -30,7 +30,7 @@ TE_KEYBOARD_upper = ["[ShadedBGBox(0x20,0x120,0x18,0x78,0x20,0x20,0x20,0x80)]","
 #text_engine.h and pressing D pad down inside a level.
 TEST_BOX = ["[ShadedBGBox(32,298,32,228,0x20,0x20,0x20,0x80)][Pop()]"]
 TEST_TEX_BOX = ["[MosaicBGBox(32,96,96,160,0x09000000,3,3)][Pop()]"]
-TEST_STR = ["[JumpLink('TEST_BOX')][JumpLink('TEST_TEX_BOX')]00000000005555555555\n\
+TEST_STR = ["[JumpLink('TEST_BOX')][JumpLink('TEST_TEX_BOX')][WordWrap(296)]00000000005555555555word wrap test it should be coming soon or something I guess\n\
 [ScaleText(2.0,1.0)]00000\
 [PushTransform(['DL_TRAN_VEL',130,50,0,'DL_TRAN_CONST',0x20,0x20,0x20,'DL_TRAN_VEL',0,90,0])]\
 [PrintDL(4,'wooden_signpost_seg3_dl_0302DD08',['DL_TRAN_NONE','DL_TRAN_NONE','DL_TRAN_NONE'])]\

@@ -21,6 +21,7 @@ struct TEState{
 	/* 0x04 */ s16 TempXOrigin;
 	/* 0x06 */ s16 TempYOrigin;
 	/* 0x08 */ s16 VIpChar; //VIs per char, negative for char per VI
+	/* NEW  */ u16 WordWrap;
 	/* 0x0A */ u8  KeyboardState;
 	/* NEW  */ s8  KeyboardChar; //which letter is being drawn on the keyboard
 	/* NEW  */ s8  KeyboardReset; //also used to keep track of box ends
@@ -32,6 +33,8 @@ struct TEState{
 	//until next box
 	/* NEW  */ s16 TransX;
 	/* NEW  */ s16 TransY;
+	/* NEW  */ s16 ScaleFixX; //translation fix from scaling
+	/* NEW  */ s16 ScaleFixY; //translation fix from scaling
 	//variables for boxes. These piggy back on start/end timers
 	/* NEW  */ s16 BoxTrXi;
 	/* NEW  */ s16 BoxTrXf;
@@ -137,7 +140,6 @@ void TE_set_env(struct TEState *CurEng);
 void TE_add_char2buf(struct TEState *CurEng);
 void TE_add_new_char(struct TEState *CurEng,u32 VI_inc);
 void TE_reset_Xpos(struct TEState *CurEng);
-void TE_fix_scale_Xpos(struct TEState *CurEng);
 void TE_print(struct TEState *CurEng);
 void TE_transition_print(struct TEState *CurEng);
 void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip);
@@ -206,8 +208,7 @@ s8 TE_non_buffer_pad(struct TEState *CurEng,u8 *str);
 s8 TE_scale_text(struct TEState *CurEng,u8 *str);
 s8 TE_enable_dialog_options(struct TEState *CurEng,u8 *str);
 s8 TE_dialog_response(struct TEState *CurEng,u8 *str);
-s8 TE_enable_screen_shake(struct TEState *CurEng,u8 *str);
-s8 TE_disable_screen_shake(struct TEState *CurEng,u8 *str);
+s8 TE_screen_shake(struct TEState *CurEng,u8 *str);
 //camera cmds
 s8 TE_trigger_warp(struct TEState *CurEng,u8 *str);
 //object cmds
@@ -229,6 +230,7 @@ s8 TE_jump_link_str(struct TEState *CurEng,u8 *str);
 s8 TE_pop_str(struct TEState *CurEng,u8 *str);
 s8 TE_enable_shake(struct TEState *CurEng,u8 *str);
 s8 TE_print_glyph(struct TEState *CurEng,u8 *str);
+s8 TE_word_wrap(struct TEState *CurEng,u8 *str);
 s8 TE_line_break(struct TEState *CurEng,u8 *str);
 s8 TE_terminator(struct TEState *CurEng,u8 *str);
 

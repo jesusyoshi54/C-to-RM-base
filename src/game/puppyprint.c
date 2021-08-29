@@ -256,7 +256,7 @@ void print_ram_overview(void)
             sprintf(textBytes, "Segment %02X: %X",i-nameTable+2, ramsizeSegment[i]);
         }
         print_set_envcolour(colourChart[i][0], colourChart[i][1], colourChart[i][2], 255);
-        print_small_text(x, y, textBytes, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL);
+        print_small_text(1.0f,1.0f,x, y, textBytes, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL);
         y += 12;
         drawn++;
     }
@@ -301,7 +301,7 @@ void print_which_benchmark(void)
     render_blank_box(110, 115, 210, 160, 0, 0, 0, 255);
     finish_blank_box();
     sprintf(textBytes, "Select Option#%s#L: Confirm", benchNames[benchOption]);
-    print_small_text(160,120, textBytes, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL);
+    print_small_text(1.0f,1.0f,160,120, textBytes, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL);
 }
 
 char consoleLogTable[LOG_BUFFER_SIZE][255];
@@ -327,7 +327,7 @@ void print_console_log(void)
     {
         if (consoleLogTable[i] == NULL)
             continue;
-        print_small_text(16, (LINE_HEIGHT)-(i*12), consoleLogTable[i], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+        print_small_text(1.0f,1.0f,16, (LINE_HEIGHT)-(i*12), consoleLogTable[i], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
     }
 }
 #undef LINE_HEIGHT
@@ -346,28 +346,28 @@ void puppyprint_render_profiler(void)
         return;
 
     sprintf(textBytes, "RAM: %06X /%06X (%d_)", main_pool_available(), mempool, (s32)(((f32)main_pool_available()/(f32)mempool)*100));
-    print_small_text(160, 224, textBytes, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL);
+    print_small_text(1.0f,1.0f,160, 224, textBytes, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL);
 
     if (!ramViewer && !benchViewer && !logViewer)
     {
         print_fps(16,40);
         sprintf(textBytes, "CPU: %dus (%d_)#RSP: %dus (%d_)#RDP: %dus (%d_)", (s32)cpuCount, (s32)OS_CYCLES_TO_USEC(cpuTime)/333, (s32)OS_CYCLES_TO_USEC(rspTime), (s32)OS_CYCLES_TO_USEC(rspTime)/333, (s32)OS_CYCLES_TO_USEC(rdpTime), (s32)OS_CYCLES_TO_USEC(rdpTime)/333);
-        print_small_text(16, 52, textBytes, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+        print_small_text(1.0f,1.0f,16, 52, textBytes, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 
         sprintf(textBytes, "OBJ: %d/%d", gObjectCounter, OBJECT_POOL_CAPACITY);
-        print_small_text(16, 124, textBytes, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+        print_small_text(1.0f,1.0f,16, 124, textBytes, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 
         //Very little point printing useless info if Mayro doesn't even exist.
         if (gMarioState->marioObj)
         {
             sprintf(textBytes, "Mario Pos#X: %d#Y: %d#Z: %d#D: %X", (s32)(gMarioState->pos[0]), (s32)(gMarioState->pos[1]), (s32)(gMarioState->pos[2]), (u16)(gMarioState->faceAngle[1]));
-            print_small_text(16, 140, textBytes, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+            print_small_text(1.0f,1.0f,16, 140, textBytes, PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
         }
         //Same for the camera, especially so because this will crash otherwise.
         if (gCamera)
         {
             sprintf(textBytes, "Camera Pos#X: %d#Y: %d#Z: %d#D: %X", (s32)(gCamera->pos[0]), (s32)(gCamera->pos[1]), (s32)(gCamera->pos[2]), (u16)(gCamera->yaw));
-            print_small_text(304, 140, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
+            print_small_text(1.0f,1.0f,304, 140, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
         }
 
         if (benchmarkTimer > 0)
@@ -378,7 +378,7 @@ void puppyprint_render_profiler(void)
             sprintf(textBytes, "Done in %0.000f seconds#Benchmark: %dus#High: %dus", (f32)(benchmarkProgramTimer)*0.000001f, (s32)OS_CYCLES_TO_USEC(benchMark[NUM_BENCH_ITERATIONS]), (s32)OS_CYCLES_TO_USEC(benchMark[NUM_BENCH_ITERATIONS+1]));
             render_blank_box(160-(get_text_width(textBytes)/2)-4, 158, 160+(get_text_width(textBytes)/2)+4, 196, 0, 0, 0, 255);
             print_set_envcolour(255, 255, 255, 255);
-            print_small_text(160, 160, textBytes, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL);
+            print_small_text(1.0f,1.0f,160, 160, textBytes, PRINT_TEXT_ALIGN_CENTRE, PRINT_ALL);
             finish_blank_box();
         }
 
@@ -391,15 +391,15 @@ void puppyprint_render_profiler(void)
         #undef ADDTIMES
 
         sprintf(textBytes, "Collision: <COL_99505099>%dus", (s32)OS_CYCLES_TO_USEC(collisionTime[NUM_PERF_ITERATIONS]));
-        print_small_text(304, 40, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
+        print_small_text(1.0f,1.0f,304, 40, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
         sprintf(textBytes, "Graph: <COL_50509999>%dus", (s32)OS_CYCLES_TO_USEC(graphTime[NUM_PERF_ITERATIONS]));
-        print_small_text(304, 52, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
+        print_small_text(1.0f,1.0f,304, 52, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
         sprintf(textBytes, "Behaviour: <COL_50995099>%dus", (s32)OS_CYCLES_TO_USEC(behaviourTime[NUM_PERF_ITERATIONS]));
-        print_small_text(304, 64, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
+        print_small_text(1.0f,1.0f,304, 64, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
         sprintf(textBytes, "Audio: <COL_99995099>%dus", (s32)OS_CYCLES_TO_USEC(audioTime[NUM_PERF_ITERATIONS]));
-        print_small_text(304, 76, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
+        print_small_text(1.0f,1.0f,304, 76, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
         sprintf(textBytes, "DMA: <COL_99509999>%dus", (s32)OS_CYCLES_TO_USEC(dmaTime[NUM_PERF_ITERATIONS]));
-        print_small_text(304, 88, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
+        print_small_text(1.0f,1.0f,304, 88, textBytes, PRINT_TEXT_ALIGN_RIGHT, PRINT_ALL);
 
         //Render CPU breakdown bar.
         prepare_blank_box();
@@ -940,7 +940,7 @@ s32 get_text_height(const char *str)
     return textPos;
 }
 
-void print_small_text(s32 x, s32 y, const char *str, s32 align, s32 amount)
+void print_small_text(f32 xScale, f32 yScale, s32 x, s32 y, const char *str, s32 align, s32 amount)
 {
     s32 textX = 0;
     s32 textY = 0;
@@ -956,9 +956,6 @@ void print_small_text(s32 x, s32 y, const char *str, s32 align, s32 amount)
     s32 xlu = currEnv[3];
     s32 prevxlu = 256; //Set out of bounds, so it will *always* be different at first.
 
-    // shakeToggle = 0;
-    // waveToggle = 0;
-
     if (amount == PRINT_ALL){
 		tx = (signed)strlen(str)-(asciiToggle);
 		if (tx==0){
@@ -970,10 +967,10 @@ void print_small_text(s32 x, s32 y, const char *str, s32 align, s32 amount)
 	}
 	gDPSetTexturePersp(gDisplayListHead++, G_TP_NONE);
 	gDPSetTextureFilter(gDisplayListHead++, G_TF_POINT);
-	if (asciiToggle){
+	// if (asciiToggle){
 		gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
 		gDPSetCombineMode(gDisplayListHead++, G_CC_FADEA, G_CC_FADEA);
-	}
+	// }
     if (align == PRINT_TEXT_ALIGN_CENTRE)
     {
         for (i = 0; i < (signed)strlen(str); i++)
@@ -1021,6 +1018,10 @@ void print_small_text(s32 x, s32 y, const char *str, s32 align, s32 amount)
     }
     lines = 0;
     gDPLoadTextureBlock_4b(gDisplayListHead++, segmented_to_virtual(small_font), G_IM_FMT_I, 128, 60, G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, 0, 0, 0, 0, 0);
+	u32 dsdx = (u32)((1.0f/xScale)*1024.0f);
+	u32 dsdy = (u32)((1.0f/yScale)*1024.0f);
+	s32 xInc = (s32) (8.0f*xScale);
+	s32 yInc = (s32) (12.0f*yScale);
     for (i = 0; i < tx; i++)
     {
         if (str[i] == -1)
@@ -1067,12 +1068,12 @@ void print_small_text(s32 x, s32 y, const char *str, s32 align, s32 amount)
             // }
         }
 		if (asciiToggle){
-			gSPScisTextureRectangle(gDisplayListHead++, (x+shakePos[0]+textPos[0]) << 2, (SCREEN_HEIGHT-(y+shakePos[1]+offsetY+textPos[1]+12+wavePos)) << 2, (x+textPos[0]+shakePos[0]+8) << 2, (SCREEN_HEIGHT-(y+wavePos+offsetY+shakePos[1]+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, 1 << 10, 1 << 10);
+			gSPScisTextureRectangle(gDisplayListHead++, ((x+shakePos[0]+textPos[0])) << 2, (SCREEN_HEIGHT-(y+yInc+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, ((x+textPos[0]+shakePos[0]+xInc)) << 2, (SCREEN_HEIGHT-(y+wavePos+offsetY+shakePos[1]+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, dsdx, dsdy);
 		}
 		else{
-			gSPScisTextureRectangle(gDisplayListHead++, (x+shakePos[0]+textPos[0]) << 2, ((y+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, (x+textPos[0]+shakePos[0]+8) << 2, ((y+wavePos+offsetY+shakePos[1]+12+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, 1 << 10, 1 << 10);
+			gSPScisTextureRectangle(gDisplayListHead++, ((x+shakePos[0]+textPos[0])) << 2, ((y+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, ((x+textPos[0]+shakePos[0]+xInc)) << 2, ((y+wavePos+offsetY+shakePos[1]+yInc+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, dsdx, dsdy);
 		}
-        textPos[0]+=spaceX+1;
+        textPos[0]+=((s32)(spaceX*xScale))+1;
     }
     if (!asciiToggle)
 		gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);

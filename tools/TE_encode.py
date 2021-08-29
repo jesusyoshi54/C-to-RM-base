@@ -74,8 +74,7 @@ Funcs = {
 	'DialogOptions':(0x85,B),
 	'DialogResponse':(0x86,B),
 	'GenericText':(0x87,),
-	'EnScreenShake':(0x88,),
-	'DisScreenShake':(0x88,),
+	'ScreenShake':(0x88,B),
 	#Camera Cmds
 	'TriggerWarp':(0x8F,H,B),
 	'StartGenBracket':(0x93,B),
@@ -95,6 +94,7 @@ Funcs = {
 	'JumpLink':(0xAC,p),
 	'Pop':(0xAD,),
 	'ShakeText':(0xAE,B),
+	'WordWrap':(0xB0,H),
 	'PrintGlyph':(0xAF,p),
 }
 def FindEnd(string):

@@ -75,7 +75,9 @@ void SetupTextEngine(s16 x, s16 y, u8 *str, u8 state){
 	TE_Engines[state].NewSeqID = -1;
 	TE_Engines[state].StackDepth = 0;
 	TE_Engines[state].NewSpeed = 0x1234;
-	TE_Engines[state].EnvColorWord =- 1;
+	TE_Engines[state].EnvColorWord = -1;
+	TE_Engines[state].PrevEnvColorWord =-1;
+	TE_Engines[state].WordWrap = 0;
 }
 
 void RunTextEngine(void){
@@ -227,6 +229,7 @@ void TE_frame_init(struct TEState *CurEng){
 	StrBuffer[CurEng->state][0] = 0xFF;
 	CurEng->TransformStackPos = 0;
 	CurEng->EnvColorWord =- 1;
+	CurEng->PrevEnvColorWord =- 1;
 }
 
 void TE_transition_print(struct TEState *CurEng){
@@ -235,7 +238,7 @@ void TE_transition_print(struct TEState *CurEng){
 		if(CurEng->TrEnd.TransLength == 0){
 			TE_set_env(CurEng);
 			// print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY, &StrBuffer[CurEng->state]);
-			print_small_text(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY, &StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+			print_small_text(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY, &StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 			return;
 		}else{
 			TE_transition_active(CurEng,&CurEng->TrEnd,0);
@@ -246,7 +249,7 @@ void TE_transition_print(struct TEState *CurEng){
 		if(CurEng->TrStart.TransLength == 0){
 			TE_set_env(CurEng);
 			// print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
-			print_small_text(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+			print_small_text(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 			return;
 		}else{
 			TE_transition_active(CurEng,&CurEng->TrStart,1);
@@ -255,7 +258,7 @@ void TE_transition_print(struct TEState *CurEng){
 	}
 	TE_set_env(CurEng);
 	// print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
-	print_small_text(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+	print_small_text(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 	return;
 }
 void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
@@ -299,14 +302,12 @@ void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 		CurEng->TrPct = Pct;
 	}
 	// print_generic_string(CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state]);
-	print_small_text(CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+	print_small_text(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 }
 
 void TE_print(struct TEState *CurEng){
 	//deal with case where buffer is empty
 	if(!(StrBuffer[CurEng->state][0] == 0xFF)){
-		create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-		TE_fix_scale_Xpos(CurEng);
 		//print shadow with plaintext
 		if(CurEng->PlainText){
 			u32 Env = CurEng->EnvColorWord;
@@ -321,7 +322,6 @@ void TE_print(struct TEState *CurEng){
 		TE_transition_print(CurEng);
 		TE_flush_str_buff(CurEng);
 		TE_reset_Xpos(CurEng);
-		gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 	}
 }
 
@@ -329,7 +329,8 @@ void TE_add_new_char(struct TEState *CurEng,u32 VI_inc){
 	//I should use macros here but I'm not really sure how they work
 	if(CurEng->SfxArg){
 		play_sound((CurEng->SfxArg<<16)+0x81, gGlobalSoundSource);
-	}else if(CurEng->CheckBlip){
+		CurEng->SfxArg = 0;
+	}else if(CurEng->CheckBlip && getTEspd(CurEng)){
 		play_sound(0x16FF81, gGlobalSoundSource);
 	}
 	CurEng->StrEnd+=1;
@@ -350,6 +351,16 @@ void TE_add_char2buf(struct TEState *CurEng){
 	StrBuffer[CurEng->state][CurEng->CurPos] = CharWrite;
 	StrBuffer[CurEng->state][CurEng->CurPos+1] = 0xFF;
 	CurEng->CurPos+=1;
+	//word wrap when next letter will be over word wrap var
+	if (CurEng->WordWrap){
+		if((CurEng->TempX+(u32)((CurEng->TotalXOff+9)*CurEng->ScaleF[0]))>CurEng->WordWrap){
+			TE_line_break(CurEng,CurEng->OgStr);
+			//skip single spaces at the end of word wrapped lines
+			if(CurEng->TempStr[CurEng->CurPos]!=0x9e){
+				CurEng->TempStr-=1;
+			}
+		}
+	}
 }
 
 void TE_add_to_cmd_buffer(struct TEState *CurEng,u8 *str,u8 len){
@@ -436,16 +447,13 @@ s16 getTEspd(struct TEState *CurEng){
 	
 }
 void TE_set_env(struct TEState *CurEng){
-	gDPSetEnvColor(gDisplayListHead++,CurEng->EnvColorByte[0], CurEng->EnvColorByte[1], CurEng->EnvColorByte[2], CurEng->EnvColorByte[3]);
+	if (CurEng->PrevEnvColorWord!=CurEng->EnvColorWord)
+		gDPSetEnvColor(gDisplayListHead++,CurEng->EnvColorByte[0], CurEng->EnvColorByte[1], CurEng->EnvColorByte[2], CurEng->EnvColorByte[3]);
 }
 
 void TE_reset_Xpos(struct TEState *CurEng){
 	CurEng->TempX += CurEng->TotalXOff*CurEng->ScaleF[0];
 	CurEng->TotalXOff = 0;
-}
-
-void TE_fix_scale_Xpos(struct TEState *CurEng){
-	create_dl_translation_matrix(MENU_MTX_NOPUSH, ((f32)CurEng->TempX)*((1.0f/CurEng->ScaleF[0])-1.0f), ((f32)(CurEng->TempY)*((1.0f/CurEng->ScaleF[1])-1.0f)), 0);
 }
 
 //gets str ready to display characters

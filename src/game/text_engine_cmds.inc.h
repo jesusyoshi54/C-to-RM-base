@@ -124,10 +124,7 @@ s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str){
 			Loop = TE_advBlen(CurEng,1);
 			break;
 		case 0x88:
-			Loop = TE_enable_screen_shake(CurEng,str);
-			break;
-		case 0x89:
-			Loop = TE_disable_screen_shake(CurEng,str);
+			Loop = TE_screen_shake(CurEng,str);
 			break;
 		//camera cmds
 		case 0x8F:
@@ -194,6 +191,9 @@ s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str){
 			break;
 		case 0xAF:
 			Loop = TE_print_glyph(CurEng,str);
+			break;
+		case 0xB0:
+			Loop = TE_word_wrap(CurEng,str);
 			break;
 		case 0xFE:
 			Loop = TE_line_break(CurEng,str);
@@ -703,8 +703,6 @@ void TE_clear_box_tr(struct TEState *CurEng){
 }
 void TE_bg_box_setup(struct TEState *CurEng){
 	//print shadow with plaintext
-	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-	TE_fix_scale_Xpos(CurEng);
 	if(CurEng->PlainText){
 		u32 Env = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
@@ -720,7 +718,6 @@ void TE_bg_box_setup(struct TEState *CurEng){
 		TE_transition_print(CurEng);
 	TE_flush_str_buff(CurEng);
 	TE_reset_Xpos(CurEng);
-	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 }
 void TE_bg_coords(struct TEState *CurEng,u8 *str){
 	f32 x1 = (f32) (TE_get_u16(str)+CurEng->BoxTrXi);
@@ -969,8 +966,6 @@ s8 TE_set_cutscene(struct TEState *CurEng,u8 *str){
 //84 cmd works
 s8 TE_scale_text(struct TEState *CurEng,u8 *str){
 	//TE print but with scale placed after resetting X pos
-	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-	TE_fix_scale_Xpos(CurEng);
 	if(CurEng->PlainText){
 		u32 Env = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
@@ -988,7 +983,6 @@ s8 TE_scale_text(struct TEState *CurEng,u8 *str){
 	TE_reset_Xpos(CurEng);
 	CurEng->ScaleU[0] = TE_get_u32(str);
 	CurEng->ScaleU[1] = TE_get_u32(str+4);
-	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 	return TE_print_adv(CurEng,9);
 }
 //85 cmd works
@@ -1056,14 +1050,9 @@ s8 TE_dialog_response(struct TEState *CurEng,u8 *str){
 	}
 }
 //88 cmd works
-s8 TE_enable_screen_shake(struct TEState *CurEng,u8 *str){
-	CurEng->ShakeScreen = 1;
-	return TE_advBlen(CurEng,1);
-}
-//89 cmd works
-s8 TE_disable_screen_shake(struct TEState *CurEng,u8 *str){
-	CurEng->ShakeScreen = 0;
-	return TE_advBlen(CurEng,1);
+s8 TE_screen_shake(struct TEState *CurEng,u8 *str){
+	CurEng->ShakeScreen = str[1];
+	return TE_advBlen(CurEng,2);
 }
 //8F cmd works
 s8 TE_trigger_warp(struct TEState *CurEng,u8 *str){
@@ -1261,12 +1250,15 @@ s8 TE_print_glyph(struct TEState *CurEng,u8 *str){
 	TE_bg_box_finish(CurEng);
 	return TE_print_adv(CurEng,5);
 }
+//b0 cmd works
+s8 TE_word_wrap(struct TEState *CurEng,u8 *str){
+	CurEng->WordWrap = TE_get_u16(str);;
+	return TE_print_adv(CurEng,2);
+}
 //fe cmd works
 s8 TE_line_break(struct TEState *CurEng,u8 *str){
 	//modified print function to make printing not fuck with X pos
 	//rather inefficient but I'm lazy
-	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-	TE_fix_scale_Xpos(CurEng);
 	if(CurEng->PlainText){
 		u32 Env = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
@@ -1285,7 +1277,6 @@ s8 TE_line_break(struct TEState *CurEng,u8 *str){
 	CurEng->TempY -= ((u16) 0xD*CurEng->ScaleF[1]);
 	CurEng->TempYOrigin -= ((u16) 0xD*CurEng->ScaleF[1]);
 	CurEng->TotalXOff = 0;
-	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 	return TE_print_adv(CurEng,1);
 }
 //ff cmd works

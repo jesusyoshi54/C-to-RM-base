@@ -210,9 +210,6 @@ static void geo_process_master_list(struct GraphNodeMasterList *node) {
         geo_process_master_list_sub(node);
         gCurGraphNodeMasterList = NULL;
     }
-	#ifdef TE
-	RunTextEngine();
-	#endif
 }
 
 /**
@@ -1095,6 +1092,9 @@ void geo_process_root(struct GraphNodeRoot *node, Vp *b, Vp *c, s32 clearColor) 
         if (node->node.children != NULL) {
             geo_process_node_and_siblings(node->node.children);
         }
+		#ifdef TE
+		RunTextEngine();
+		#endif
         gCurGraphNodeRoot = NULL;
         if (gShowDebugText) {
 #ifndef USE_SYSTEM_MALLOC

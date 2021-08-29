@@ -1018,7 +1018,6 @@ s32 play_mode_normal(void) {
 		SetupTextEngine(34,64,TE_Strings[0],TE_STATE_MAIN);
 	}
 	#endif
-	
 	area_update_objects();
     update_hud_values();
 
