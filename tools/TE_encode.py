@@ -43,7 +43,7 @@ Funcs = {
 	'TransOffs':(0x49,H,H),
 	'TransAbs':(0x4A,H,H),
 	#needs editing
-	'TransMoving':(0x4B,H,H),
+	'PopTransform':(0x4B,),
 	'FFSpd':(0x4c,h),
 	'NoFFSpd':(0x4D,),
 	'ResetKeyboard':(0x4E,),
@@ -63,11 +63,11 @@ Funcs = {
 	'TimeEndStr':(0x7C,H),
 	'MosaicBGBox':(0x7D,H,H,H,H,p,B,B),
 	#needs editing
-	'PrintDL':([0x7E,0,0],B,p,z),
+	'PrintDL':([0x7E,255,255],B,p,z),
 	'ShadedBGBox':(0x7F,H,H,H,H,B,B,B,B),
 	'TexBGBox':(0x80,H,H,H,H,p),
 	#needs editing
-	'MovingShadedBGBox':(0x81,H,H,H,H,B,B,B,B),
+	'PushTransform':([0x81,255,255],z),
 	'SetCutscene':(0x82,B),
 	'Pad':(0x83,),
 	'ScaleText':(0x84,f,f),

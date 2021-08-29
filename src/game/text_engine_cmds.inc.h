@@ -36,7 +36,7 @@ s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str){
 			Loop = TE_translate_absolute(CurEng,str);
 			break;
 		case 0x4B:
-			Loop = TE_text_moving(CurEng,str);
+			Loop = TE_pop_transform(CurEng,str);
 			break;
 		case 0x4C:
 			Loop = TE_en_A_spd_incr(CurEng,str);
@@ -103,7 +103,7 @@ s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str){
 			Loop = TE_textured_bg_box(CurEng,str);
 			break;
 		case 0x81:
-			Loop = TE_moving_shaded_bg_box(CurEng,str);
+			Loop = TE_push_transform(CurEng,str);
 			break;
 		case 0x82:
 			Loop = TE_set_cutscene(CurEng,str);
@@ -308,14 +308,17 @@ s8 TE_translate_absolute(struct TEState *CurEng,u8 *str){
 	CurEng->TempYOrigin = CurEng->TempY;
 	return TE_print_adv(CurEng,5);
 }
-//4B cmd not done
-s8 TE_text_moving(struct TEState *CurEng,u8 *str){
-	TE_print(CurEng);
-	CurEng->TempX = TE_get_s16(str);
-	CurEng->TempY = TE_get_s16(str+2);
-	CurEng->TempXOrigin = CurEng->TempX;
-	CurEng->TempYOrigin = CurEng->TempY;
-	return TE_print_adv(CurEng,5);
+//4B cmd works
+s8 TE_pop_transform(struct TEState *CurEng,u8 *str){
+	u8 z;
+	if (CurEng->TransformStackPos){
+		for(z=0;z<CurEng->TransformStack[CurEng->TransformStackPos-1];z++){
+			gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+		}
+		CurEng->TransformStack[CurEng->TransformStackPos-1] = 0;
+		CurEng->TransformStackPos--;
+	}
+	return TE_print_adv(CurEng,1);
 }
 //4C cmd works
 s8 TE_en_A_spd_incr(struct TEState *CurEng,u8 *str){
@@ -473,6 +476,16 @@ s8 TE_next_box(struct TEState *CurEng,u8 *str){
 		CurEng->TrStart.TransVI = gNumVblanks;
 	}
 	CurEng->OgStr = CurEng->CurPos+CurEng->TempStr+1;
+	//pop all transforms
+	u8 z;
+	u8 j;
+	for(j=0;z<CurEng->TransformStackPos;j++){
+		for(z=0;z<CurEng->TransformStack[j];z++){
+			gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
+			CurEng->TransformStack[j] = 0;
+		}
+	}
+	CurEng->TransformStackPos = 0;
 	CurEng->StackLocked = CurEng->StackDepth;
 	CurEng->CurPos = 0;
 	CurEng->StrEnd = 0;
@@ -680,8 +693,6 @@ void TE_bg_box_finish(struct TEState *CurEng){
 	TE_reset_Xpos(CurEng);
 	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
-	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-	TE_fix_scale_Xpos(CurEng);
 	gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
 }
 void TE_clear_box_tr(struct TEState *CurEng){
@@ -692,6 +703,8 @@ void TE_clear_box_tr(struct TEState *CurEng){
 }
 void TE_bg_box_setup(struct TEState *CurEng){
 	//print shadow with plaintext
+	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
+	TE_fix_scale_Xpos(CurEng);
 	if(CurEng->PlainText){
 		u32 Env = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
@@ -752,10 +765,6 @@ s8 TE_mosaic_bg_box(struct TEState *CurEng,u8 *str){
 			gSPScisTextureRectangle(gDisplayListHead++, (ULx) << 2, (SCREEN_HEIGHT-ULy) << 2, (LRx) << 2,(SCREEN_HEIGHT-LRy) << 2, G_TX_RENDERTILE, 0, 0, (u32)((32.0f/W)*1024.0f), (u32)((32.0f/H)*1024.0f));
 		}
 	}
-	TE_reset_Xpos(CurEng);
-	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
-	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-	TE_fix_scale_Xpos(CurEng);
 	TE_clear_box_tr(CurEng);
 	return TE_print_adv(CurEng,15);
 }
@@ -785,7 +794,7 @@ void PushTransform(u8 Type,f32 x,f32 y, f32 z){
 			break;
 	}
 }
-void Process_Transformation(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSize, u8 *PushCnt,u16 Timer,u8 Type){
+void Process_Transformation(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSize, u8 *PushCnt,s16 Timer,u8 Type){
 	f32 x,y,z;
 	u32 Counter = TimerBuffer[CurEng->state][Timer+1];
 	u32 *CountInc = &TimerBuffer[CurEng->state][Timer+1];
@@ -859,31 +868,36 @@ void Process_Transformation(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSiz
 	}
 	*CountInc += 1;
 }
+void Apply_Transform(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSize, u8 *PushCnt,s16 Timer){
+	//Translation
+	Process_Transformation(CurEng,str,CmdLoc,CmdSize,PushCnt,Timer,0);
+	//Scale
+	Process_Transformation(CurEng,str,CmdLoc,CmdSize,PushCnt,Timer+2,1);
+	//Rotation
+	Process_Transformation(CurEng,str,CmdLoc,CmdSize,PushCnt,Timer+4,2);
+}
 //7e cmd works
 s8 TE_print_DL(struct TEState *CurEng,u8 *str){
 	TE_print(CurEng);
 	u32 *ptr = segmented_to_virtual(TE_get_ptr(str+3,str));
-	u16 Timer = TE_get_u16(str+1);
+	s16 Timer = TE_get_s16(str);
 	u8 z=0;
-	if (!Timer){
-		str[0] = CurEng->BufferTimeBytes[0];
-		str[1] = CurEng->BufferTimeBytes[1];
+	if (Timer==-1){
+		str[1] = CurEng->BufferTimeBytes[0];
+		str[2] = CurEng->BufferTimeBytes[1];
 		for(z=0;z<3;z++){
-			TimerBuffer[CurEng->state][CurEng->BufferTimePtr] = str;
-			TimerBuffer[CurEng->state][CurEng->BufferTimePtr+1] = 0;
+			u32 *Tbuf = &TimerBuffer[CurEng->state][CurEng->BufferTimePtr];
+			*Tbuf = str;
+			*(Tbuf+1) = 0;
 			CurEng->BufferTimePtr+=2;
 		}
+		Timer = TE_get_s16(str);
 	}
 	u8 PushCnt = 0;
 	u8 CmdSize = 8;
 	u8 CmdLoc = 8;
 	u8 layer = str[3];
-	//Translation
-	Process_Transformation(CurEng,str,&CmdLoc,&CmdSize,&PushCnt,Timer,0);
-	//Scale
-	Process_Transformation(CurEng,str,&CmdLoc,&CmdSize,&PushCnt,Timer+2,1);
-	//Rotation
-	Process_Transformation(CurEng,str,&CmdLoc,&CmdSize,&PushCnt,Timer+4,2);
+	Apply_Transform(CurEng,str,&CmdLoc,&CmdSize,&PushCnt,Timer);
 	//set layer
 	gDPSetRenderMode(gDisplayListHead++, renderModeTable_1Cycle->modes[layer], renderModeTable_2Cycle->modes[layer]);
 	gDPSetTexturePersp(gDisplayListHead++, G_TP_PERSP);
@@ -918,17 +932,29 @@ s8 TE_textured_bg_box(struct TEState *CurEng,u8 *str){
 	TE_bg_box_finish(CurEng);
 	return TE_print_adv(CurEng,13);
 }
-//81 cmd not done
-s8 TE_moving_shaded_bg_box(struct TEState *CurEng,u8 *str){
-	TE_bg_box_setup(CurEng);
-	TE_bg_coords(CurEng,str);
-	u32 *ptr = segmented_to_virtual(TE_get_ptr(str+8,str));
-	gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
-	//pkt, timg, fmt, siz, width, height, pal, cms, cmt, masks, maskt, shifts, shiftt
-	gDPLoadTextureBlock(gDisplayListHead++,ptr,G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 0,G_TX_CLAMP, G_TX_CLAMP, 5, 5, G_TX_NOLOD, G_TX_NOLOD);
-	gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box_TE);
-	TE_bg_box_finish(CurEng);
-	return TE_print_adv(CurEng,13);
+//81 cmd works
+s8 TE_push_transform(struct TEState *CurEng,u8 *str){
+	TE_print(CurEng);
+	s16 Timer = TE_get_s16(str);
+	u8 z=0;
+	if (Timer==-1){
+		str[1] = CurEng->BufferTimeBytes[0];
+		str[2] = CurEng->BufferTimeBytes[1];
+		for(z=0;z<3;z++){
+			u32 *Tbuf = &TimerBuffer[CurEng->state][CurEng->BufferTimePtr];
+			*Tbuf = str;
+			*(Tbuf+1) = 0;
+			CurEng->BufferTimePtr+=2;
+		}
+		Timer = TE_get_s16(str);
+	}
+	u8 PushCnt = 0;
+	u8 CmdSize = 3;
+	u8 CmdLoc = 3;
+	Apply_Transform(CurEng,str,&CmdLoc,&CmdSize,&PushCnt,Timer);
+	CurEng->TransformStack[CurEng->TransformStackPos] = PushCnt;
+	CurEng->TransformStackPos++;
+	return TE_print_adv(CurEng,CmdSize);
 }
 //82 cmd works
 s8 TE_set_cutscene(struct TEState *CurEng,u8 *str){
@@ -943,6 +969,8 @@ s8 TE_set_cutscene(struct TEState *CurEng,u8 *str){
 //84 cmd works
 s8 TE_scale_text(struct TEState *CurEng,u8 *str){
 	//TE print but with scale placed after resetting X pos
+	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
+	TE_fix_scale_Xpos(CurEng);
 	if(CurEng->PlainText){
 		u32 Env = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
@@ -961,8 +989,6 @@ s8 TE_scale_text(struct TEState *CurEng,u8 *str){
 	CurEng->ScaleU[0] = TE_get_u32(str);
 	CurEng->ScaleU[1] = TE_get_u32(str+4);
 	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
-	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-	TE_fix_scale_Xpos(CurEng);
 	return TE_print_adv(CurEng,9);
 }
 //85 cmd works
@@ -1219,12 +1245,12 @@ s8 TE_enable_shake(struct TEState *CurEng,u8 *str){
 s8 TE_print_glyph(struct TEState *CurEng,u8 *str){
 	TE_bg_box_setup(CurEng);
 	/*bg box coords*/
-	f32 x1 = (f32) (CurEng->TempX+CurEng->TransX);
-	f32 y1 = (f32) (CurEng->TempY+CurEng->TransY);
+	f32 x1 = (f32) (CurEng->TempX+CurEng->TransX+1);
+	f32 y1 = (f32) (CurEng->TempY+CurEng->TransY+1);
 	f32 x2 = x1+12*CurEng->ScaleF[0];
 	f32 y2 = y1+12*CurEng->ScaleF[1];
 	create_dl_scale_matrix(MENU_MTX_PUSH, (x2-x1)/130.0f,(y2-y1)/80.0f, 1.0f);
-	create_dl_translation_matrix(MENU_MTX_NOPUSH, 130.0f*(x1/(x2-x1)),80.0f*y2/(y2-y1), 1.0f);
+	create_dl_translation_matrix(MENU_MTX_NOPUSH, 130.0f*(x1/(x2-x1)),80.0f*(y2)/(y2-y1), 1.0f);
 	/* end bg box cords*/
 	u32 *ptr = segmented_to_virtual(TE_get_ptr(str,str));
 	//pkt, timg, fmt, siz, width, height, pal, cms, cmt, masks, maskt, shifts, shiftt
@@ -1239,6 +1265,8 @@ s8 TE_print_glyph(struct TEState *CurEng,u8 *str){
 s8 TE_line_break(struct TEState *CurEng,u8 *str){
 	//modified print function to make printing not fuck with X pos
 	//rather inefficient but I'm lazy
+	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
+	TE_fix_scale_Xpos(CurEng);
 	if(CurEng->PlainText){
 		u32 Env = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
@@ -1253,13 +1281,11 @@ s8 TE_line_break(struct TEState *CurEng,u8 *str){
 	if(!(StrBuffer[CurEng->state][0] == 0xFF))
 		TE_transition_print(CurEng);
 	TE_flush_str_buff(CurEng);
-	CurEng->TempX = CurEng->TempXOrigin-1;
+	CurEng->TempX = CurEng->TempXOrigin;
 	CurEng->TempY -= ((u16) 0xD*CurEng->ScaleF[1]);
 	CurEng->TempYOrigin -= ((u16) 0xD*CurEng->ScaleF[1]);
 	CurEng->TotalXOff = 0;
 	gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
-	create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-	TE_fix_scale_Xpos(CurEng);
 	return TE_print_adv(CurEng,1);
 }
 //ff cmd works

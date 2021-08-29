@@ -77,15 +77,17 @@ struct TEState{
 	/* 0x5B */ u8 HoveredDialog;
 	/* 0x5C */ u8 *DialogEnd;
 	/* 0x62 */ u32 VICounter;
+	/* 0x68 */ u8 *BufferStrPtr; //Used so buffer knows where to go back and clear
 	union{
 	/* NEW  */ u16 BufferTimePtr; //ptr to the current place in the timer buffer
 	/* NEW  */ u8 BufferTimeBytes[2]; //ptr to the current place in the timer buffer
 	};
-	/* 0x68 */ u8 *BufferStrPtr; //Used so buffer knows where to go back and clear
 	/* 0x6C */ s16 NewSpeed;
+	/* NEW  */ u8 *StrStack[10];
 	/* NEW  */ u8 StackDepth;
 	/* NEW  */ u8 StackLocked;
-	/* NEW  */ u8 *StrStack[10];
+	/* NEW  */ u8 TransformStackPos;
+	/* NEW  */ u8 TransformStack[8];
 	//camera cmds
 	
 	//callback cmds
@@ -154,7 +156,8 @@ void TE_bg_box_finish(struct TEState *CurEng);
 void TE_bg_box_setup(struct TEState *CurEng);
 void TE_bg_coords(struct TEState *CurEng,u8 *str);
 void PushTransform(u8 Type,f32 x,f32 y, f32 z);
-void Process_Transformation(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSize, u8 *PushCnt,u16 Timer,u8 Type);
+void Apply_Transform(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSize, u8 *PushCnt,s16 Timer);
+void Process_Transformation(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSize, u8 *PushCnt,s16 Timer,u8 Type);
 void TE_flush_buffers(struct TEState *CurEng);
 void TE_flush_eng(struct TEState *CurEng);
 void TE_add_to_cmd_buffer(struct TEState *CurEng,u8 *str,u8 len);
@@ -171,7 +174,7 @@ s8 TE_change_origin(struct TEState *CurEng,u8 *str);
 s8 TE_jump_str(struct TEState *CurEng,u8 *str);
 s8 TE_translate_offset(struct TEState *CurEng,u8 *str);
 s8 TE_translate_absolute(struct TEState *CurEng,u8 *str);
-s8 TE_text_moving(struct TEState *CurEng,u8 *str);
+s8 TE_pop_transform(struct TEState *CurEng,u8 *str);
 s8 TE_en_A_spd_incr(struct TEState *CurEng,u8 *str);
 s8 TE_dis_A_spd_incr(struct TEState *CurEng,u8 *str);
 s8 TE_always_allow_keyboard(struct TEState *CurEng,u8 *str);
@@ -197,7 +200,7 @@ s8 TE_mosaic_bg_box(struct TEState *CurEng,u8 *str);
 s8 TE_print_DL(struct TEState *CurEng,u8 *str);
 s8 TE_shaded_bg_box(struct TEState *CurEng,u8 *str);
 s8 TE_textured_bg_box(struct TEState *CurEng,u8 *str);
-s8 TE_moving_shaded_bg_box(struct TEState *CurEng,u8 *str);
+s8 TE_push_transform(struct TEState *CurEng,u8 *str);
 s8 TE_set_cutscene(struct TEState *CurEng,u8 *str);
 s8 TE_non_buffer_pad(struct TEState *CurEng,u8 *str);
 s8 TE_scale_text(struct TEState *CurEng,u8 *str);

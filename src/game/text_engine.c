@@ -225,6 +225,8 @@ void TE_frame_init(struct TEState *CurEng){
 	CurEng->StackDepth = CurEng->StackLocked;
 	CurEng->ShakeScreen = 0;
 	StrBuffer[CurEng->state][0] = 0xFF;
+	CurEng->TransformStackPos = 0;
+	CurEng->EnvColorWord =- 1;
 }
 
 void TE_transition_print(struct TEState *CurEng){
@@ -303,6 +305,8 @@ void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 void TE_print(struct TEState *CurEng){
 	//deal with case where buffer is empty
 	if(!(StrBuffer[CurEng->state][0] == 0xFF)){
+		create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
+		TE_fix_scale_Xpos(CurEng);
 		//print shadow with plaintext
 		if(CurEng->PlainText){
 			u32 Env = CurEng->EnvColorWord;
@@ -318,8 +322,6 @@ void TE_print(struct TEState *CurEng){
 		TE_flush_str_buff(CurEng);
 		TE_reset_Xpos(CurEng);
 		gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
-		create_dl_scale_matrix(MENU_MTX_PUSH, CurEng->ScaleF[0], CurEng->ScaleF[1], 1.0f);
-		TE_fix_scale_Xpos(CurEng);
 	}
 }
 
@@ -434,7 +436,7 @@ s16 getTEspd(struct TEState *CurEng){
 	
 }
 void TE_set_env(struct TEState *CurEng){
-	print_set_envcolour(CurEng->EnvColorByte[0], CurEng->EnvColorByte[1], CurEng->EnvColorByte[2], CurEng->EnvColorByte[3]);
+	gDPSetEnvColor(gDisplayListHead++,CurEng->EnvColorByte[0], CurEng->EnvColorByte[1], CurEng->EnvColorByte[2], CurEng->EnvColorByte[3]);
 }
 
 void TE_reset_Xpos(struct TEState *CurEng){
