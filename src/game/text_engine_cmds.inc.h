@@ -310,6 +310,7 @@ s8 TE_translate_absolute(struct TEState *CurEng,u8 *str){
 }
 //4B cmd works
 s8 TE_pop_transform(struct TEState *CurEng,u8 *str){
+	TE_print(CurEng);
 	u8 z;
 	if (CurEng->TransformStackPos){
 		for(z=0;z<CurEng->TransformStack[CurEng->TransformStackPos-1];z++){
@@ -338,6 +339,9 @@ s8 TE_always_allow_keyboard(struct TEState *CurEng,u8 *str){
 //4F cmd works
 s8 TE_make_keyboard(struct TEState *CurEng,u8 *str){
 	//end keyboard
+	if(CurEng->KeyboardState == 1){
+		return TE_draw_keyboard(CurEng,str);
+	}
 	if(CurEng->KeyboardState == 5){
 		CurEng->TempStr = CurEng->PreKeyboardStr+2;
 		UserInputs[CurEng->state][CurEng->CurUsrStr][CurEng->UserInput] = 0x45;
@@ -376,6 +380,10 @@ s8 TE_make_keyboard(struct TEState *CurEng,u8 *str){
 	return -1;
 }
 s8 TE_add_usr_str(struct TEState *CurEng,u8 *str){
+	TE_print(CurEng);
+	gDPSetRenderMode(gDisplayListHead++,G_RM_XLU_SURF, G_RM_XLU_SURF2);
+	CurEng->TempStrEnd-=CurEng->CurPos;
+	CurEng->CurPos=0;
 	CurEng->KeyboardState = 3;
 	str[1] = CurEng->CurUsrStr;
 	return TE_display_usr_str(CurEng,str);
@@ -391,7 +399,11 @@ s8 TE_draw_keyboard(struct TEState *CurEng,u8 *str){
 		CurEng->TempStr = &TE_KEYBOARD_lower;
 	}
 	if(gNumVblanks > CurEng->KeyboardTimer){
-		if(gPlayer1Controller->buttonPressed&A_BUTTON){
+		if(gPlayer1Controller->buttonPressed&START_BUTTON){
+			CurEng->KeyboardTimer = gNumVblanks+2;
+			CurEng->IntendedLetter = 42;
+		}
+		else if(gPlayer1Controller->buttonPressed&A_BUTTON){
 			CurEng->KeyboardTimer = gNumVblanks+2;
 			//handle shift, end and backspace
 			switch(CurEng->SelLetter){
@@ -400,7 +412,7 @@ s8 TE_draw_keyboard(struct TEState *CurEng,u8 *str){
 					CurEng->ShiftPressed^=1;
 					break;
 				//backspace
-				case 0x52:
+				case 0x9F:
 					if(CurEng->UserInput>0){
 						UserInputs[CurEng->state][CurEng->CurUsrStr][CurEng->UserInput-1] = 0x9F;
 						CurEng->UserInput-=1;
@@ -428,8 +440,8 @@ s8 TE_draw_keyboard(struct TEState *CurEng,u8 *str){
 			UserInputs[CurEng->state][CurEng->CurUsrStr][CurEng->UserInput-1] = 0x9F;
 			CurEng->UserInput-=1;
 		}
-	}if(gNumVblanks%4==2 && CurEng->KeyboardTimerScroll<gNumVblanks){
-		CurEng->KeyboardTimerScroll = gNumVblanks;
+	}if(CurEng->KeyboardTimerScroll<gNumVblanks){
+		CurEng->KeyboardTimerScroll = gNumVblanks+2;
 		//for overflow
 		s8 vert = 0;
 		handle_menu_scrolling(MENU_SCROLL_VERTICAL,&vert,-1,1);
@@ -461,10 +473,10 @@ s8 TE_draw_keyboard(struct TEState *CurEng,u8 *str){
 s8 TE_keyboard_sel(struct TEState *CurEng,u8 *str,u8 state){
 	TE_print(CurEng);
 	if(state){
-		gDPSetCombineMode(gDisplayListHead++,G_CC_MODULATEI,G_CC_MODULATEI);
+		gDPSetRenderMode(gDisplayListHead++,G_RM_AA_ZB_OPA_SURF, G_RM_AA_ZB_OPA_SURF2);
 		CurEng->SelLetter = str[0];
 	}else{
-		gDPSetCombineMode(gDisplayListHead++,G_CC_FADEA,G_CC_FADEA);
+		gDPSetRenderMode(gDisplayListHead++,G_RM_XLU_SURF, G_RM_XLU_SURF2);
 	}
 	return TE_print_adv(CurEng,0);
 }
@@ -1252,8 +1264,8 @@ s8 TE_print_glyph(struct TEState *CurEng,u8 *str){
 }
 //b0 cmd works
 s8 TE_word_wrap(struct TEState *CurEng,u8 *str){
-	CurEng->WordWrap = TE_get_u16(str);;
-	return TE_print_adv(CurEng,2);
+	CurEng->WordWrap = TE_get_u16(str);
+	return TE_advBlen(CurEng,3);
 }
 //fe cmd works
 s8 TE_line_break(struct TEState *CurEng,u8 *str){

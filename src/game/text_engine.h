@@ -118,9 +118,6 @@ union WordByte{
 	char col[4];
 };
 #include "text_engine_helpers.h"
-u32 PrintAnswer(void);
-u32 DamageAnswer(u8 answer);
-u32 DetermineAnswer(u8 answer);
 extern u16 sCurrentMusic;
 extern const Gfx dl_draw_text_bg_box_TE[];
 extern char TE_KEYBOARD_lower[];
@@ -143,6 +140,7 @@ void TE_reset_Xpos(struct TEState *CurEng);
 void TE_print(struct TEState *CurEng);
 void TE_transition_print(struct TEState *CurEng);
 void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip);
+u8 TE_find_next_space(struct TEState *CurEng,u8 *str);
 s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str);
 s8 TE_advBlen(struct TEState *CurEng,u16 len);
 s8 TE_print_adv(struct TEState *CurEng,u16 len);

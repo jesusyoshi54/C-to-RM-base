@@ -11,8 +11,9 @@ for x in char_range('a','z'):
 Ascii.update({
 '^':hex(0x50),
 '|':hex(0x51),
-'<':hex(0x52),
-'>':hex(0x53),
+'[DOWN]':hex(0x51),
+# '<':hex(0x52),
+# '>':hex(0x53),
 '[A]':hex(0x54),
 '[B]':hex(0x55),
 '[C]':hex(0x56),

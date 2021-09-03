@@ -42,25 +42,6 @@ static struct TEState *AccessEngine; //for outside functions to access
 #include "text_engine_cmds.inc.h"
 #include "text_engine_helpers.inc.h"
 
-//SR11 specific funcs
-u32 PrintAnswer(void){
-	return gCurrentArea->index;
-}
-u32 DetermineAnswer(u8 answer){
-	if(AccessEngine->ReturnedDialog == answer)
-		return 1;
-	else
-		return 0;
-}
-u32 DamageAnswer(u8 answer){
-	if(AccessEngine->ReturnedDialog == answer)
-		return 1;
-	else{
-		gMarioState->health-=0x0300;
-		return 0;
-	}
-}
-
 void SetupTextEngine(s16 x, s16 y, u8 *str, u8 state){
 	TE_flush_eng(&TE_Engines[state]);
 	str = segmented_to_virtual(str);
@@ -119,16 +100,12 @@ void RunTextEngine(void){
 				loop = TE_blank_time(CurEng,str);
 				goto loopswitch;
 			}
-			//draw keyboard
-			if (CurEng->KeyboardState==1){
-				loop = TE_draw_keyboard(CurEng,str);
-				goto loopswitch;
-			}
+
 			if (CurEng->KeyboardState==5){
 				loop = TE_make_keyboard(CurEng,str);
 				goto loopswitch;
 			}
-			if(!(CurChar<0x40||(CurChar>0x4F&&CurChar<0x70)||(CurChar>0xCF&&CurChar<0xFE)||CurChar==0x9E||CurChar==0x9F)){
+			if(!IS_TE_CMD(CurChar)){
 				loop = TE_jump_cmds(CurEng,CurChar,str);
 				loopswitch:
 					if (loop==1)
@@ -139,6 +116,12 @@ void RunTextEngine(void){
 						goto printnone;
 					else if (loop==-2)
 						goto printnone;
+			}
+			//draw keyboard but after processing other cmds. Can cause conflicts but allows
+			//effects. Rely on users not messing up (impossible)
+			if (CurEng->KeyboardState==1){
+				loop = TE_draw_keyboard(CurEng,str);
+				goto loopswitch;
 			}
 			//keep track of current keyboard index while drawing keyboard
 			if (CurEng->KeyboardState==2 && CurChar!=0x9E){
@@ -346,23 +329,40 @@ void TE_add_char2buf(struct TEState *CurEng){
 	//increase X pos
 	s32 textX, textY, offsetY, spaceX;
 	get_char_from_byte_sm64(CharWrite,&textX, &textY, &spaceX, &offsetY);
-	CurEng->TotalXOff+=spaceX+1;
+	CurEng->TotalXOff+=(spaceX*CurEng->ScaleF[0])+1;
+	// if(CharWrite!=0x9E){
+		// CurEng->TotalXOff+=(8*CurEng->ScaleF[0])+1;
+	// }else{
+		// CurEng->TotalXOff+=(3*CurEng->ScaleF[0])+1;
+	// }
 	//write char to buffer
 	StrBuffer[CurEng->state][CurEng->CurPos] = CharWrite;
 	StrBuffer[CurEng->state][CurEng->CurPos+1] = 0xFF;
 	CurEng->CurPos+=1;
 	//word wrap when next letter will be over word wrap var
 	if (CurEng->WordWrap){
-		if((CurEng->TempX+(u32)((CurEng->TotalXOff+9)*CurEng->ScaleF[0]))>CurEng->WordWrap){
+		u8 Nxt = TE_find_next_space(CurEng,CurEng->TempStr);
+		if((CurEng->TempX+(u32)((CurEng->TotalXOff+(Nxt*8))*CurEng->ScaleF[0]))>(CurEng->WordWrap)){
 			TE_line_break(CurEng,CurEng->OgStr);
-			//skip single spaces at the end of word wrapped lines
-			if(CurEng->TempStr[CurEng->CurPos]!=0x9e){
+			if(!((CurEng->TempStr[CurEng->CurPos-1]==0x9E)||(CurEng->TempStr[CurEng->CurPos-1]==0xFE))){
 				CurEng->TempStr-=1;
 			}
 		}
 	}
 }
-
+u8 TE_find_next_space(struct TEState *CurEng,u8 *str){
+	u8 x = 0;
+	u8 CharWrite = str[CurEng->CurPos+x];
+	while(CharWrite != 0x9e){
+		CharWrite = str[CurEng->CurPos+x];
+		//generic
+		if(!IS_TE_CMD(CharWrite)){
+			break;
+		}
+		x++;
+	}
+	return x;
+}
 void TE_add_to_cmd_buffer(struct TEState *CurEng,u8 *str,u8 len){
 	u32 i;
 	union PtrByte Offset;
@@ -452,7 +452,7 @@ void TE_set_env(struct TEState *CurEng){
 }
 
 void TE_reset_Xpos(struct TEState *CurEng){
-	CurEng->TempX += CurEng->TotalXOff*CurEng->ScaleF[0];
+	CurEng->TempX += CurEng->TotalXOff;
 	CurEng->TotalXOff = 0;
 }
 

@@ -616,7 +616,7 @@ s8 shakeToggle = 0;
 s8 waveToggle = 0;
 s8 asciiToggle = 0;
 
-//same as below but uses SM64 strings as input
+//same as below but uses SM64 strings as input, also uses even kerning
 /* Unsupported characters
 [x] / cross
 [Cur*] / cur star count
@@ -680,12 +680,12 @@ void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32
     {//Space, the final frontier.
         *textX = 128;
         *textY = 0;
-        *spaceX = 2;
+        *spaceX = 3;
     }
 	//just replaced the ascii case with sm64 byte
     switch (letter)
     {
-        case 0xFF: *textX = 128; *textY = 0; *spaceX = 2; break; //END, shouldn't be encountered anyway
+        case 0xFF: *textX = 128; *textY = 0; *spaceX = 3; break; //END, shouldn't be encountered anyway
         case 0x9F: *textX = 40; *textY = 0; *spaceX = textLen[10]; break; //Hyphen
         case 0xE4: *textX = 44; *textY = 0; *spaceX = textLen[11]; break; //Plus
         case 0xE1: *textX = 48; *textY = 0; *spaceX = textLen[12]; break; //Open Bracket
@@ -779,7 +779,7 @@ void get_char_from_byte(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32 *off
     {//Space, the final frontier.
         *textX = 128;
         *textY = 0;
-        *spaceX = 2;
+        *spaceX = 3;
     }
 
     switch (letter)
@@ -958,19 +958,21 @@ void print_small_text(f32 xScale, f32 yScale, s32 x, s32 y, const char *str, s32
 
     if (amount == PRINT_ALL){
 		tx = (signed)strlen(str)-(asciiToggle);
-		if (tx==0){
-			return;
-		}
+
 		if (asciiToggle)
 			tx=100; //just generic limit. Should be stopped by terminator way earlier
-		
+		else{
+			if (tx==0){
+				return;
+			}
+		}
 	}
 	gDPSetTexturePersp(gDisplayListHead++, G_TP_NONE);
 	gDPSetTextureFilter(gDisplayListHead++, G_TF_POINT);
-	// if (asciiToggle){
+	if (!asciiToggle){
 		gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
 		gDPSetCombineMode(gDisplayListHead++, G_CC_FADEA, G_CC_FADEA);
-	// }
+	}
     if (align == PRINT_TEXT_ALIGN_CENTRE)
     {
         for (i = 0; i < (signed)strlen(str); i++)
@@ -1064,16 +1066,21 @@ void print_small_text(f32 xScale, f32 yScale, s32 x, s32 y, const char *str, s32
             // }
             // else
             // {
-                gDPSetRenderMode(gDisplayListHead++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+				if (!asciiToggle)
+					gDPSetRenderMode(gDisplayListHead++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
             // }
         }
 		if (asciiToggle){
-			gSPScisTextureRectangle(gDisplayListHead++, ((x+shakePos[0]+textPos[0])) << 2, (SCREEN_HEIGHT-(y+yInc+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, ((x+textPos[0]+shakePos[0]+xInc)) << 2, (SCREEN_HEIGHT-(y+wavePos+offsetY+shakePos[1]+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, dsdx, dsdy);
+			if(str[i]!=-98){
+				gSPScisTextureRectangle(gDisplayListHead++, ((x+shakePos[0]+textPos[0])) << 2, (SCREEN_HEIGHT-(y+yInc+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, ((x+textPos[0]+shakePos[0]+xInc)) << 2, (SCREEN_HEIGHT-(y+wavePos+offsetY+shakePos[1]+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, dsdx, dsdy);
+			}
 		}
 		else{
-			gSPScisTextureRectangle(gDisplayListHead++, ((x+shakePos[0]+textPos[0])) << 2, ((y+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, ((x+textPos[0]+shakePos[0]+xInc)) << 2, ((y+wavePos+offsetY+shakePos[1]+yInc+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, dsdx, dsdy);
+			if(str[i]!=' '){
+				gSPScisTextureRectangle(gDisplayListHead++, ((x+shakePos[0]+textPos[0])) << 2, ((y+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, ((x+textPos[0]+shakePos[0]+xInc)) << 2, ((y+wavePos+offsetY+shakePos[1]+yInc+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, dsdx, dsdy);
+			}
 		}
-        textPos[0]+=((s32)(spaceX*xScale))+1;
+		textPos[0]+=((s32)(spaceX*xScale))+1;
     }
     if (!asciiToggle)
 		gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
