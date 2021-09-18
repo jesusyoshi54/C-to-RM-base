@@ -104,7 +104,7 @@ static const u8 optsAudioStr[][32] = {
     { TEXT_OPT_ENVVOLUME },
 };
 
-static const u8 optsChallengeStr[][112] = {
+static const u8 optsChallengeStr[][128] = {
     { TEXT_OPT_CHALLENGE1 },
     { TEXT_OPT_CHALLENGE2 },
     { TEXT_OPT_CHALLENGE3 },
@@ -118,7 +118,9 @@ static const u8 optsChallengeStr[][112] = {
     { TEXT_OPT_CHALLENGE11 },
     { TEXT_OPT_CHALLENGE12 },
     { TEXT_OPT_CHALLENGE13 },
-    { TEXT_OPT_CHALLENGE14 }
+    { TEXT_OPT_CHALLENGE14 },
+    { TEXT_OPT_CHALLENGE15 },
+    { TEXT_OPT_CHALLENGE16 }
 };
 
 static const u8 optsCheatsStr[][64] = {
@@ -338,6 +340,8 @@ bool         configDD = false;
 bool         configGD = false;
 bool         configMB = false;
 bool         configSM = false;
+bool         configHUGE = false;
+bool         configTINY = false;
 #endif
 
 static struct Option optsChallenges[] = {
@@ -354,7 +358,9 @@ static struct Option optsChallenges[] = {
     DEF_OPT_TOGGLE( optsChallengeStr[13], &configDD ),
     DEF_OPT_TOGGLE( optsChallengeStr[10], &configGD ),
     DEF_OPT_TOGGLE( optsChallengeStr[11], &configMB ),
-    DEF_OPT_TOGGLE( optsChallengeStr[12], &configSM )
+    DEF_OPT_TOGGLE( optsChallengeStr[12], &configSM ),
+    DEF_OPT_TOGGLE( optsChallengeStr[14], &configHUGE ),
+    DEF_OPT_TOGGLE( optsChallengeStr[15], &configTINY )
 };
 
 #ifdef CHEATS_ACTIONS

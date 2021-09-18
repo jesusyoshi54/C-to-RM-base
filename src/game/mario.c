@@ -1247,11 +1247,13 @@ void squish_mario_model(struct MarioState *m) {
 					if (m->Chaos_Vals[0]<5 | m->Chaos_Vals[1]<5){
 						
 					}else{
-						vec3f_set(m->marioObj->header.gfx.scale, 1.0f, 1.0f, 1.0f);
+						f32 Mscale = GetMarioScaleFactors();
+						vec3f_set(m->marioObj->header.gfx.scale, Mscale, Mscale, Mscale);
 					}
 				}else{
-				vec3f_set(m->marioObj->header.gfx.scale, 1.0f, 1.0f, 1.0f);
-					}
+					f32 Mscale = GetMarioScaleFactors();
+					vec3f_set(m->marioObj->header.gfx.scale, Mscale, Mscale, Mscale);
+				}
 #ifdef CHEATS_ACTIONS
             }
 #endif      
@@ -1369,9 +1371,10 @@ void update_mario_joystick_inputs(struct MarioState *m) {
 void update_mario_geometry_inputs(struct MarioState *m) {
     f32 gasLevel;
     f32 ceilToFloorDist;
+	f32 mScale = GetMarioScaleFactors();
 
-    f32_find_wall_collision(&m->pos[0], &m->pos[1], &m->pos[2], 60.0f, 50.0f);
-    f32_find_wall_collision(&m->pos[0], &m->pos[1], &m->pos[2], 30.0f, 24.0f);
+    f32_find_wall_collision(&m->pos[0], &m->pos[1], &m->pos[2], 60.0f*mScale, 50.0f*mScale);
+    f32_find_wall_collision(&m->pos[0], &m->pos[1], &m->pos[2], 30.0f*mScale, 24.0f*mScale);
 
     m->floorHeight = find_floor(m->pos[0], m->pos[1], m->pos[2], &m->floor);
 
@@ -1405,15 +1408,15 @@ void update_mario_geometry_inputs(struct MarioState *m) {
             }
         }
 
-        if (m->pos[1] > m->floorHeight + 100.0f) {
+        if (m->pos[1] > m->floorHeight + 100.0f*mScale) {
             m->input |= INPUT_OFF_FLOOR;
         }
 
-        if (m->pos[1] < (m->waterLevel - 10)) {
+        if (m->pos[1] < (m->waterLevel - 10*mScale)) {
             m->input |= INPUT_IN_WATER;
         }
 
-        if (m->pos[1] < (gasLevel - 100.0f)) {
+        if (m->pos[1] < (gasLevel - 100.0f*mScale)) {
             m->input |= INPUT_IN_POISON_GAS;
         }
 
@@ -1738,9 +1741,9 @@ void mario_update_hitbox_and_cap_model(struct MarioState *m) {
 
     // Short hitbox for crouching/crawling/etc.
     if (m->action & ACT_FLAG_SHORT_HITBOX) {
-        m->marioObj->hitboxHeight = 100.0f;
+        m->marioObj->hitboxHeight = 100.0f*GetMarioScaleFactors();
     } else {
-        m->marioObj->hitboxHeight = 160.0f;
+        m->marioObj->hitboxHeight = 160.0f*GetMarioScaleFactors();
     }
 
     if ((m->flags & MARIO_TELEPORTING) && (m->fadeWarpOpacity != 0xFF)) {
@@ -1783,7 +1786,27 @@ void queue_rumble_particles(void) {
     }
 }
 #endif
-
+//for TINY/HUGE mario
+f32 GetMarioScaleFactors(void){
+	if (configHUGE){
+		return 1.5f;
+	}else if (configTINY){
+		return 0.75f;
+	}else{
+		return 1.0f;
+	}
+	
+};
+f32 GetMarioReducedScaleFactors(void){
+	if (configHUGE){
+		return 1.2f;
+	}else if (configTINY){
+		return 0.8f;
+	}else{
+		return 1.0f;
+	}
+	
+};
 
 //list of edits
 enum Chaos_Lite_Edit

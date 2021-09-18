@@ -13,6 +13,7 @@
 #include "hud.h"
 #include "engine/math_util.h"
 #include "area.h"
+#include "mario.h"
 #include "engine/surface_collision.h"
 #include "engine/behavior_script.h"
 #include "level_update.h"
@@ -919,7 +920,7 @@ s32 update_2_directions_camera(struct Camera *c, Vec3f focus, Vec3f pos) {
     f32 posY;
     f32 focusY;
     f32 yOff = 125.f;
-    f32 baseDist = 1000.f;
+    f32 baseDist = 1000.f*GetMarioScaleFactors();
 	
 
     sAreaYaw = camYaw;
@@ -944,7 +945,7 @@ s32 update_8_directions_camera(struct Camera *c, Vec3f focus, Vec3f pos) {
     UNUSED f32 unused2;
     UNUSED f32 unused3;
     f32 yOff = 125.f;
-    f32 baseDist = 1000.f;
+    f32 baseDist = 1000.f*GetMarioScaleFactors();
 
     sAreaYaw = camYaw;
     calc_y_to_curr_floor(&posY, 1.f, 200.f, &focusY, 0.9f, 200.f);
@@ -3419,6 +3420,7 @@ void init_camera(struct Camera *c) {
     sMarioGeometry.prevCeil = sMarioGeometry.currCeil;
     sMarioGeometry.prevFloorType = sMarioGeometry.currFloorType;
     sMarioGeometry.prevCeilType = sMarioGeometry.currCeilType;
+	gCameraZoomDist*=GetMarioScaleFactors();
     for (i = 0; i < 32; i++) {
         sCurCreditsSplinePos[i].index = -1;
         sCurCreditsSplineFocus[i].index = -1;

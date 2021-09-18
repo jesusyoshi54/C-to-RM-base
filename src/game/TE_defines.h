@@ -1,4 +1,4 @@
-#define TE_DEBUG 1
+#define TE_DEBUG 0
 #define NumEngines 3
 
 #define TE_STATE_MAIN 0

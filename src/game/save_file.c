@@ -649,6 +649,8 @@ void save_file_set_challenges(void) {
 	flag |= (configMB<<11);
 	flag |= (configSM<<12);
 	flag |= (configDD<<13);
+	flag |= (configHUGE<<14);
+	flag |= (configTINY<<15);
 	gSaveBuffer.files[gCurrSaveFileNum - 1][0].Challenges = flag;
 	gSaveBuffer.files[gCurrSaveFileNum - 1][0].Camera = configEnableCamera;
 	gSaveFileModified = TRUE;
@@ -672,6 +674,8 @@ void save_file_init_challenges(void){
 	configMB = save_file_get_challenge(CHALLENGE_MB);
 	configSM = save_file_get_challenge(CHALLENGE_SM);
 	configDD = save_file_get_challenge(CHALLENGE_DD);
+	configHUGE = save_file_get_challenge(CHALLENGE_HUGE);
+	configTINY = save_file_get_challenge(CHALLENGE_TINY);
 }
 s32 save_file_get_camera(void) {
 	return gSaveBuffer.files[gCurrSaveFileNum - 1][0].Camera;

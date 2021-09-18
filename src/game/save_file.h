@@ -98,6 +98,8 @@ extern s8 gLevelToCourseNumTable[];
 #define CHALLENGE_MB       /* 0x00000800 */ (1 << 11)
 #define CHALLENGE_SM      /* 0x00001000 */ (1 << 12)
 #define CHALLENGE_DD      /* 0x00002000 */ (1 << 13)
+#define CHALLENGE_HUGE      /* 0x00004000 */ (1 << 14)
+#define CHALLENGE_TINY      /* 0x00008000 */ (1 << 15)
 
 // game progress flags
 #define SAVE_FLAG_FILE_EXISTS            /* 0x00000001 */ (1 << 0)

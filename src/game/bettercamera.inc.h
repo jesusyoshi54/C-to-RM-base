@@ -1,4 +1,5 @@
 #include "sm64.h"
+#include "mario.h"
 #include "game/camera.h"
 #include "game/level_update.h"
 #include "game/print.h"
@@ -727,12 +728,13 @@ static void newcam_position_cam(void) {
     newcam_pos_target[1] = gMarioState->pos[1]+newcam_extheight;
     newcam_pos_target[2] = gMarioState->pos[2];
     //These will set the position of the camera to where Mario is supposed to be, minus adjustments for where the camera should be, on top of.
+	f32 newcamADJ_distance = newcam_distance*GetMarioScaleFactors();
     if (newcam_modeflags & NC_FLAG_POSX)
-        newcam_pos[0] = newcam_pos_target[0]+lengthdir_x(lengthdir_x(newcam_distance,newcam_tilt+shakeX),newcam_yaw+shakeY);
+        newcam_pos[0] = newcam_pos_target[0]+lengthdir_x(lengthdir_x(newcamADJ_distance,newcam_tilt+shakeX),newcam_yaw+shakeY);
     if (newcam_modeflags & NC_FLAG_POSZ)
-        newcam_pos[2] = newcam_pos_target[2]+lengthdir_y(lengthdir_x(newcam_distance,newcam_tilt+shakeX),newcam_yaw+shakeY);
+        newcam_pos[2] = newcam_pos_target[2]+lengthdir_y(lengthdir_x(newcamADJ_distance,newcam_tilt+shakeX),newcam_yaw+shakeY);
     if (newcam_modeflags & NC_FLAG_POSY)
-        newcam_pos[1] = newcam_pos_target[1]+lengthdir_y(newcam_distance,newcam_tilt+gLakituState.shakeMagnitude[0])+floorY;
+        newcam_pos[1] = newcam_pos_target[1]+lengthdir_y(newcamADJ_distance,newcam_tilt+gLakituState.shakeMagnitude[0])+floorY;
     if ((newcam_modeflags & NC_FLAG_FOCUSX) && (newcam_modeflags & NC_FLAG_FOCUSY) && (newcam_modeflags & NC_FLAG_FOCUSZ))
         newcam_set_pan();
     //Set where the camera wants to be looking at. This is almost always the place it's based off, too.

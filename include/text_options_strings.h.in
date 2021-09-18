@@ -176,6 +176,8 @@
 #define TEXT_OPT_CHALLENGE12    _("Move Badges")
 #define TEXT_OPT_CHALLENGE13    _("Super Mode")
 #define TEXT_OPT_CHALLENGE14    _("Daredevil")
+#define TEXT_OPT_CHALLENGE15    _("Huge Mario")
+#define TEXT_OPT_CHALLENGE16    _("Tiny Mario")
 
 #endif // VERSION
 
