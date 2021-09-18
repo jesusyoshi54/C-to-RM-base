@@ -728,7 +728,7 @@ static void newcam_position_cam(void) {
     newcam_pos_target[1] = gMarioState->pos[1]+newcam_extheight;
     newcam_pos_target[2] = gMarioState->pos[2];
     //These will set the position of the camera to where Mario is supposed to be, minus adjustments for where the camera should be, on top of.
-	f32 newcamADJ_distance = newcam_distance*GetMarioScaleFactors();
+	f32 newcamADJ_distance = newcam_distance*GetMarioLargeScaleFactors();
     if (newcam_modeflags & NC_FLAG_POSX)
         newcam_pos[0] = newcam_pos_target[0]+lengthdir_x(lengthdir_x(newcamADJ_distance,newcam_tilt+shakeX),newcam_yaw+shakeY);
     if (newcam_modeflags & NC_FLAG_POSZ)

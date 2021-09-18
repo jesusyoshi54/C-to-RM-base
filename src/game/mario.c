@@ -1739,9 +1739,11 @@ void mario_update_hitbox_and_cap_model(struct MarioState *m) {
         }
     }
 
-    // Short hitbox for crouching/crawling/etc.
+    m->marioObj->hitboxRadius = 37.0f*GetMarioScaleFactors();
+	// Short hitbox for crouching/crawling/etc.
     if (m->action & ACT_FLAG_SHORT_HITBOX) {
         m->marioObj->hitboxHeight = 100.0f*GetMarioScaleFactors();
+        
     } else {
         m->marioObj->hitboxHeight = 160.0f*GetMarioScaleFactors();
     }
@@ -1791,7 +1793,7 @@ f32 GetMarioScaleFactors(void){
 	if (configHUGE){
 		return 1.5f;
 	}else if (configTINY){
-		return 0.75f;
+		return 0.6f;
 	}else{
 		return 1.0f;
 	}
@@ -1799,9 +1801,19 @@ f32 GetMarioScaleFactors(void){
 };
 f32 GetMarioReducedScaleFactors(void){
 	if (configHUGE){
-		return 1.2f;
+		return 1.25f;
 	}else if (configTINY){
-		return 0.8f;
+		return 0.75f;
+	}else{
+		return 1.0f;
+	}
+	
+};
+f32 GetMarioLargeScaleFactors(void){
+	if (configHUGE){
+		return 1.75f;
+	}else if (configTINY){
+		return 0.5f;
 	}else{
 		return 1.0f;
 	}

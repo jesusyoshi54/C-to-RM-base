@@ -8,6 +8,7 @@
 
 f32 GetMarioScaleFactors(void);
 f32 GetMarioReducedScaleFactors(void);
+f32 GetMarioLargeScaleFactors(void);
 s32 is_anim_at_end(struct MarioState *m);
 s32 is_anim_past_end(struct MarioState *m);
 s16 set_mario_animation(struct MarioState *m, s32 targetAnimID);
