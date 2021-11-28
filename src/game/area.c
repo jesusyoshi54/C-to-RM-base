@@ -21,6 +21,7 @@
 #include "engine/geo_layout.h"
 #include "save_file.h"
 #include "level_table.h"
+#include "puppyprint.h"
 
 #include "gfx_dimensions.h"
 
@@ -422,7 +423,9 @@ void render_game(void) {
             clear_frame_buffer(gWarpTransFBSetColor);
         }
     }
-
+    #if PUPPYPRINT_DEBUG
+    puppyprint_render_profiler();
+    #endif
     D_8032CE74 = NULL;
     D_8032CE78 = NULL;
 }

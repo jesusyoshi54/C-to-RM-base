@@ -37,6 +37,37 @@ extern f32 gCosineTable[];
 
 #define min(a, b) ((a) <= (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
+#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+
+// from limits.h
+#define S8_MAX __SCHAR_MAX__
+#define S8_MIN (-S8_MAX - 1)
+#define U8_MAX (S8_MAX * 2 + 1)
+#define S16_MAX __SHRT_MAX__
+#define S16_MIN (-S16_MAX - 1)
+#define U16_MAX (S16_MAX * 2 + 1)
+#define S32_MAX __INT_MAX__
+#define S32_MIN (-S32_MAX - 1)
+#define U32_MAX (S32_MAX * 2U + 1U)
+#define S64_MAX __LONG_LONG_MAX__
+#define S64_MIN (-S64_MAX - 1LL)
+#define U64_MAX (S64_MAX * 2ULL + 1ULL)
+#define F32_MAX __FLT_MAX__
+#define F32_MIN __FLT_MIN__
+#define F64_MAX __DBL_MAX__
+#define F64_MIN __DBL_MIN__
+
+#define CLAMP_U8( x)        CLAMP((x),     0x0,  U8_MAX)
+#define CLAMP_S8( x)        CLAMP((x),  S8_MIN,  S8_MAX)
+#define CLAMP_U16(x)        CLAMP((x),     0x0, U16_MAX)
+#define CLAMP_S16(x)        CLAMP((x), S16_MIN, S16_MAX)
+#define CLAMP_U32(x)        CLAMP((x),     0x0, U32_MAX)
+#define CLAMP_S32(x)        CLAMP((x), S32_MIN, S32_MAX)
+#define CLAMP_U64(x)        CLAMP((x),     0x0, U64_MAX)
+#define CLAMP_S64(x)        CLAMP((x), S64_MIN, S64_MAX)
+#define CLAMP_F32(x)        CLAMP((x), F32_MIN, F32_MAX)
+#define CLAMP_F64(x)        CLAMP((x), F64_MIN, F64_MAX)
+
 
 #define sqr(x) ((x) * (x))
 

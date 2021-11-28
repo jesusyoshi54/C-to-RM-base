@@ -11,7 +11,7 @@
 #include "segments.h"
 #include "main.h"
 #include "rumble_init.h"
-
+#include "game/puppyprint.h"
 /**
  * This entry point is only used in TARGET_N64.
  * In PC Port the new entry point is located in 'pc/pc_main.c'
@@ -206,6 +206,9 @@ void start_gfx_sptask(void) {
     if (gActiveSPTask == NULL && sCurrentDisplaySPTask != NULL
         && sCurrentDisplaySPTask->state == SPTASK_STATE_NOT_STARTED) {
         profiler_log_gfx_time(TASKS_QUEUED);
+		#if PUPPYPRINT_DEBUG
+        rspDelta = osGetTime();
+		#endif
         start_sptask(M_GFXTASK);
     }
 }
@@ -253,7 +256,10 @@ void handle_vblank(void) {
         if (gActiveSPTask == NULL && sCurrentDisplaySPTask != NULL
             && sCurrentDisplaySPTask->state != SPTASK_STATE_FINISHED) {
             profiler_log_gfx_time(TASKS_QUEUED);
-            start_sptask(M_GFXTASK);
+            #if PUPPYPRINT_DEBUG
+            rspDelta = osGetTime();
+			#endif
+			start_sptask(M_GFXTASK);
         }
     }
 #ifdef VERSION_SH
@@ -281,6 +287,9 @@ void handle_sp_complete(void) {
             // The gfx task completed before we had time to interrupt it.
             // Mark it finished, just like below.
             curSPTask->state = SPTASK_STATE_FINISHED;
+			#if PUPPYPRINT_DEBUG
+            profiler_update(rspGenTime, rspDelta);
+            #endif
             profiler_log_gfx_time(RSP_COMPLETE);
         }
 
@@ -311,7 +320,10 @@ void handle_sp_complete(void) {
             // The SP process is done, but there is still a Display Processor notification
             // that needs to arrive before we can consider the task completely finished and
             // null out sCurrentDisplaySPTask. That happens in handle_dp_complete.
-            profiler_log_gfx_time(RSP_COMPLETE);
+            #if PUPPYPRINT_DEBUG
+            profiler_update(rspGenTime, rspDelta);
+#endif
+			profiler_log_gfx_time(RSP_COMPLETE);
         }
     }
 }
@@ -339,7 +351,9 @@ void thread3_main(UNUSED void *arg) {
 
     while (TRUE) {
         OSMesg msg;
-
+#if PUPPYPRINT_DEBUG
+        OSTime first = osGetTime();
+#endif
         osRecvMesg(&gIntrMesgQueue, &msg, OS_MESG_BLOCK);
         switch ((uintptr_t) msg) {
             case MESG_VI_VBLANK:
@@ -358,7 +372,9 @@ void thread3_main(UNUSED void *arg) {
                 handle_nmi_request();
                 break;
         }
-        stub_main_2();
+#if PUPPYPRINT_DEBUG
+        profiler_update(taskTime, first);
+#endif
     }
 }
 

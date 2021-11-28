@@ -13,6 +13,7 @@
 #include "segment_symbols.h"
 #include "segments.h"
 #include "platform_info.h"
+#include "game/puppyprint.h"
 
 // round up to the next multiple
 #define ALIGN4(val) (((val) + 0x3) & ~0x3)
@@ -174,6 +175,9 @@ void main_pool_init(void *start, void *end) {
     sPoolListHeadL->next = NULL;
     sPoolListHeadR->prev = NULL;
     sPoolListHeadR->next = NULL;
+    #if PUPPYPRINT_DEBUG
+    mempool = sPoolFreeSpace;
+    #endif
 }
 #endif
 
@@ -351,6 +355,9 @@ u32 main_pool_pop_state(void) {
  */
 static void dma_read(u8 *dest, u8 *srcStart, u8 *srcEnd) {
     u32 size = ALIGN16(srcEnd - srcStart);
+    #if PUPPYPRINT_DEBUG
+    OSTime first = osGetTime();
+    #endif
 #ifdef TARGET_N64
     osInvalDCache(dest, size);
     while (size != 0) {
@@ -367,6 +374,9 @@ static void dma_read(u8 *dest, u8 *srcStart, u8 *srcEnd) {
 #else
     memcpy(dest, srcStart, srcEnd - srcStart);
 #endif
+    #if PUPPYPRINT_DEBUG
+    dmaTime[perfIteration] += osGetTime()-first;
+    #endif
 }
 
 /**
@@ -399,6 +409,9 @@ void *load_segment(s32 segment, u8 *srcStart, u8 *srcEnd, u32 side) {
     if (addr != NULL) {
         set_segment_base_addr(segment, addr);
     }
+	#if PUPPYPRINT_DEBUG
+    ramsizeSegment[segment+nameTable-2] = (s32)srcEnd- (s32)srcStart;
+    #endif
     return addr;
 }
 
@@ -453,6 +466,9 @@ void *load_segment_decompress(s32 segment, u8 *srcStart, u8 *srcEnd) {
         }
     } else {
     }
+	#if PUPPYPRINT_DEBUG
+    ramsizeSegment[segment+nameTable-2] = (s32)srcEnd - (s32)srcStart;
+    #endif
     return dest;
 }
 
@@ -799,3 +815,8 @@ s32 load_patchable_table(struct MarioAnimation *a, u32 index) {
     }
     return ret;
 }
+
+//in the future maybe make something for PC here?
+u32 osGetMemSize(void){
+	return 8000000;
+};

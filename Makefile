@@ -30,10 +30,13 @@ COMPILER_N64 ?= gcc
 # Accept RM2C level folder output
 RM2C ?= 0
 #add in text engine
-TE ?= 1
+TE ?= 0
 #Debug stuff to make testing easier
 #inside pause menu of levels
 LEVEL_SELECT ?= 0
+#puppyprint debug
+PUPPYDEBUG ?= 1
+
 
 # Build for original N64 (no pc code)
 TARGET_N64 = 1
@@ -658,6 +661,7 @@ ifeq ($(RM2C),1)
   CC_CHECK += -DRM2C
   CFLAGS += -DRM2C
 endif
+
 ifeq ($(TE),1)
   CC_CHECK += -DTE
   CFLAGS += -DTE
@@ -666,6 +670,11 @@ endif
 ifeq ($(LEVEL_SELECT),1)
   CC_CHECK += -DLEVEL_SELECT
   CFLAGS += -DLEVEL_SELECT
+endif
+
+ifeq ($(PUPPYDEBUG),1)
+  CC_CHECK += -DPUPPYPRINT_DEBUG
+  CFLAGS += -DPUPPYPRINT_DEBUG
 endif
 
 # Check for extended options menu option
@@ -895,6 +904,11 @@ endif
 ifeq ($(LEVEL_SELECT),1)
   CC_CHECK += -DLEVEL_SELECT
   CFLAGS += -DLEVEL_SELECT
+endif
+
+ifeq ($(PUPPYDEBUG),1)
+  CC_CHECK += -DPUPPYPRINT_DEBUG
+  CFLAGS += -DPUPPYPRINT_DEBUG
 endif
 
 ifeq ($(TEXTSAVES),1)

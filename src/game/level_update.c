@@ -1013,10 +1013,12 @@ s32 play_mode_normal(void) {
         gHudDisplay.timer += 1;
     }
 
-    #ifdef TE_DEBUG
+    #ifdef TE
+	#ifdef TE_DEBUG
 	if (gPlayer1Controller->buttonPressed&D_JPAD){
 		SetupTextEngine(34,64,TE_Strings[0],TE_STATE_MAIN);
 	}
+	#endif
 	#endif
 	area_update_objects();
     update_hud_values();

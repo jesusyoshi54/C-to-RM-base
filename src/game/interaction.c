@@ -1710,6 +1710,7 @@ u32 check_read_sign(struct MarioState *m, struct Object *o) {
     return FALSE;
 }
 
+#ifdef TE
 #include "text_engine.h"
 u32 check_read_sign_TE(struct MarioState *m, struct Object *o) {
     if ((m->input & READ_MASK) && mario_can_talk(m, 0) && object_facing_mario(m, o, SIGN_RANGE)) {
@@ -1731,6 +1732,28 @@ u32 check_read_sign_TE(struct MarioState *m, struct Object *o) {
 
     return FALSE;
 }
+#else
+//just a normal sign if no def
+u32 check_read_sign_TE(struct MarioState *m, struct Object *o) {
+    if ((m->input & READ_MASK) && mario_can_talk(m, 0) && object_facing_mario(m, o, SIGN_RANGE)) {
+        s16 facingDYaw = (s16)(o->oMoveAngleYaw + 0x8000) - m->faceAngle[1];
+        if (facingDYaw >= -SIGN_RANGE && facingDYaw <= SIGN_RANGE) {
+            f32 targetX = o->oPosX + 105.0f * sins(o->oMoveAngleYaw);
+            f32 targetZ = o->oPosZ + 105.0f * coss(o->oMoveAngleYaw);
+
+            m->marioObj->oMarioReadingSignDYaw = facingDYaw;
+            m->marioObj->oMarioReadingSignDPosX = targetX - m->pos[0];
+            m->marioObj->oMarioReadingSignDPosZ = targetZ - m->pos[2];
+
+            m->interactObj = o;
+            m->usedObj = o;
+            return set_mario_action(m, ACT_READING_SIGN, 0);
+        }
+    }
+
+    return FALSE;
+}
+#endif
 
 u32 check_npc_talk(struct MarioState *m, struct Object *o) {
     if ((m->input & READ_MASK) && mario_can_talk(m, 1)) {
