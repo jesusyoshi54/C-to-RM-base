@@ -955,7 +955,7 @@ s32 act_hold_walking(struct MarioState *m) {
         return drop_and_set_mario_action(m, ACT_CROUCH_SLIDE, 0);
     }
 
-    m->intendedMag *= 0.4f;
+    m->intendedMag *= 0.6f;
 
     update_walking_speed(m);
 
@@ -985,15 +985,11 @@ s32 act_hold_heavy_walking(struct MarioState *m) {
         return set_mario_action(m, ACT_HEAVY_THROW, 0);
     }
 
-    if (should_begin_sliding(m)) {
-        return drop_and_set_mario_action(m, ACT_BEGIN_SLIDING, 0);
-    }
-
     if (m->input & INPUT_UNKNOWN_5) {
         return set_mario_action(m, ACT_HOLD_HEAVY_IDLE, 0);
     }
 
-    m->intendedMag *= 0.1f;
+    m->intendedMag *= 0.3f;
 
     update_walking_speed(m);
 

@@ -467,10 +467,6 @@ s32 act_hold_heavy_idle(struct MarioState *m) {
         return drop_and_set_mario_action(m, ACT_FREEFALL, 0);
     }
 
-    if (m->input & INPUT_ABOVE_SLIDE) {
-        return drop_and_set_mario_action(m, ACT_BEGIN_SLIDING, 0);
-    }
-
     if (m->input & INPUT_NONZERO_ANALOG) {
         return set_mario_action(m, ACT_HOLD_HEAVY_WALKING, 0);
     }

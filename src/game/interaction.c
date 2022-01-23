@@ -1722,7 +1722,7 @@ u32 check_read_sign_TE(struct MarioState *m, struct Object *o) {
             m->marioObj->oMarioReadingSignDYaw = facingDYaw;
             m->marioObj->oMarioReadingSignDPosX = targetX - m->pos[0];
             m->marioObj->oMarioReadingSignDPosZ = targetZ - m->pos[2];
-			SetupTextEngine(32,60,TE_Strings[o->oBehParams2ndByte],TE_STATE_MAIN);
+			SetupTextEngine(32,60,TE_Strings[o->oBehParams],TE_STATE_MAIN);
 
             m->interactObj = o;
             m->usedObj = o;

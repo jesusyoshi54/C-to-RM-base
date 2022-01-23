@@ -23,8 +23,6 @@
  * Converts an angle in degrees to sm64's s16 angle units. For example, DEGREES(90) == 0x4000
  * This should be used mainly to make camera code clearer at first glance.
  */
-#define DEGREES(x) ((x) * 0x10000 / 360)
-
 #define LEVEL_AREA_INDEX(levelNum, areaNum) (((levelNum) << 4) + (areaNum))
 
 /**
@@ -680,7 +678,6 @@ extern struct Object *gSecondCameraFocus;
 extern u8 gRecentCutscene;
 
 // TODO: sort all of this extremely messy shit out after the split
-
 void set_camera_shake_from_hit(s16 shake);
 void set_environmental_camera_shake(s16 shake);
 void set_camera_shake_from_point(s16 shake, f32 posX, f32 posY, f32 posZ);
@@ -692,9 +689,6 @@ void reset_camera(struct Camera *c);
 void init_camera(struct Camera *c);
 void select_mario_cam_mode(void);
 Gfx *geo_camera_main(s32 callContext, struct GraphNode *g, void *context);
-void stub_camera_2(UNUSED struct Camera *c);
-void stub_camera_3(UNUSED struct Camera *c);
-void vec3f_sub(Vec3f dst, Vec3f src);
 void object_pos_to_vec3f(Vec3f dst, struct Object *o);
 void vec3f_to_object_pos(struct Object *o, Vec3f src);
 s32 move_point_along_spline(Vec3f p, struct CutsceneSplinePoint spline[], s16 *splineSegment, f32 *progress);

@@ -233,6 +233,7 @@ s8 TE_set_sfx(struct TEState *CurEng,u8 *str){
 //42 cmd works
 s8 TE_set_env_color(struct TEState *CurEng,u8 *str){
 	TE_print(CurEng);
+	CurEng->PrevEnvColorWord = CurEng->EnvColorWord;
 	CurEng->EnvColorWord = TE_get_u32(str);
 	return TE_print_adv(CurEng,5);
 }
@@ -272,6 +273,7 @@ s8 TE_enable_rainbow_txt(struct TEState *CurEng,u8 *str){
 		timer+=0x78;
 	}
 	CurEng->RainbowColorByte[3] = str[1];
+	CurEng->PrevEnvColorWord = CurEng->EnvColorWord;
 	CurEng->EnvColorWord = CurEng->RainbowColorWord;
 	return TE_print_adv(CurEng,2);
 }
@@ -716,7 +718,7 @@ void TE_clear_box_tr(struct TEState *CurEng){
 void TE_bg_box_setup(struct TEState *CurEng){
 	//print shadow with plaintext
 	if(CurEng->PlainText){
-		u32 Env = CurEng->EnvColorWord;
+		s32 Env = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
 		CurEng->TempX += 1;
 		CurEng->TempY -= 1;
@@ -724,10 +726,11 @@ void TE_bg_box_setup(struct TEState *CurEng){
 			TE_transition_print(CurEng);
 		CurEng->TempX -= 1;
 		CurEng->TempY += 1;
+		CurEng->PrevEnvColorWord = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = Env;
 	}
-	if(!(StrBuffer[CurEng->state][0] == 0xFF))
-		TE_transition_print(CurEng);
+	TE_transition_print(CurEng);
+	CurEng->PrevEnvColorWord = CurEng->EnvColorWord;
 	TE_flush_str_buff(CurEng);
 	TE_reset_Xpos(CurEng);
 }
@@ -979,7 +982,7 @@ s8 TE_set_cutscene(struct TEState *CurEng,u8 *str){
 s8 TE_scale_text(struct TEState *CurEng,u8 *str){
 	//TE print but with scale placed after resetting X pos
 	if(CurEng->PlainText){
-		u32 Env = CurEng->EnvColorWord;
+		s32 Env = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
 		CurEng->TempX += 1;
 		CurEng->TempY -= 1;
@@ -987,10 +990,11 @@ s8 TE_scale_text(struct TEState *CurEng,u8 *str){
 			TE_transition_print(CurEng);
 		CurEng->TempX -= 1;
 		CurEng->TempY += 1;
+		CurEng->PrevEnvColorWord = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = Env;
 	}
-	if(!(StrBuffer[CurEng->state][0] == 0xFF))
-		TE_transition_print(CurEng);
+	TE_transition_print(CurEng);
+	CurEng->PrevEnvColorWord = CurEng->EnvColorWord;
 	TE_flush_str_buff(CurEng);
 	TE_reset_Xpos(CurEng);
 	CurEng->ScaleU[0] = TE_get_u32(str);
@@ -999,13 +1003,13 @@ s8 TE_scale_text(struct TEState *CurEng,u8 *str){
 }
 //85 cmd works
 s8 TE_enable_dialog_options(struct TEState *CurEng,u8 *str){
-	u8 arrow = 0x9E;
+	u8 arrow = 0xFF;
 	TE_print(CurEng);
 	CurEng->TempY -= ((u16) 0xD*CurEng->ScaleF[1]);
 	CurEng->TempYOrigin = CurEng->TempY;
 	CurEng->TempXOrigin -= 1;
 	CurEng->NumDialogs = str[1];
-	if(CurEng->DialogEnd != 0){
+	if(CurEng->DialogEnd != 0 && (CurEng->LastVI+2)<gNumVblanks){
 		if(gPlayer1Controller->buttonPressed&A_BUTTON){
 			CurEng->OgStr = CurEng->DialogEnd;
 			CurEng->StackLocked = CurEng->StackDepth;
@@ -1026,10 +1030,10 @@ s8 TE_enable_dialog_options(struct TEState *CurEng,u8 *str){
 	}
 	StrBuffer[CurEng->state][0] = arrow;
 	StrBuffer[CurEng->state][1] = 0xFF;
-	CurEng->TempX = CurEng->TempXOrigin;
+	CurEng->TempX = CurEng->TempXOrigin-1;
 	TE_print(CurEng);
-	CurEng->TempXOrigin += gDialogCharWidths[0x53];
-	CurEng->TempX = CurEng->TempXOrigin;
+	CurEng->TempXOrigin += ((u16)(8*CurEng->ScaleF[0]));
+	CurEng->TempX = CurEng->TempXOrigin-1;
 	CurEng->DisplayingDialog = 0;
 	return TE_print_adv(CurEng,2);
 }
@@ -1048,7 +1052,6 @@ s8 TE_dialog_response(struct TEState *CurEng,u8 *str){
 			}else if(str[0] == 0x87){
 				TE_print(CurEng);
 				CurEng->TempStr+=off;
-				CurEng->CurPos=0;
 				return TE_print_adv(CurEng,1);
 			}else{
 				str += 1;
@@ -1204,6 +1207,7 @@ s8 TE_set_mario_action(struct TEState *CurEng,u8 *str){
 	gMarioState->action = TE_get_ptr(str,str);
 	return TE_advBlen(CurEng,5);
 }
+//aa cmd works
 s8 TE_box_transition(struct TEState *CurEng,u8 *str){
 	CurEng->BoxTrXi = (s16) (TE_get_s16(str)*CurEng->TrPct);
 	CurEng->BoxTrXf = (s16) (TE_get_s16(str+2)*CurEng->TrPct);
@@ -1257,6 +1261,7 @@ s8 TE_print_glyph(struct TEState *CurEng,u8 *str){
 	//pkt, timg, fmt, siz, width, height, pal, cms, cmt, masks, maskt, shifts, shiftt
 	gDPLoadTextureBlock(gDisplayListHead++,ptr,G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 0,G_TX_CLAMP, G_TX_CLAMP, 5, 5, G_TX_NOLOD, G_TX_NOLOD);
 	gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, 255);
+	CurEng->PrevEnvColorWord = -1;
 	gSPDisplayList(gDisplayListHead++, dl_draw_text_bg_box_TE);
 	CurEng->TotalXOff+=14;
 	TE_bg_box_finish(CurEng);
@@ -1272,18 +1277,18 @@ s8 TE_line_break(struct TEState *CurEng,u8 *str){
 	//modified print function to make printing not fuck with X pos
 	//rather inefficient but I'm lazy
 	if(CurEng->PlainText){
-		u32 Env = CurEng->EnvColorWord;
+		s32 Env = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = 0x10101000 | CurEng->EnvColorByte[3];
 		CurEng->TempX += 1;
 		CurEng->TempY -= 1;
-		if(!(StrBuffer[CurEng->state][0] == 0xFF))
-			TE_transition_print(CurEng);
+		TE_transition_print(CurEng);
 		CurEng->TempX -= 1;
 		CurEng->TempY += 1;
+		CurEng->PrevEnvColorWord = CurEng->EnvColorWord;
 		CurEng->EnvColorWord = Env;
 	}
-	if(!(StrBuffer[CurEng->state][0] == 0xFF))
-		TE_transition_print(CurEng);
+	TE_transition_print(CurEng);
+	CurEng->PrevEnvColorWord = CurEng->EnvColorWord;
 	TE_flush_str_buff(CurEng);
 	CurEng->TempX = CurEng->TempXOrigin;
 	CurEng->TempY -= ((u16) 0xD*CurEng->ScaleF[1]);

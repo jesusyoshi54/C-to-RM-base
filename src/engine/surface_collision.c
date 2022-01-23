@@ -852,8 +852,8 @@ s32 ray_surface_intersect(Vec3f orig, Vec3f dir, f32 dir_length, struct Surface 
     vec3s_to_vec3f(v1, surface->vertex2);
     vec3s_to_vec3f(v2, surface->vertex3);
     
-    vec3f_dif(e1, v1, v0);
-    vec3f_dif(e2, v2, v0);
+    vec3f_diff(e1, v1, v0);
+    vec3f_diff(e2, v2, v0);
     
     vec3f_cross(h, dir, e2);
     
@@ -865,7 +865,7 @@ s32 ray_surface_intersect(Vec3f orig, Vec3f dir, f32 dir_length, struct Surface 
     // Check if we're making contact with the surface
     f = 1.0f / a;
     
-    vec3f_dif(s, orig, v0);
+    vec3f_diff(s, orig, v0);
     u = f * vec3f_dot(s, h);
     if (u < 0.0f || u > 1.0f)
         return FALSE;
@@ -882,7 +882,7 @@ s32 ray_surface_intersect(Vec3f orig, Vec3f dir, f32 dir_length, struct Surface 
     
     // Successful contact
     vec3f_copy(add_dir, dir);
-    vec3f_mul(add_dir, *length);
+    vec3f_scale(add_dir, *length);
     vec3f_sum(hit_pos, orig, add_dir);
     return TRUE;
 }

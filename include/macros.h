@@ -25,6 +25,13 @@
 #define UNUSED
 #endif
 
+// Align to 16-byte boundary for audio lib requirements
+#ifdef __GNUC__
+#define ALWAYS_INLINE inline __attribute__((always_inline))
+#else
+#define ALWAYS_INLINE inline
+#endif
+
 // Avoid undefined behaviour for non-returning functions
 #ifdef __GNUC__
 #define NORETURN __attribute__((noreturn))

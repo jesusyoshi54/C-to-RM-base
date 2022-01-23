@@ -453,10 +453,15 @@ static void geo_process_scale(struct GraphNodeScale *node) {
 static void geo_process_billboard(struct GraphNodeBillboard *node) {
     Vec3f translation;
     Mtx *mtx = alloc_display_list(sizeof(*mtx));
-
+    Vec3f scale = { 1.0f, 1.0f, 1.0f };
     gMatStackIndex++;
     vec3s_to_vec3f(translation, node->translation);
-    mtxf_billboard(gMatStack[gMatStackIndex], gMatStack[gMatStackIndex - 1], translation,
+    if (gCurGraphNodeHeldObject != NULL) {
+        vec3f_copy(scale, gCurGraphNodeHeldObject->objNode->header.gfx.scale);
+    } else if (gCurGraphNodeObject != NULL) {
+        vec3f_copy(scale, gCurGraphNodeObject->scale);
+    }
+    mtxf_billboard(gMatStack[gMatStackIndex], gMatStack[gMatStackIndex - 1], translation, scale,
                    gCurGraphNodeCamera->roll);
     if (gCurGraphNodeHeldObject != NULL) {
         mtxf_scale_vec3f(gMatStack[gMatStackIndex], gMatStack[gMatStackIndex],
@@ -649,57 +654,53 @@ void geo_set_animation_globals(struct AnimInfo *node, s32 hasAnimation) {
  * translation of the first animated component and rotated according to
  * the floor below it.
  */
-static void geo_process_shadow(struct GraphNodeShadow *node) {
-    Gfx *shadowList;
-    Mat4 mtxf;
-    Vec3f shadowPos;
-    Vec3f animOffset;
-    f32 objScale;
-    f32 shadowScale;
-    f32 sinAng;
-    f32 cosAng;
-    struct GraphNode *geo;
-    Mtx *mtx;
-
+void geo_process_shadow(struct GraphNodeShadow *node) {
     if (gCurGraphNodeCamera != NULL && gCurGraphNodeObject != NULL) {
+        Vec3f shadowPos;
+        f32 shadowScale;
+		Mat4 mtxf;
+		Mtx *mtx;
+
         if (gCurGraphNodeHeldObject != NULL) {
             get_pos_from_transform_mtx(shadowPos, gMatStack[gMatStackIndex],
                                        *gCurGraphNodeCamera->matrixPtr);
-            shadowScale = node->shadowScale;
+            shadowScale = node->shadowScale * gCurGraphNodeHeldObject->objNode->header.gfx.scale[0];
         } else {
             vec3f_copy(shadowPos, gCurGraphNodeObject->pos);
             shadowScale = node->shadowScale * gCurGraphNodeObject->scale[0];
         }
 
-        objScale = 1.0f;
-        if (gCurAnimEnabled) {
-            if (gCurAnimType == ANIM_TYPE_TRANSLATION
-                || gCurAnimType == ANIM_TYPE_LATERAL_TRANSLATION) {
-                geo = node->node.children;
-                if (geo != NULL && geo->type == GRAPH_NODE_TYPE_SCALE) {
-                    objScale = ((struct GraphNodeScale *) geo)->scale;
-                }
-                animOffset[0] =
-                    gCurAnimData[retrieve_animation_index(gCurrAnimFrame, &gCurrAnimAttribute)]
-                    * gCurAnimTranslationMultiplier * objScale;
-                animOffset[1] = 0.0f;
-                gCurrAnimAttribute += 2;
-                animOffset[2] =
-                    gCurAnimData[retrieve_animation_index(gCurrAnimFrame, &gCurrAnimAttribute)]
-                    * gCurAnimTranslationMultiplier * objScale;
-                gCurrAnimAttribute -= 6;
+        s8 shifted = (gCurAnimEnabled
+                      && (gCurAnimType == ANIM_TYPE_TRANSLATION
+                       || gCurAnimType == ANIM_TYPE_LATERAL_TRANSLATION)
+        );
 
-                // simple matrix rotation so the shadow offset rotates along with the object
-                sinAng = sins(gCurGraphNodeObject->angle[1]);
-                cosAng = coss(gCurGraphNodeObject->angle[1]);
-
-                shadowPos[0] += animOffset[0] * cosAng + animOffset[2] * sinAng;
-                shadowPos[2] += -animOffset[0] * sinAng + animOffset[2] * cosAng;
+        if (shifted) {
+            struct GraphNode *geo = node->node.children;
+            f32 objScale = 1.0f;
+            if (geo != NULL && geo->type == GRAPH_NODE_TYPE_SCALE) {
+                objScale = ((struct GraphNodeScale *) geo)->scale;
             }
+
+            f32 animScale = gCurAnimTranslationMultiplier * objScale;
+            Vec3f animOffset;
+            animOffset[0] = gCurAnimData[retrieve_animation_index(gCurrAnimFrame, &gCurrAnimAttribute)] * animScale;
+            animOffset[1] = 0.0f;
+            gCurrAnimAttribute += 2;
+            animOffset[2] = gCurAnimData[retrieve_animation_index(gCurrAnimFrame, &gCurrAnimAttribute)] * animScale;
+            gCurrAnimAttribute -= 6;
+
+            // simple matrix rotation so the shadow offset rotates along with the object
+            f32 sinAng = sins(gCurGraphNodeObject->angle[1]);
+            f32 cosAng = coss(gCurGraphNodeObject->angle[1]);
+
+            shadowPos[0] += animOffset[0] * cosAng + animOffset[2] * sinAng;
+            shadowPos[2] += -animOffset[0] * sinAng + animOffset[2] * cosAng;
         }
 
-        shadowList = create_shadow_below_xyz(shadowPos[0], shadowPos[1], shadowPos[2], shadowScale,
-                                             node->shadowSolidity, node->shadowType);
+        Gfx *shadowList = create_shadow_below_xyz(shadowPos, shadowScale * 0.5f,
+                                                  node->shadowSolidity, node->shadowType, shifted);
+
         if (shadowList != NULL) {
             mtx = alloc_display_list(sizeof(*mtx));
             gMatStackIndex++;
@@ -707,13 +708,7 @@ static void geo_process_shadow(struct GraphNodeShadow *node) {
             mtxf_mul(gMatStack[gMatStackIndex], mtxf, *gCurGraphNodeCamera->matrixPtr);
             mtxf_to_mtx(mtx, gMatStack[gMatStackIndex]);
             gMatStackFixed[gMatStackIndex] = mtx;
-            if (gShadowAboveWaterOrLava == TRUE) {
-                geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(shadowList), 4);
-            } else if (gMarioOnIceOrCarpet == 1) {
-                geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(shadowList), 5);
-            } else {
-                geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(shadowList), 6);
-            }
+			geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(shadowList), 6);
             gMatStackIndex--;
         }
     }
@@ -825,7 +820,7 @@ static void geo_process_object(struct Object *node) {
                            node->header.gfx.pos, gCurGraphNodeCamera->roll);
         } else if (node->header.gfx.node.flags & GRAPH_RENDER_BILLBOARD) {
             mtxf_billboard(gMatStack[gMatStackIndex + 1], gMatStack[gMatStackIndex],
-                           node->header.gfx.pos, gCurGraphNodeCamera->roll);
+                           node->header.gfx.pos, node->header.gfx.scale, gCurGraphNodeCamera->roll);
         } else {
             mtxf_rotate_zxy_and_translate(mtxf, node->header.gfx.pos, node->header.gfx.angle);
             mtxf_mul(gMatStack[gMatStackIndex + 1], mtxf, gMatStack[gMatStackIndex]);
@@ -909,8 +904,13 @@ void geo_process_held_object(struct GraphNodeHeldObject *node) {
         gMatStack[gMatStackIndex + 1][3][1] = gMatStack[gMatStackIndex][3][1];
         gMatStack[gMatStackIndex + 1][3][2] = gMatStack[gMatStackIndex][3][2];
         mtxf_mul(gMatStack[gMatStackIndex + 1], mat, gMatStack[gMatStackIndex + 1]);
-        mtxf_scale_vec3f(gMatStack[gMatStackIndex + 1], gMatStack[gMatStackIndex + 1],
-                         node->objNode->header.gfx.scale);
+		//clear scale from the stack (by dividing by mario scale
+        Vec3f scale;
+		scale[0] = node->objNode->header.gfx.scale[0]*node->scale;
+		scale[1] = node->objNode->header.gfx.scale[1]*node->scale;
+		scale[2] = node->objNode->header.gfx.scale[2]*node->scale;
+		mtxf_scale_vec3f(gMatStack[gMatStackIndex + 1], gMatStack[gMatStackIndex + 1],
+                         scale);
         if (node->fnNode.func != NULL) {
             node->fnNode.func(GEO_CONTEXT_HELD_OBJ, &node->fnNode.node,
                               (struct AllocOnlyPool *) gMatStack[gMatStackIndex + 1]);

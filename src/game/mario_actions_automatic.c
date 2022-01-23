@@ -305,8 +305,8 @@ s32 perform_hanging_step(struct MarioState *m, Vec3f nextPos) {
     f32 ceilHeight;
     f32 floorHeight;
     f32 ceilOffset;
-
-    m->wall = resolve_and_return_wall_collisions(nextPos, 50.0f, 50.0f);
+	f32 Mscale = GetMarioScaleFactors();
+    m->wall = resolve_and_return_wall_collisions(nextPos, 50.0f*Mscale, 50.0f*Mscale);
     floorHeight = find_floor(nextPos[0], nextPos[1], nextPos[2], &floor);
     ceilHeight = vec3f_find_ceil(nextPos, nextPos[1], &ceil);
 
@@ -316,22 +316,22 @@ s32 perform_hanging_step(struct MarioState *m, Vec3f nextPos) {
     if (ceil == NULL) {
         return HANG_LEFT_CEIL;
     }
-    if (ceilHeight - floorHeight <= 160.0f) {
+    if (ceilHeight - floorHeight <= 160.0f*Mscale) {
         return HANG_HIT_CEIL_OR_OOB;
     }
     if (ceil->type != SURFACE_HANGABLE) {
         return HANG_LEFT_CEIL;
     }
 
-    ceilOffset = ceilHeight - (nextPos[1] + 160.0f);
-    if (ceilOffset < -30.0f) {
+    ceilOffset = ceilHeight - (nextPos[1] + 160.0f*Mscale);
+    if (ceilOffset < -30.0f*Mscale) {
         return HANG_HIT_CEIL_OR_OOB;
     }
-    if (ceilOffset > 30.0f) {
+    if (ceilOffset > 30.0f*Mscale) {
         return HANG_LEFT_CEIL;
     }
 
-    nextPos[1] = m->ceilHeight - 160.0f;
+    nextPos[1] = m->ceilHeight - 160.0f*Mscale;
     vec3f_copy(m->pos, nextPos);
 
     m->floor = floor;
@@ -345,15 +345,15 @@ s32 perform_hanging_step(struct MarioState *m, Vec3f nextPos) {
 s32 update_hang_moving(struct MarioState *m) {
     s32 stepResult;
     Vec3f nextPos;
-    f32 maxSpeed = 4.0f;
+    f32 maxSpeed = 6.0f;
 
-    m->forwardVel += 1.0f;
+    m->forwardVel += 4.0f;
     if (m->forwardVel > maxSpeed) {
         m->forwardVel = maxSpeed;
     }
 
     m->faceAngle[1] =
-        m->intendedYaw - approach_s32((s16)(m->intendedYaw - m->faceAngle[1]), 0, 0x800, 0x800);
+        m->intendedYaw - approach_s32((s16)(m->intendedYaw - m->faceAngle[1]), 0, 0xC00, 0xC00);
 
     m->slideYaw = m->faceAngle[1];
     m->slideVelX = m->forwardVel * sins(m->faceAngle[1]);
@@ -379,7 +379,7 @@ void update_hang_stationary(struct MarioState *m) {
     m->slideVelX = 0.0f;
     m->slideVelZ = 0.0f;
 
-    m->pos[1] = m->ceilHeight - 160.0f;
+    m->pos[1] = m->ceilHeight - 160.0f*GetMarioScaleFactors();
     vec3f_copy(m->vel, gVec3fZero);
     vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
 }
@@ -548,7 +548,7 @@ s32 act_ledge_grab(struct MarioState *m) {
         m->actionTimer++;
     }
 
-    if (m->floor->normal.y < 0.9063078f) {
+    if (m->floor->normal.y < 0.8063078f) {
         return let_go_of_ledge(m);
     }
 

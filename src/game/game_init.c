@@ -301,7 +301,7 @@ void draw_reset_bars(void) {
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
 }
-
+u8 gJaboCheck = 0;
 #ifdef TARGET_N64
 void rendering_init(void) {
     gGfxPool = &gGfxPools[0];
@@ -310,10 +310,15 @@ void rendering_init(void) {
     gDisplayListHead = gGfxPool->buffer;
     gGfxPoolEnd = (u8 *) (gGfxPool->buffer + GFX_POOL_SIZE);
     init_render_image();
+	//check for FB EMULATION
+	gFrameBuffer0[0] = 0xff;
     clear_frame_buffer(0);
     end_master_display_list();
     send_display_list(&gGfxPool->spTask);
-
+	//yep, its jabo (or just 1.6 lol)
+	if(gFrameBuffer0[0] == 0xff){
+		gJaboCheck = 1;
+	}
     // Skip incrementing the initial framebuffer index on emulators so that they display immediately as the Gfx task finishes
     if ((*(volatile u32 *)0xA4100010) != 0) { // Read RDP Clock Register, has a value of zero on emulators
         frameBufferIndex++;

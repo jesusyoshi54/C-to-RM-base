@@ -680,7 +680,7 @@ s32 mario_floor_is_steep(struct MarioState *m) {
                 break;
 
             case SURFACE_NOT_SLIPPERY:
-                normY = 0.8660254f; // ~cos(30 deg)
+                normY = 0.0f; // ~cos(30 deg)
                 break;
         }
 
@@ -905,7 +905,12 @@ static u32 set_mario_action_airborne(struct MarioState *m, u32 action, u32 actio
             m->vel[1] = 20.0f;
             break;
     }
-
+	if(gMarioObject->platform != NULL){
+		if(gMarioObject->platform->oVelY > 0.0f){
+			m->pos[1] += gMarioObject->platform->oVelY;
+			m->vel[1] += gMarioObject->platform->oVelY;
+		}
+	}
     m->peakHeight = m->pos[1];
     m->flags |= MARIO_UNKNOWN_08;
 
@@ -1653,7 +1658,9 @@ void sink_mario_in_quicksand(struct MarioState *m) {
  * Equals [1000]^5 . [100]^8 . [10]^9 . [1] in binary, which is
  * 100010001000100010001001001001001001001001001010101010101010101.
  */
-u64 sCapFlickerFrames = 0x4444449249255555;
+//compiler is being dumb
+u32 sCapFlickerFrames1 = 0x44444492;
+u32 sCapFlickerFrames2 = 0x49255555;
 
 /**
  * Updates the cap flags mainly based on the cap timer.
@@ -1686,7 +1693,7 @@ u32 update_and_return_cap_flags(struct MarioState *m) {
 
         // This code flickers the cap through a long binary string, increasing in how
         // common it flickers near the end.
-        if ((m->capTimer < 64) && ((1ULL << m->capTimer) & sCapFlickerFrames)) {
+        if (((m->capTimer < 64) && ((1 << (m->capTimer-32)) & sCapFlickerFrames1)) || ((m->capTimer < 32) && ((1 << m->capTimer) & sCapFlickerFrames2))) {
             flags &= ~MARIO_SPECIAL_CAPS;
             if (!(flags & MARIO_CAPS)) {
                 flags &= ~MARIO_CAP_ON_HEAD;

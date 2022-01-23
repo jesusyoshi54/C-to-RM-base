@@ -393,7 +393,7 @@ void set_mario_initial_action(struct MarioState *m, u32 spawnType, u32 actionArg
 
     set_mario_initial_cap_powerup(m);
 }
-
+extern u16 sCurrentMusic;
 void init_mario_after_warp(void) {
     struct ObjectWarpNode *spawnNode = area_get_warp_node(sWarpDest.nodeId);
     u32 marioSpawnType = get_mario_spawn_type(spawnNode->object);
@@ -452,7 +452,9 @@ void init_mario_after_warp(void) {
     }
 
     if (gCurrDemoInput == NULL) {
-        set_background_music(gCurrentArea->musicParam, gCurrentArea->musicParam2, 0);
+		if (gCurrentArea->musicParam != sCurrentMusic){
+			set_background_music(gCurrentArea->musicParam, gCurrentArea->musicParam2, 0);
+		}
 
         if (gMarioState->flags & MARIO_METAL_CAP) {
             play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP));
@@ -461,30 +463,6 @@ void init_mario_after_warp(void) {
         if (gMarioState->flags & (MARIO_VANISH_CAP | MARIO_WING_CAP)) {
             play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP));
         }
-
-#ifndef VERSION_JP
-        if (gCurrLevelNum == LEVEL_BOB
-            && get_current_background_music() != SEQUENCE_ARGS(4, SEQ_LEVEL_SLIDE)
-            && sTimerRunning) {
-            play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_LEVEL_SLIDE), 0);
-        }
-#endif
-
-        if (sWarpDest.levelNum == LEVEL_CASTLE && sWarpDest.areaIdx == 1
-#ifndef VERSION_JP
-            && (sWarpDest.nodeId == 31 || sWarpDest.nodeId == 32)
-#else
-            && sWarpDest.nodeId == 31
-#endif
-        )
-            play_sound(SOUND_MENU_MARIO_CASTLE_WARP, gGlobalSoundSource);
-#ifndef VERSION_JP
-        if (sWarpDest.levelNum == LEVEL_CASTLE_GROUNDS && sWarpDest.areaIdx == 1
-            && (sWarpDest.nodeId == 7 || sWarpDest.nodeId == 10 || sWarpDest.nodeId == 20
-                || sWarpDest.nodeId == 30)) {
-            play_sound(SOUND_MENU_MARIO_CASTLE_WARP, gGlobalSoundSource);
-        }
-#endif
     }
 }
 
@@ -591,6 +569,46 @@ void check_instant_warp(void) {
             }
         }
     }
+}
+
+#if IS_64_BIT
+struct F2{
+	unsigned int Y:12;
+	unsigned int X:12;
+	unsigned int MSB:8;
+};
+#else
+struct F2{
+	unsigned int MSB:8;
+	unsigned int X:12;
+	unsigned int Y:12;
+};
+#endif
+union PosBytes{
+	u32 pos;
+	char bytes[4];
+};
+union WDBytes{
+	uintptr_t w0;
+	struct F2 SetTile;
+};
+void ScrollF2(Gfx *F2,u32 x, u32 y){
+	union PosBytes Xspd;
+	union PosBytes Yspd;
+	union WDBytes F2B;
+	Xspd.pos = x;
+	Yspd.pos = y;
+	F2B.w0 = F2->words.w0;
+	#if IS_64_BIT
+	#define FLOAT_BYTE 2
+	#else
+	#define FLOAT_BYTE 1
+	#endif
+	F2B.SetTile.X+=Xspd.pos;//Xspd.bytes[FLOAT_BYTE];
+	F2B.SetTile.Y+=Yspd.pos;//Yspd.bytes[FLOAT_BYTE];
+	F2B.SetTile.X=F2B.SetTile.X%0x200;
+	F2B.SetTile.Y=F2B.SetTile.Y%0x200;
+	F2->words.w0 = F2B.w0;
 }
 
 s16 music_changed_through_warp(s16 arg) {
@@ -762,7 +780,7 @@ s16 level_trigger_warp(struct MarioState *m, s32 warpOp) {
 				if(configHC){
 					int i=1/0;
 				}
-				if (m->numLives == 0 && INFINITE_LIVES) {
+				if (m->numLives == 0 && !INFINITE_LIVES) {
                     sDelayedWarpOp = WARP_OP_GAME_OVER;
                 }
                 sDelayedWarpTimer = 48;
@@ -1077,7 +1095,12 @@ s32 play_mode_paused(void) {
         if (gDebugLevelSelect) {
             fade_into_special_warp(-9, 1);
         } else {
+			#ifdef exit_course_death
             initiate_warp(EXIT_COURSE,0);
+			#else
+			struct ObjectWarpNode *warpNode = area_get_warp_node(WARP_NODE_DEATH);
+			initiate_warp(warpNode->node.destLevel,warpNode->node.destArea,warpNode->node.destNode, 0);
+			#endif
             fade_into_special_warp(0, 0);
             gSavedCourseNum = COURSE_NONE;
         }
@@ -1087,7 +1110,12 @@ s32 play_mode_paused(void) {
 #ifndef TARGET_N64
     else if (gPauseScreenMode == 3) {
         // We should only be getting "int 3" to here
-        initiate_warp(EXIT_COURSE, 0);
+		#ifdef exit_course_death
+		initiate_warp(EXIT_COURSE,0);
+		#else
+		struct ObjectWarpNode *warpNode = area_get_warp_node(WARP_NODE_DEATH);
+		initiate_warp(warpNode->node.destLevel,warpNode->node.destArea,warpNode->node.destNode, 0);
+		#endif
         fade_into_special_warp(0, 0);
         game_exit();
     }

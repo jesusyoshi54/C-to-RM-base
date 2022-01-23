@@ -56,11 +56,11 @@ struct TEState{
 	};
 	union{
 	/* 0x38 */ u8 EnvColorByte[4];
-	/* 0x38 */ u32 EnvColorWord;
+	/* 0x38 */ s32 EnvColorWord;
 	};
 	union{
 	/* 0x3C */ u8 RainbowColorByte[4];
-	/* 0x3C */ u32 RainbowColorWord;
+	/* 0x3C */ s32 RainbowColorWord;
 	};
 	/* 0x40 */ u8 *StrRemoval;
 	//For user input on keyboard
@@ -118,13 +118,19 @@ union WordByte{
 	char col[4];
 };
 #include "text_engine_helpers.h"
+
+extern u8 StrBuffer[NumEngines][0x100];
+extern u8 CmdBuffer[NumEngines][0x400];
+extern u32 TimerBuffer[NumEngines][64]; //stores timers necessary for certain cmds with their own cycles and stuff
+extern u8 UserInputs[NumEngines][16][16]; //16 length 16 strings
+
 extern u16 sCurrentMusic;
 extern const Gfx dl_draw_text_bg_box_TE[];
 extern char TE_KEYBOARD_lower[];
 extern char TE_KEYBOARD_upper[];
 extern char *TE_Strings[];
 extern u8 StrBuffer[NumEngines][0x100];
-extern volatile struct TEState TE_Engines[NumEngines];
+extern struct TEState TE_Engines[NumEngines];
 void SetupTextEngine(s16 x, s16 y, u8 *str, u8 state);
 void RunTextEngine(void);
 void TE_setup_ia8(void);

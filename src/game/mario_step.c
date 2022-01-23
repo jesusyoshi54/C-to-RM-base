@@ -357,7 +357,7 @@ u32 check_ledge_grab(struct MarioState *m, struct Surface *wall, Vec3f intendedP
     Vec3f ledgePos;
     f32 displacementX;
     f32 displacementZ;
-
+	f32 Mscale = GetMarioScaleFactors();
     if (m->vel[1] > 0) {
         return FALSE;
     }
@@ -373,9 +373,9 @@ u32 check_ledge_grab(struct MarioState *m, struct Surface *wall, Vec3f intendedP
 
     //! Since the search for floors starts at y + 160, we will sometimes grab
     // a higher ledge than expected (glitchy ledge grab)
-    ledgePos[0] = nextPos[0] - wall->normal.x * 60.0f;
-    ledgePos[2] = nextPos[2] - wall->normal.z * 60.0f;
-    ledgePos[1] = find_floor(ledgePos[0], nextPos[1] + 160.0f, ledgePos[2], &ledgeFloor);
+    ledgePos[0] = nextPos[0] - wall->normal.x * 60.0f*Mscale;
+    ledgePos[2] = nextPos[2] - wall->normal.z * 60.0f*Mscale;
+    ledgePos[1] = find_floor(ledgePos[0], nextPos[1] + 160.0f*Mscale, ledgePos[2], &ledgeFloor);
 
     if (ledgePos[1] - nextPos[1] <= 100.0f) {
         return FALSE;
@@ -407,7 +407,7 @@ s32 perform_air_quarter_step(struct MarioState *m, Vec3f intendedPos, u32 stepAr
     vec3f_copy(nextPos, intendedPos);
 
     upperWall = resolve_and_return_wall_collisions(nextPos, 150.0f*Mscale, 50.0f*Mscale);
-    lowerWall = resolve_and_return_wall_collisions(nextPos, 30.0f*Mscale, 50.0f*Mscale);
+    lowerWall = resolve_and_return_wall_collisions(nextPos, 30.0f, 50.0f*Mscale);
 
     floorHeight = find_floor(nextPos[0], nextPos[1], nextPos[2], &floor);
     ceilHeight = vec3f_find_ceil(nextPos, nextPos[1], &ceil);
@@ -499,7 +499,7 @@ s32 perform_air_quarter_step(struct MarioState *m, Vec3f intendedPos, u32 stepAr
             return AIR_STEP_HIT_LAVA_WALL;
         }
 
-        if (wallDYaw < -0x6000 || wallDYaw > 0x6000) {
+        if (wallDYaw < -0x58E0 || wallDYaw > 0x58E0) {
             m->flags |= MARIO_UNKNOWN_30;
             return AIR_STEP_HIT_WALL;
         }

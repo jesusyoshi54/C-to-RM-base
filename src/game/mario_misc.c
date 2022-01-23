@@ -540,6 +540,7 @@ Gfx *geo_mario_rotate_wing_cap_wings(s32 callContext, struct GraphNode *node, UN
 /**
  * Geo node that updates the held object node and the HOLP.
  */
+extern f32 GetMarioScaleFactors(void);
 Gfx *geo_switch_mario_hand_grab_pos(s32 callContext, struct GraphNode *b, Mat4 *mtx) {
     struct GraphNodeHeldObject *asHeldObj = (struct GraphNodeHeldObject *) b;
     Mat4 *curTransform = mtx;
@@ -549,6 +550,8 @@ Gfx *geo_switch_mario_hand_grab_pos(s32 callContext, struct GraphNode *b, Mat4 *
         asHeldObj->objNode = NULL;
         if (marioState->heldObj != NULL) {
             asHeldObj->objNode = marioState->heldObj;
+			//inverse mario's scale on held obj
+			asHeldObj->scale = (1.0f/GetMarioScaleFactors());
             switch (marioState->marioBodyState->grabPos) {
                 case GRAB_POS_LIGHT_OBJ:
                     if (marioState->action & ACT_FLAG_THROWING) {

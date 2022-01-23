@@ -39,18 +39,18 @@
 #include "macros.h"
 
 //set this to the extended bounds mode you want, then do "make clean".
-#define EXTENDED_BOUNDS_MODE 4
+#define EXTENDED_BOUNDS_MODE 3
 
 // SURFACE_POOL_SIZE and SURFACE_NODE_POOL_SIZE only matter on N64
 // On non-N64 targets, surface sizes are allocated using SYSTEM_MALLOC
 
 //the maximum amount of collision surfaces (static and dynamic combined)
 //8200 should work fine for a 2x extended stage, the vanilla value is 2300
-#define SURFACE_POOL_SIZE 4000
+#define SURFACE_POOL_SIZE 10000
 
 //make this approximately (amount of collision cells) + (SURFACE_POOL_SIZE * 3)
 //22000 should work fine for a 2x extended stage, the vanilla value is 7000
-#define SURFACE_NODE_POOL_SIZE 12000
+#define SURFACE_NODE_POOL_SIZE 30000
 
 //cell and height limits
 #define CELL_HEIGHT_LIMIT           20000

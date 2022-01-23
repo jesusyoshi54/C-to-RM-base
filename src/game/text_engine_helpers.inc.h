@@ -1,3 +1,4 @@
+#include "include/course_table.h"
 s32 TE_inc_state(s32 *state){
 	s32 a = *state;
 	++*state;
@@ -16,6 +17,10 @@ s32 TE_mod_state(s32 *state,s32 mod){
 s32 TE_get_state(s32 *state){
 	return *state;
 }
+s32 TE_set_state(s32 *state,u32 value){
+	*state = value;
+	return 1;
+}
 s32 TE_get_flag(s32 *flag,u32 bit){
 	s32 a = *flag;
 	return ((a&bit)>0);
@@ -23,6 +28,12 @@ s32 TE_get_flag(s32 *flag,u32 bit){
 s32 TE_set_flag(s32 *flag,u32 bit){
 	*flag |= bit;
 	return 1;
+}
+void TE_print_star_cnt(s32 fileindex, s32 usr, u8 eng){
+	u32 cnt = save_file_get_total_star_count(fileindex, COURSE_MIN - 1, COURSE_MAX - 1);
+	UserInputs[eng][usr][0] = (u32) cnt / 10;
+	UserInputs[eng][usr][1] = (u32) cnt % 10;
+	UserInputs[eng][usr][2] = 0x45;
 }
 s32 TE_check_password(char *password,u32 usr){
 	char *input = UserInputs[0][usr];

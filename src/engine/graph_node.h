@@ -333,6 +333,7 @@ struct GraphNodeHeldObject
     /*0x18*/ s32 playerIndex;
     /*0x1C*/ struct Object *objNode;
     /*0x20*/ Vec3s translation;
+	/*0x20*/ f32 scale;
 };
 
 /** A node that allows an object to specify a different culling radius than the

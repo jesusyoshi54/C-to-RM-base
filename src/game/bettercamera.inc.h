@@ -653,7 +653,7 @@ static void newcam_bounding_box(void) {
     for (i = 0; i < NEW_CAM_BOUNDING_BOX_RAYS; i++) {
         vec3f_add(avg, raypos[i]);
     }
-    vec3f_mul(avg, 1.0f / ((f32)NEW_CAM_BOUNDING_BOX_RAYS));
+    vec3f_scale(avg, 1.0f / ((f32)NEW_CAM_BOUNDING_BOX_RAYS));
 
     vec3f_copy(newcam_pos, avg);
 }
@@ -677,11 +677,11 @@ static void newcam_collision(void) {
         offset[0] = surf->normal.x;
         offset[1] = surf->normal.y;
         offset[2] = surf->normal.z;
-        vec3f_mul(offset, 5.0f);
+        vec3f_scale(offset, 5.0f);
         vec3f_add(hitpos, offset);
 		//just set the camera to have a Y pos below the ceiling
         if (surf->type == SURFACE_HANGABLE) {
-			vec3f_mul(offset, 50.0f);
+			vec3f_scale(offset, 50.0f);
 			vec3f_add(hitpos, offset);
 			// newcam_pos[0] -= hitpos[0];
 			newcam_pos[1] = hitpos[1];

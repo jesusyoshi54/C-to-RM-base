@@ -920,7 +920,7 @@ s32 update_2_directions_camera(struct Camera *c, Vec3f focus, Vec3f pos) {
     f32 posY;
     f32 focusY;
     f32 yOff = 125.f;
-    f32 baseDist = 1000.f*GetMarioLargeScaleFactors();
+    f32 baseDist = 1000.f;
 	
 
     sAreaYaw = camYaw;
@@ -945,7 +945,7 @@ s32 update_8_directions_camera(struct Camera *c, Vec3f focus, Vec3f pos) {
     UNUSED f32 unused2;
     UNUSED f32 unused3;
     f32 yOff = 125.f;
-    f32 baseDist = 1000.f*GetMarioLargeScaleFactors();
+    f32 baseDist = 1000.f;
 
     sAreaYaw = camYaw;
     calc_y_to_curr_floor(&posY, 1.f, 200.f, &focusY, 0.9f, 200.f);
@@ -1249,7 +1249,7 @@ void mode_8_directions_camera(struct Camera *c) {
         s8DirModeYawOffset += DEGREES(1);
     }
     else if (gPlayer1Controller->buttonPressed & U_JPAD) {
-        s8DirModeYawOffset = (gMarioState->faceAngle[1]+0x9000)&0xE000;
+        s8DirModeYawOffset = gMarioState->faceAngle[1];
     }
     else if (gPlayer1Controller->buttonPressed & D_JPAD) {
         s8DirModeYawOffset = (s8DirModeYawOffset+0x1000)&0xE000;
@@ -3150,7 +3150,6 @@ void update_camera(struct Camera *c) {
 		}
 #endif
     // camera_course_processing(c);
-    stub_camera_3(c);
     sCButtonsPressed = find_c_buttons_pressed(sCButtonsPressed, gPlayer1Controller->buttonPressed,gPlayer1Controller->buttonDown);
 #ifdef BETTERCAMERA
 	}
@@ -3270,7 +3269,6 @@ void update_camera(struct Camera *c) {
     }
     // Start any Mario-related cutscenes
     start_cutscene(c, get_cutscene_from_mario_status(c));
-    stub_camera_2(c);
     gCheckingSurfaceCollisionsForCamera = FALSE;
     if (gCurrLevelNum != LEVEL_CASTLE) {
         // If fixed camera is selected as the alternate mode, then fix the camera as long as the right
@@ -3420,7 +3418,6 @@ void init_camera(struct Camera *c) {
     sMarioGeometry.prevCeil = sMarioGeometry.currCeil;
     sMarioGeometry.prevFloorType = sMarioGeometry.currFloorType;
     sMarioGeometry.prevCeilType = sMarioGeometry.currCeilType;
-	gCameraZoomDist*=GetMarioScaleFactors();
     for (i = 0; i < 32; i++) {
         sCurCreditsSplinePos[i].index = -1;
         sCurCreditsSplineFocus[i].index = -1;
@@ -3651,18 +3648,6 @@ Gfx *geo_camera_main(s32 callContext, struct GraphNode *g, void *context) {
             break;
     }
     return NULL;
-}
-
-void stub_camera_2(UNUSED struct Camera *c) {
-}
-
-void stub_camera_3(UNUSED struct Camera *c) {
-}
-
-void vec3f_sub(Vec3f dst, Vec3f src) {
-    dst[0] -= src[0];
-    dst[1] -= src[1];
-    dst[2] -= src[2];
 }
 
 void object_pos_to_vec3f(Vec3f dst, struct Object *o) {
