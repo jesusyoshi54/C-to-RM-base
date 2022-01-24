@@ -370,6 +370,66 @@ UNUSED void mtxf_rotate_xyz_and_translate(Mat4 dest, Vec3f trans, Vec3s rot) {
     MTXF_END(dest);
 }
 
+/// Build a matrix that rotates around the z axis, then the x axis, then the y axis, and then translates and multiplies.
+void mtxf_rotate_zxy_and_translate_and_mul(Vec3s rot, Vec3f trans, Mat4 dest, Mat4 src) {
+    register f32 sx = sins(rot[0]);
+    register f32 cx = coss(rot[0]);
+    register f32 sy = sins(rot[1]);
+    register f32 cy = coss(rot[1]);
+    register f32 sz = sins(rot[2]);
+    register f32 cz = coss(rot[2]);
+    Vec3f entry;
+    register f32 sysz = (sy * sz);
+    register f32 cycz = (cy * cz);
+    entry[0] = ((sysz * sx) + cycz);
+    entry[1] = (sz * cx);
+    register f32 cysz = (cy * sz);
+    register f32 sycz = (sy * cz);
+    entry[2] = ((cysz * sx) - sycz);
+    linear_mtxf_mul_vec3f(src, dest[0], entry);
+    entry[0] = ((sycz * sx) - cysz);
+    entry[1] = (cz * cx);
+    entry[2] = ((cycz * sx) + sysz);
+    linear_mtxf_mul_vec3f(src, dest[1], entry);
+    entry[0] = (cx * sy);
+    entry[1] = -sx;
+    entry[2] = (cx * cy);
+    linear_mtxf_mul_vec3f(src, dest[2], entry);
+    linear_mtxf_mul_vec3f(src, dest[3], trans);
+    vec3f_add(dest[3], src[3]);
+    MTXF_END(dest);
+}
+
+/// Build a matrix that rotates around the x axis, then the y axis, then the z axis, and then translates and multiplies.
+void mtxf_rotate_xyz_and_translate_and_mul(Vec3s rot, Vec3f trans, Mat4 dest, Mat4 src) {
+    register f32 sx = sins(rot[0]);
+    register f32 cx = coss(rot[0]);
+    register f32 sy = sins(rot[1]);
+    register f32 cy = coss(rot[1]);
+    register f32 sz = sins(rot[2]);
+    register f32 cz = coss(rot[2]);
+    Vec3f entry;
+    entry[0] = (cy * cz);
+    entry[1] = (cy * sz);
+    entry[2] = -sy;
+    linear_mtxf_mul_vec3f(src, dest[0], entry);
+    register f32 sxcz = (sx * cz);
+    register f32 cxsz = (cx * sz);
+    entry[0] = ((sxcz * sy) - cxsz);
+    register f32 sxsz = (sx * sz);
+    register f32 cxcz = (cx * cz);
+    entry[1] = ((sxsz * sy) + cxcz);
+    entry[2] = (sx * cy);
+    linear_mtxf_mul_vec3f(src, dest[1], entry);
+    entry[0] = ((cxcz * sy) + sxsz);
+    entry[1] = ((cxsz * sy) - sxcz);
+    entry[2] = (cx * cy);
+    linear_mtxf_mul_vec3f(src, dest[2], entry);
+    linear_mtxf_mul_vec3f(src, dest[3], trans);
+    vec3f_add(dest[3], src[3]);
+    MTXF_END(dest);
+}
+
 /**
  * Set 'dest' to a transformation matrix that turns an object to face the camera.
  * 'mtx' is the look-at matrix from the camera.
@@ -420,29 +480,37 @@ void mtxf_billboard(Mat4 dest, Mat4 mtx, Vec3f position, Vec3f scale, s16 angle)
 }
 
 // straight up mtxf_billboard but minus the dest[1][n] lines. transform for cylindrical billboards
-void mtxf_cylboard(Mat4 dest, Mat4 mtx, Vec3f position, s16 angle) {
-    dest[0][0] = coss(angle);
-    dest[0][1] = sins(angle);
+void mtxf_cylboard(Mat4 dest, Mat4 mtx, Vec3f position, Vec3f scale, s16 angle) {
+    register f32 sx = scale[0];
+    register f32 sy = scale[1];
+    register f32 sz = ((f32 *) scale)[2];
+    register f32 *temp2, *temp = (f32 *)dest;
+    register s32 i;
+	dest[0][0] = coss(angle) * sx;
+    dest[0][1] = sins(angle) * sx;
     dest[0][2] = 0;
     dest[0][3] = 0;
 
-    dest[1][0] = mtx[1][0];
-    dest[1][1] = mtx[1][1];
-    dest[1][2] = mtx[1][2];
+    dest[1][0] = mtx[1][0] * sy;
+    dest[1][1] = mtx[1][1] * sy;
+    dest[1][2] = mtx[1][2] * sy;
     dest[1][3] = 0;
 
     dest[2][0] = 0;
     dest[2][1] = 0;
-    dest[2][2] = 1;
+    dest[2][2] = sz;
     dest[2][3] = 0;
 
-    dest[3][0] =
-        mtx[0][0] * position[0] + mtx[1][0] * position[1] + mtx[2][0] * position[2] + mtx[3][0];
-    dest[3][1] =
-        mtx[0][1] * position[0] + mtx[1][1] * position[1] + mtx[2][1] * position[2] + mtx[3][1];
-    dest[3][2] =
-        mtx[0][2] * position[0] + mtx[1][2] * position[1] + mtx[2][2] * position[2] + mtx[3][2];
-    dest[3][3] = 1;
+    temp  = (f32 *)dest;
+    temp2 = (f32 *)mtx;
+    for (i = 0; i < 3; i++) {
+        temp[12] = ((temp2[ 0] * position[0])
+                  + (temp2[ 4] * position[1])
+                  + (temp2[ 8] * position[2])
+                  +  temp2[12]);
+        temp++;
+        temp2++;
+    }
 }
 
 /**

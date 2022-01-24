@@ -34,6 +34,7 @@ extern f32 gCosineTable[];
 
 #define sins(x) gSineTable[(u16) (x) >> 4]
 #define coss(x) gCosineTable[(u16) (x) >> 4]
+#define tans(x) (sins(x) / coss(x))
 
 #define min(a, b) ((a) <= (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -231,6 +232,18 @@ ALWAYS_INLINE s32 roundf(f32 in) {
 #define vec2_add(dst, src) vec2_sum((dst), (dst), (src))
 #define vec3_add(dst, src) vec3_sum((dst), (dst), (src))
 #define vec4_add(dst, src) vec4_sum((dst), (dst), (src))
+#define vec2_prod_val(dst, src, x) {    \
+    (dst)[0] = ((src)[0] * (x));        \
+    (dst)[1] = ((src)[1] * (x));        \
+}
+#define vec3_prod_val(dst, src, x) {    \
+    vec2_prod_val((dst), (src), (x));   \
+    (dst)[2] = ((src)[2] * (x));        \
+}
+#define vec4_prod_val(dst, src, x) {    \
+    vec3_prod_val((dst), (src), (x));   \
+    (dst)[3] = ((src)[3] * (x));        \
+}
 void vec3f_diff(Vec3f dest, const Vec3f a, const Vec3f b);
 void vec3i_diff(Vec3i dest, const Vec3i a, const Vec3i b);
 void vec3s_diff(Vec3s dest, const Vec3s a, const Vec3s b);
@@ -258,7 +271,7 @@ void mtxf_lookat(Mat4 mtx, Vec3f from, Vec3f to, s16 roll);
 void mtxf_rotate_zxy_and_translate(Mat4 dest, Vec3f translate, Vec3s rotate);
 void mtxf_rotate_xyz_and_translate(Mat4 dest, Vec3f b, Vec3s c);
 void mtxf_billboard(Mat4 dest, Mat4 mtx, Vec3f position, Vec3f scale, s16 angle);
-void mtxf_cylboard(Mat4 dest, Mat4 mtx, Vec3f position, s16 angle);
+void mtxf_cylboard(Mat4 dest, Mat4 mtx, Vec3f position, Vec3f scale, s16 angle);
 void mtxf_align_terrain_normal(Mat4 dest, Vec3f upDir, Vec3f pos, s16 yaw);
 void mtxf_align_terrain_triangle(Mat4 mtx, Vec3f pos, s16 yaw, f32 radius);
 void mtxf_mul(Mat4 dest, Mat4 a, Mat4 b);
@@ -276,5 +289,6 @@ f32 atan2f(f32 a, f32 b);
 void spline_get_weights(Vec4f result, f32 t, UNUSED s32 c);
 void anim_spline_init(Vec4s *keyFrames);
 s32 anim_spline_poll(Vec3f result);
-
+void mtxf_rotate_zxy_and_translate_and_mul(Vec3s rot, Vec3f trans, Mat4 dest, Mat4 src);
+void mtxf_rotate_xyz_and_translate_and_mul(Vec3s rot, Vec3f trans, Mat4 dest, Mat4 src);
 #endif // MATH_UTIL_H

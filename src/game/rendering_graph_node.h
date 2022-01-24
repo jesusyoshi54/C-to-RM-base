@@ -31,6 +31,8 @@ extern u16 gAreaUpdateCounter;
 // translation types the type is set to this
 #define ANIM_TYPE_ROTATION              5
 
+#define GET_GRAPH_NODE_LAYER(ly) ly>>8
+
 void geo_process_node_and_siblings(struct GraphNode *firstNode);
 void geo_process_root(struct GraphNodeRoot *node, Vp *b, Vp *c, s32 clearColor);
 
