@@ -244,6 +244,9 @@ ALWAYS_INLINE s32 roundf(f32 in) {
     vec3_prod_val((dst), (src), (x));   \
     (dst)[3] = ((src)[3] * (x));        \
 }
+void vec3f_prod(Vec3f dest, const Vec3f a, const Vec3f b);
+void vec3i_prod(Vec3i dest, const Vec3i a, const Vec3i b);
+void vec3s_prod(Vec3s dest, const Vec3s a, const Vec3s b);
 void vec3f_diff(Vec3f dest, const Vec3f a, const Vec3f b);
 void vec3i_diff(Vec3i dest, const Vec3i a, const Vec3i b);
 void vec3s_diff(Vec3s dest, const Vec3s a, const Vec3s b);

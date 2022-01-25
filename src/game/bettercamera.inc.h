@@ -12,6 +12,7 @@
 #include "pc/configfile.h"
 #include "pc/controller/controller_mouse.h"
 
+
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR) 
 //quick and dirty fix for some older MinGW.org mingwrt
 #else
@@ -72,7 +73,7 @@ struct newcam_hardpos {
 
 s16 newcam_yaw; //Z axis rotation
 f32 newcam_yaw_acc;
-s16 newcam_tilt = 0x600; //Y axis rotation
+s16 newcam_tilt = 0x900; //Y axis rotation
 f32 newcam_tilt_acc;
 u16 newcam_distance = 750; //The distance the camera stays from the player
 u16 newcam_distance_target = 750; //The distance the player camera tries to reach.
@@ -132,9 +133,10 @@ void newcam_init(struct Camera *c, u8 dv)
     #if defined(VERSION_EU)
     newcam_set_language();
     #endif
-    newcam_tilt = 0x600;
+    newcam_tilt = 0x900;
     newcam_distance_target = newcam_distance_values[dv];
-    newcam_yaw = ((-gMarioState->faceAngle[1]-0x4000)+0x1000)&0xE000;
+	newcam_distance_int = dv;
+    newcam_yaw = -gMarioState->faceAngle[1]-0x4000;
     //putting mode 8D here as standard, going to change newcam mode via L button
 	newcam_mode = NC_MODE_8D;
     ///This here will dictate what modes the camera will start in at the beginning of a level. Below are some examples.
@@ -176,7 +178,7 @@ void newcam_toggle(bool enabled) {
         newcam_saved_defmode = gLakituState.defMode;
         gLakituState.mode = CAMERA_MODE_NEWCAM;
         gLakituState.defMode = CAMERA_MODE_NEWCAM;
-		newcam_init(gCurrentArea->camera, 0);
+		newcam_init(gCurrentArea->camera, newcam_distance_int);
     } else if (!enabled && newcam_active) {
         if (newcam_saved_mode != -1) {
             gLakituState.defMode = newcam_saved_defmode;
@@ -303,7 +305,7 @@ static void newcam_rotate_button(void)
 			newcam_centering = 1;
 		}
 	}
-	if ((gPlayer1Controller->buttonDown & L_JPAD) &&  newcam_analogue == 0)
+	if ((gPlayer1Controller->buttonDown & L_JPAD) && newcam_analogue == 0)
 	{
 		newcam_yaw_target = newcam_yaw_target+(ivrt(0)*0x80);
 		newcam_centering = 1;
@@ -315,25 +317,25 @@ static void newcam_rotate_button(void)
 		newcam_centering = 1;
 	}
 	else
-	if ((gPlayer1Controller->buttonPressed & D_JPAD) && newcam_analogue == 0)
+	if ((gPlayer1Controller->buttonPressed & D_JPAD)  && newcam_analogue == 0)
 	{
 		newcam_yaw_target = (newcam_yaw_target+0x1000)&0xE000;
 		newcam_centering = 1;
 		if(newcam_distance_int == 0){
-			newcam_tilt = 0x650;
+			newcam_tilt = 0x750;
 		}else{
-			newcam_tilt = 0x850;
+			newcam_tilt = 0x950;
 		}
 	}
 	else
 	if (gPlayer1Controller->buttonDown & U_JPAD && newcam_analogue == 0)
 	{
-		newcam_yaw_target = (-gMarioState->faceAngle[1]-0x4000); //conversion from sm64 angles to newcam angle system
+		newcam_yaw_target = -gMarioState->faceAngle[1]-0x4000; //conversion from sm64 angles to newcam angle system
 		newcam_centering = 1;
 		if(newcam_distance_int == 0){
-			newcam_tilt = 0x650;
+			newcam_tilt = 0x750;
 		}else{
-			newcam_tilt = 0x850;
+			newcam_tilt = 0x950;
 		}
 	}
     if (newcam_analogue == 1) //8 directional camera rotation input for buttons.
@@ -515,7 +517,7 @@ static void newcam_bounding_box(void) {
     for (i = 0; i < NEW_CAM_BOUNDING_BOX_RAYS; i++) {
         vec3f_add(avg, raypos[i]);
     }
-    vec3f_mul(avg, 1.0f / ((f32)NEW_CAM_BOUNDING_BOX_RAYS));
+    vec3f_scale(avg, 1.0f / ((f32)NEW_CAM_BOUNDING_BOX_RAYS));
 
     vec3f_copy(newcam_pos, avg);
 }

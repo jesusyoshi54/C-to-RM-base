@@ -255,7 +255,7 @@ void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 		CurAlpha = CurEng->EnvColorByte[3];
 		TarAlpha = Tr->TransAlpha;
 	}
-	u32 Env = CurEng->EnvColorWord;
+	s32 Env = CurEng->EnvColorWord;
 	u32 Time = (gNumVblanks-Tr->TransVI);
 	f32 Pct = ((f32) Time) / ((f32) Tr->TransLength);
 	f32 Spd = ((f32)Tr->TransSpeed)/((f32) Tr->TransLength);
@@ -279,6 +279,7 @@ void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 	CurEng->EnvColorWord = (CurEng->EnvColorWord&0xFFFFFF00) | (u8) TarAlpha;
 	TE_set_env(CurEng);
 	CurEng->EnvColorWord = Env;
+	CurEng->TrPct = Pct;
 	// print_generic_string(CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state]);
 	print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
 }
@@ -497,16 +498,17 @@ u32 TE_get_ptr(u8 *strArgs,u8 *str){
 
 #if TE_DEBUG
 extern uintptr_t sSegmentTable[32];
+#include "magic.h"
 void TE_debug_print(struct TEState *CurEng){
 	u8 buf[32];
-	if (gPlayer1Controller->buttonDown&L_TRIG){
-		sprintf(buf,"col %d",CurEng->EnvColorWord);
-		print_text(32,64,buf);
-		sprintf(buf,"og %d",CurEng->OgSeqID);
-		print_text(32,128,buf);
-		sprintf(buf,"param %d",gCurrentArea->musicParam);
-		print_text(32,96,buf);
-	}
+	// if (gPlayer1Controller->buttonDown&L_TRIG){
+		// sprintf(buf,"og %x",CurEng->OgStr);
+		// print_text(32,64,buf);
+		// sprintf(buf,"temp %x",CurEng->TempStr);
+		// print_text(32,96,buf);
+		// sprintf(buf,"stck %x",CurEng->StrStack[0]);
+		// print_text(32,128,buf);
+	// }
 	
 }
 #endif
