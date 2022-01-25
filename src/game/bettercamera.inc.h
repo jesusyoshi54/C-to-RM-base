@@ -285,12 +285,14 @@ static void newcam_rotate_button(void)
 		{
 			newcam_yaw_target = newcam_yaw_target+(ivrt(0)*0x2000);
 			newcam_centering = 1;
+			play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource);
 		}
 		else
 		if ((gPlayer1Controller->buttonPressed & R_CBUTTONS))
 		{
 			newcam_yaw_target = newcam_yaw_target-(ivrt(0)*0x2000);
 			newcam_centering = 1;
+			play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource);
 		}
 	}else{
 		if ((gPlayer1Controller->buttonDown & L_CBUTTONS))
@@ -380,17 +382,21 @@ static void newcam_zoom_button(void)
             newcam_distance_target = newcam_distance_values[1];
 			newcam_distance_int = 1;
 			newcam_tilt += 0x200;
+			play_sound(SOUND_MENU_CAMERA_ZOOM_OUT, gGlobalSoundSource);
 		}
         else
         if (newcam_distance_target == newcam_distance_values[1]){
             newcam_distance_target = newcam_distance_values[2];
 			newcam_distance_int = 3;
+			play_sound(SOUND_MENU_CAMERA_ZOOM_OUT, gGlobalSoundSource);
 		}
         else
 		if ((newcam_distance_target == newcam_distance_values[2])&& newcam_modeflags&NC_FLAG_ZOOM_ULTRA){
             newcam_distance_target = newcam_distance_values[3];
 			newcam_distance_int = 3;
+			play_sound(SOUND_MENU_CAMERA_ZOOM_OUT, gGlobalSoundSource);
 		}
+		
     }
     else if (gPlayer1Controller->buttonPressed & U_CBUTTONS && newcam_analogue == 0)
     {
@@ -399,17 +405,21 @@ static void newcam_zoom_button(void)
             newcam_distance_target = newcam_distance_values[0];
 			newcam_tilt -= 0x200;
 			newcam_distance_int = 0;
+			play_sound(SOUND_MENU_CAMERA_ZOOM_IN, gGlobalSoundSource);
 		}
         else
         if (newcam_distance_target == newcam_distance_values[2]){
             newcam_distance_target = newcam_distance_values[1];
 			newcam_distance_int = 1;
+			play_sound(SOUND_MENU_CAMERA_ZOOM_IN, gGlobalSoundSource);
 		}
         else
 		if (newcam_distance_target == newcam_distance_values[3]){
             newcam_distance_target = newcam_distance_values[2];
 			newcam_distance_int = 2;
+			play_sound(SOUND_MENU_CAMERA_ZOOM_IN, gGlobalSoundSource);
 		}
+		
     }
     if (newcam_centering && newcam_modeflags & NC_FLAG_XTURN)
     {
