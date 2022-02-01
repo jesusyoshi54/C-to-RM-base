@@ -2249,7 +2249,7 @@ void stop_sounds_from_source(f32 *pos) {
 /**
  * Called from threads: thread3_main, thread5_game_loop
  */
-static void stop_sounds_in_bank(u8 bank) {
+void stop_sounds_in_bank(u8 bank) {
     u8 soundIndex = sSoundBanks[bank][0].next;
 
     while (soundIndex != 0xff) {

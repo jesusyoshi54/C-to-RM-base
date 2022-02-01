@@ -220,6 +220,7 @@ static u16 Bank = 0;
 static u16 Index = 0;
 static u16 m64 = 0;
 static s8 selected = -1;
+extern void stop_sounds_in_bank(u8 bank);
 #include "src/game/Keyboard_te.h"
 #include "src/game/text_engine.h"
 s32 intro_play_its_a_me_mario(void) {
@@ -242,6 +243,8 @@ s32 intro_play_its_a_me_mario(void) {
 			}
 			if(gPlayer3Controller->buttonPressed & L_TRIG){
 				play_sound(SOUND_ARG_LOAD(Bank,Index, 0xFF, SOUND_DISCRETE), gGlobalSoundSource);
+			}if(gPlayer3Controller->buttonPressed & R_TRIG){
+				stop_sounds_in_bank(Bank);
 			}
 			break;
 		case 1:
@@ -257,6 +260,9 @@ s32 intro_play_its_a_me_mario(void) {
 			if(gPlayer3Controller->buttonPressed & L_TRIG){
 				play_sound(SOUND_ARG_LOAD(Bank,Index, 0xFF, SOUND_DISCRETE), gGlobalSoundSource);
 			}
+			if(gPlayer3Controller->buttonPressed & R_TRIG){
+				stop_sounds_in_bank(Bank);
+			}
 			break;
 		case 2:
 			if(gPlayer3Controller->buttonPressed & A_BUTTON){
@@ -271,14 +277,13 @@ s32 intro_play_its_a_me_mario(void) {
 			if(gPlayer3Controller->buttonPressed & L_TRIG){
 				play_music(1, SEQUENCE_ARGS(4, m64), 0);
 			}
-
+			if(gPlayer3Controller->buttonPressed & R_TRIG){
+				play_music(1, 0, 0);
+			}
 			break;
 		case 3:
 			selected = 0;
 			break;
-	}
-	if(gPlayer3Controller->buttonPressed & R_TRIG){
-		play_music(1, 0, 0);
 	}
 	u8 i = 0;
 	UserInputs[0][0][0] = running&3;
