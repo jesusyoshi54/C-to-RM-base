@@ -722,7 +722,8 @@ void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32
         case 0x3F: *textX = 56; *textY = 12; *spaceX = textLen[46]; break; //Period
         case 0x6F: *textX = 60; *textY = 12; *spaceX = textLen[47]; break; //Comma
 
-        case 0xF7: *textX = 40; *textY = 24; *spaceX = textLen[74]; break; //Tilde
+        case 0x53: *textX = 40; *textY = 24; *spaceX = textLen[74]; break; //ARROW
+        case 0xF7: *textX = 40; *textY = 24; *spaceX = textLen[74]; break; //ARROW
         case 0x50: *textX = 48; *textY = 24; *spaceX = textLen[76]; break; //Caret
         case 0x51: *textX = 44; *textY = 24; *spaceX = textLen[76]; break; //Down
         case 0xD0: *textX = 52; *textY = 24; *spaceX = textLen[77]; break; //Slash

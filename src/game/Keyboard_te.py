@@ -33,3 +33,9 @@ TEST_TEX_BOX = ["[MosaicBGBox(32,96,96,160,0x09000000,3,3)][Pop()]"]
 TEST_STR = ["[JumpLink('TEST_BOX')][JumpLink('TEST_TEX_BOX')]\
 [SetEnv(30,255,255,255)][StartKeyboard(0)][WordWrap(296)]Empy test for now. Nothing happening\
 [end]"]
+
+msg = ["running [UsrStr(0)]\n\n\
+A to inc, B to dec, Z to reset, L to Play.\n\
+R to stop playing a sequence.\n\n\
+Play SFX Bank [UsrStr(1)] Index [UsrStr(2)]\n\n\
+Play SEQ [UsrStr(3)][end][end]"]

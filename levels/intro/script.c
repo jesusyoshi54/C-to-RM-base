@@ -33,7 +33,7 @@ const LevelScript level_intro_splash_screen[] = {
     // Start animation
     LOAD_AREA(/*area*/ 1),
 
-    CALL(/*arg*/ 0, /*func*/ lvl_intro_update),
+    CALL_LOOP(/*arg*/ 0, /*func*/ lvl_intro_update),
     SLEEP(/*frames*/ 75),
     TRANSITION(/*transType*/ WARP_TRANSITION_FADE_INTO_COLOR, /*time*/ 16, /*color*/ 0x00, 0x00, 0x00),
     SLEEP(/*frames*/ 16),

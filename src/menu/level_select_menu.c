@@ -215,11 +215,106 @@ s32 intro_game_over(void) {
     }
     return run_press_start_demo_timer(sp1C);
 }
-
+static u8 running = 0;
+static u16 Bank = 0;
+static u16 Index = 0;
+static u16 m64 = 0;
+static s8 selected = -1;
+#include "src/game/Keyboard_te.h"
+#include "src/game/text_engine.h"
 s32 intro_play_its_a_me_mario(void) {
-    set_background_music(0, SEQ_SOUND_PLAYER, 0);
-    play_sound(SOUND_MENU_COIN_ITS_A_ME_MARIO, gGlobalSoundSource);
-    return 1;
+    //do controls for sound player here
+	if(selected == -1){
+		SetupTextEngine(16,200,&msg,0);
+		selected = 0;
+	}
+	running += 1;
+	switch(selected){
+		case 0:
+			if(gPlayer3Controller->buttonPressed & A_BUTTON){
+				Bank += 1;
+			}
+			if(gPlayer3Controller->buttonPressed & B_BUTTON){
+				Bank -= 1;
+			}
+			if(gPlayer3Controller->buttonPressed & Z_TRIG){
+				Bank = 0;
+			}
+			if(gPlayer3Controller->buttonPressed & L_TRIG){
+				play_sound(SOUND_ARG_LOAD(Bank,Index, 0xFF, SOUND_DISCRETE), gGlobalSoundSource);
+			}
+			break;
+		case 1:
+			if(gPlayer3Controller->buttonPressed & A_BUTTON){
+				Index += 1;
+			}
+			if(gPlayer3Controller->buttonPressed & B_BUTTON){
+				Index -= 1;
+			}
+			if(gPlayer3Controller->buttonPressed & Z_TRIG){
+				Index = 0;
+			}
+			if(gPlayer3Controller->buttonPressed & L_TRIG){
+				play_sound(SOUND_ARG_LOAD(Bank,Index, 0xFF, SOUND_DISCRETE), gGlobalSoundSource);
+			}
+			break;
+		case 2:
+			if(gPlayer3Controller->buttonPressed & A_BUTTON){
+				m64 += 1;
+			}
+			if(gPlayer3Controller->buttonPressed & B_BUTTON){
+				m64 -= 1;
+			}
+			if(gPlayer3Controller->buttonPressed & Z_TRIG){
+				m64 = 0;
+			}
+			if(gPlayer3Controller->buttonPressed & L_TRIG){
+				play_music(1, SEQUENCE_ARGS(4, m64), 0);
+			}
+
+			break;
+		case 3:
+			selected = 0;
+			break;
+	}
+	if(gPlayer3Controller->buttonPressed & R_TRIG){
+		play_music(1, 0, 0);
+	}
+	u8 i = 0;
+	UserInputs[0][0][0] = running&3;
+	UserInputs[0][0][2] = 0x45;
+	
+	if(selected == 0){
+		UserInputs[0][1][0] = 0x53;
+	}else{
+		UserInputs[0][1][0] = 0x9E;
+	}
+	UserInputs[0][1][1] = (u8)Bank/10;
+	UserInputs[0][1][2] = (u8)Bank%10;
+	UserInputs[0][1][3] = 0x45;
+	
+	if(selected == 1){
+		UserInputs[0][2][0] = 0x53;
+	}else{
+		UserInputs[0][2][0] = 0x9E;
+	}
+	UserInputs[0][2][1] = (u8)Index/10;
+	UserInputs[0][2][2] = (u8)Index%10;
+	UserInputs[0][2][3] = 0x45;
+	
+	if(selected == 2){
+		UserInputs[0][3][0] = 0x53;
+	}else{
+		UserInputs[0][3][0] = 0x9E;
+	}
+	UserInputs[0][3][1] = (u8)m64/10;
+	UserInputs[0][3][2] = (u8)m64%10;
+	UserInputs[0][3][3] = 0x45;
+	
+	
+	handle_menu_scrolling(2,&selected,0,3);
+
+	return 0;
 }
 
 s32 lvl_intro_update(s16 arg1, UNUSED s32 arg2) {
