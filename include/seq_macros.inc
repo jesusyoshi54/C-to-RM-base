@@ -382,6 +382,14 @@
     .byte 0xe4
 .endm
 
+.macro chan_external
+    .byte 0xcd
+.endm
+
+.macro chan_external_pop
+    .byte 0xce
+.endm
+
 .macro chan_hang
     .byte 0xf3
 .endm

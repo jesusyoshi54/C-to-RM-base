@@ -74,6 +74,7 @@ extern f32 gCosineTable[];
     ((u32 *)(mtx))[15] = FLOAT_ONE;             \
 }
 
+#ifdef TARGET_N64
 /// From Wiseguy
 ALWAYS_INLINE s32 roundf(f32 in) {
     f32 tmp;
@@ -82,6 +83,8 @@ ALWAYS_INLINE s32 roundf(f32 in) {
     __asm__("mfc1      %0,%1" : "=r" (out) : "f" (tmp));
     return out;
 }
+#endif
+
 // backwards compatibility
 #define round_float(in) roundf(in)
 

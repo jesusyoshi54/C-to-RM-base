@@ -78,7 +78,7 @@ OSMesg gUnkMesgBufs2[0x10];
 OSMesgQueue gCurrAudioFrameDmaQueue;
 OSMesg gCurrAudioFrameDmaMesgBufs[AUDIO_FRAME_DMA_QUEUE_SIZE];
 OSIoMesg gCurrAudioFrameDmaIoMesgBufs[AUDIO_FRAME_DMA_QUEUE_SIZE];
-
+u8 gExternalSeqLoad = 0;
 OSMesgQueue gAudioDmaMesgQueue;
 OSMesg gAudioDmaMesg;
 OSIoMesg gAudioDmaIoMesg;
@@ -1416,20 +1416,43 @@ struct AudioBank *bank_load_async(s32 bankId, s32 arg1, struct SequencePlayer *s
 #endif
 
 #ifndef VERSION_SH
+
+#ifndef TARGET_N64
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#endif
+
+
 void *sequence_dma_immediate(s32 seqId, s32 arg1) {
     s32 seqLength;
     void *ptr;
     u8 *seqData;
+	if(gExternalSeqLoad){
+		#ifndef TARGET_N64
+		FILE *ptr_ext_m64;
 
-    seqLength = gSeqFileHeader->seqArray[seqId].len + 0xf;
-    seqLength = ALIGN16(seqLength);
-    seqData = gSeqFileHeader->seqArray[seqId].offset;
-    ptr = alloc_bank_or_seq(&gSeqLoadedPool, 1, seqLength, arg1, seqId);
+		ptr_ext_m64 = fopen("test.m64","rb");
+		fseek(ptr_ext_m64,0,SEEK_END);
+		seqLength = ftell(ptr_ext_m64);
+		fseek(ptr_ext_m64,0,0);
+		ptr = alloc_bank_or_seq(&gSeqLoadedPool, 1, seqLength, arg1, seqId);
+		fread(ptr,seqLength,1,ptr_ext_m64);
+		printf("external load %p\n",ptr);
+		#endif
+	}else{
+		seqLength = gSeqFileHeader->seqArray[seqId].len + 0xf;
+		seqLength = ALIGN16(seqLength);
+		seqData = gSeqFileHeader->seqArray[seqId].offset;
+		ptr = alloc_bank_or_seq(&gSeqLoadedPool, 1, seqLength, arg1, seqId);
+	}
     if (ptr == NULL) {
         return NULL;
     }
 
-    audio_dma_copy_immediate((uintptr_t) seqData, ptr, seqLength);
+    if(!gExternalSeqLoad){
+		audio_dma_copy_immediate((uintptr_t) seqData, ptr, seqLength);
+	}
     gSeqLoadStatus[seqId] = SOUND_LOAD_STATUS_COMPLETE;
     return ptr;
 }
@@ -1520,37 +1543,37 @@ u8 get_missing_bank(u32 seqId, s32 *nonNullCount, s32 *nullCount) {
 #endif
 
 #ifndef VERSION_SH
+extern u16 Extm64;
 struct AudioBank *load_banks_immediate(s32 seqId, u8 *arg1) {
     void *ret;
     u32 bankId;
     u16 offset;
     u8 i;
 
-    offset = ((u16 *) gAlBankSets)[seqId];
-#ifdef VERSION_EU
-    for (i = gAlBankSets[offset++]; i != 0; i--) {
-        bankId = gAlBankSets[offset++];
-#else
-    offset++;
-    for (i = gAlBankSets[offset - 1]; i != 0; i--) {
-        offset++;
-        bankId = gAlBankSets[offset - 1];
-#endif
+    if(gExternalSeqLoad){
+		bankId = Extm64;
+		ret = get_bank_or_seq(&gBankLoadedPool, 2, Extm64);
+		if (ret == NULL) {
+			ret = bank_load_immediate(bankId, 2);
+		}
+	}else{
+		offset = ((u16 *) gAlBankSets)[seqId];
+		offset++;
+		for (i = gAlBankSets[offset - 1]; i != 0; i--) {
+			offset++;
+			bankId = gAlBankSets[offset - 1];
 
-        if (IS_BANK_LOAD_COMPLETE(bankId) == TRUE) {
-#ifdef VERSION_EU
-            ret = get_bank_or_seq(&gBankLoadedPool, 2, bankId);
-#else
-            ret = get_bank_or_seq(&gBankLoadedPool, 2, gAlBankSets[offset - 1]);
-#endif
-        } else {
-            ret = NULL;
-        }
+			if (IS_BANK_LOAD_COMPLETE(bankId) == TRUE) {
+				ret = get_bank_or_seq(&gBankLoadedPool, 2, gAlBankSets[offset - 1]);
+			} else {
+				ret = NULL;
+			}
 
-        if (ret == NULL) {
-            ret = bank_load_immediate(bankId, 2);
-        }
-    }
+			if (ret == NULL) {
+				ret = bank_load_immediate(bankId, 2);
+			}
+		}
+	}
     *arg1 = bankId;
     return ret;
 }
@@ -1609,8 +1632,13 @@ void load_sequence_internal(u32 player, u32 seqId, s32 loadAsync) {
     UNUSED u32 padding[2];
 
     if (seqId >= gSequenceCount) {
-        return;
-    }
+        gExternalSeqLoad = 1;
+		#ifdef TARGET_N64
+		return;
+		#endif
+    }else{
+		gExternalSeqLoad = 0;
+	}
 
     sequence_player_disable(seqPlayer);
     if (loadAsync) {
@@ -1650,7 +1678,8 @@ void load_sequence_internal(u32 player, u32 seqId, s32 loadAsync) {
     eu_stubbed_printf_2("Seq %d:Default Load Id is %d\n", seqId, seqPlayer->defaultBank[0]);
     eu_stubbed_printf_0("Seq Loading Start\n");
 
-    seqPlayer->seqId = seqId;
+
+	seqPlayer->seqId = seqId;
 #ifndef VERSION_SH
     sequenceData = get_bank_or_seq(&gSeqLoadedPool, 2, seqId);
 #endif
@@ -1674,7 +1703,7 @@ void load_sequence_internal(u32 player, u32 seqId, s32 loadAsync) {
         }
     }
 
-    eu_stubbed_printf_1("SEQ  %d ALREADY CACHED\n", seqId);
+	eu_stubbed_printf_1("SEQ  %d ALREADY CACHED\n", seqId);
     init_sequence_player(player);
     seqPlayer->scriptState.depth = 0;
     seqPlayer->delay = 0;

@@ -291,6 +291,9 @@ struct SequencePlayer
     /*     , 0x012, 0x014*/ u16 fadeTimerUnkEu;
 #endif
     /*0x014, 0x014*/ u8 *seqData; // buffer of some sort
+    /*0x014, 0x014*/ u8 *extData; // ext data ptr
+    /*0x014, 0x014*/ u8 *tmpData; // ext data ptr for when outside channel to park it
+    /*0x014, 0x014*/ u32 tmpDiff; // ext data ptr for when outside channel to park it
     /*0x018, 0x018, 0x1C*/ f32 fadeVolume; // set to 1.0f
     /*0x01C, 0x01C*/ f32 fadeVelocity; // set to 0.0f
     /*0x020, 0x020, 0x024*/ f32 volume; // set to 0.0f

@@ -39,7 +39,7 @@ PUPPYDEBUG ?= 0
 
 
 # Build for original N64 (no pc code)
-TARGET_N64 = 1
+TARGET_N64 = 0
 # Build and optimize for Raspberry Pi(s)
 TARGET_RPI ?= 0
 # Build for Emscripten/WebGL
@@ -96,7 +96,7 @@ CONTROLLER_API ?= SDL2
 .PHONY: RM2CPC
 RM2CPC:
 	$(info "Running make -j4 TARGET_N64=0 TARGET_ARCH=native WINDOWS_BUILD=1 TARGET_GAME_CONSOLE=0 DEBUG=1 NODRAWINGDISTANCE=1")
-	make TARGET_N64=0 TARGET_ARCH=native WINDOWS_BUILD=1 TARGET_GAME_CONSOLE=0 DEBUG=1 NODRAWINGDISTANCE=1 -j4 
+	make TARGET_N64=0 TARGET_ARCH=native WINDOWS_BUILD=1 TARGET_GAME_CONSOLE=0 DEBUG=1 NODRAWINGDISTANCE=1 -j4 2>&1 | grep --color -iP "\^|warning:|error:|"
 
 
 ifeq ($(TARGET_WII_U),1)
@@ -899,6 +899,11 @@ endif
 ifeq ($(RM2C),1)
   CC_CHECK += -DRM2C
   CFLAGS += -DRM2C
+endif
+
+ifeq ($(TE),1)
+  CC_CHECK += -DTE
+  CFLAGS += -DTE
 endif
 
 ifeq ($(LEVEL_SELECT),1)

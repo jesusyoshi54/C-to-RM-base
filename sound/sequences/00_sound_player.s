@@ -18,7 +18,7 @@ seq_setmutescale 0
   seq_setvol 127
 .endif
 seq_settempo 120
-seq_initchannels 0x3ff
+seq_initchannels 0x7ff
 seq_startchannel 0, .channel0
 seq_startchannel 1, .channel1
 seq_startchannel 2, .channel2
@@ -29,9 +29,23 @@ seq_startchannel 6, .channel6
 seq_startchannel 7, .channel7
 seq_startchannel 8, .channel38
 seq_startchannel 9, .channel59
+seq_startchannel 10, .channelExternal
 .seq_loop:
 seq_delay 20000
 seq_jump .seq_loop
+
+
+.channelExternal:
+chan_largenoteson
+chan_setinstr 0
+chan_setpanmix 127
+chan_setnotepriority 14
+chan_setval 0
+chan_iowriteval 5
+chan_stereoheadseteffects 1
+chan_setdyntable .channelExernal_table
+chan_jump .main_loop_023589
+
 
 .channel0:
 chan_largenoteson
@@ -246,6 +260,14 @@ chan_end
 chan_writeseq_nextinstr 0, 1
 chan_setreverb 10
 chan_iowriteval 5
+chan_end
+
+
+.channelExernal_table:
+sound_ref .sound_external
+
+.sound_external:
+chan_external
 chan_end
 
 .channel0_table:

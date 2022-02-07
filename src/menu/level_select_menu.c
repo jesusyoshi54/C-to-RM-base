@@ -218,11 +218,21 @@ s32 intro_game_over(void) {
 static u8 running = 0;
 static u16 Bank = 0;
 static u16 Index = 0;
-static u16 m64 = 0;
+static u16 m64 = 1;
+u16 Extm64 = 12;
 static s8 selected = -1;
 extern void stop_sounds_in_bank(u8 bank);
+extern u16 gSequenceCount;
 #include "src/game/Keyboard_te.h"
 #include "src/game/text_engine.h"
+#ifndef TARGET_N64
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+FILE *ptr_sfx_dyncall;
+u8 *dyncall_read;
+#endif
+
 s32 intro_play_its_a_me_mario(void) {
     //do controls for sound player here
 	if(selected == -1){
@@ -232,6 +242,12 @@ s32 intro_play_its_a_me_mario(void) {
 	running += 1;
 	switch(selected){
 		case 0:
+			if(gPlayer3Controller->buttonPressed & U_CBUTTONS){
+				Bank += 10;
+			}
+			if(gPlayer3Controller->buttonPressed & D_CBUTTONS){
+				Bank -= 10;
+			}
 			if(gPlayer3Controller->buttonPressed & A_BUTTON){
 				Bank += 1;
 			}
@@ -245,9 +261,16 @@ s32 intro_play_its_a_me_mario(void) {
 				play_sound(SOUND_ARG_LOAD(Bank,Index, 0xFF, SOUND_DISCRETE), gGlobalSoundSource);
 			}if(gPlayer3Controller->buttonPressed & R_TRIG){
 				stop_sounds_in_bank(Bank);
+				stop_sounds_in_continuous_banks();
 			}
 			break;
 		case 1:
+			if(gPlayer3Controller->buttonPressed & U_CBUTTONS){
+				Index += 10;
+			}
+			if(gPlayer3Controller->buttonPressed & D_CBUTTONS){
+				Index -= 10;
+			}
 			if(gPlayer3Controller->buttonPressed & A_BUTTON){
 				Index += 1;
 			}
@@ -262,9 +285,16 @@ s32 intro_play_its_a_me_mario(void) {
 			}
 			if(gPlayer3Controller->buttonPressed & R_TRIG){
 				stop_sounds_in_bank(Bank);
+				stop_sounds_in_continuous_banks();
 			}
 			break;
 		case 2:
+			if(gPlayer3Controller->buttonPressed & U_CBUTTONS){
+				m64 += 10;
+			}
+			if(gPlayer3Controller->buttonPressed & D_CBUTTONS){
+				m64 -= 10;
+			}
 			if(gPlayer3Controller->buttonPressed & A_BUTTON){
 				m64 += 1;
 			}
@@ -281,9 +311,61 @@ s32 intro_play_its_a_me_mario(void) {
 				play_music(1, 0, 0);
 			}
 			break;
+		#ifndef TARGET_N64
+		case 3:
+			//load external file
+			if(gPlayer3Controller->buttonPressed & L_TRIG){
+				ptr_sfx_dyncall = fopen("dyncall.bin","rb");
+				if (ptr_sfx_dyncall){
+					printf("file loaded %p\n",ptr_sfx_dyncall);
+					int i;
+					fseek(ptr_sfx_dyncall,0,SEEK_END);
+					i = ftell(ptr_sfx_dyncall);
+					fseek(ptr_sfx_dyncall,0,0);
+					dyncall_read = malloc(i);
+					fread(dyncall_read,i,1,ptr_sfx_dyncall);
+					play_sound(SOUND_ARG_LOAD(10,0, 0xFF, SOUND_DISCRETE), gGlobalSoundSource);
+				}else{
+					printf("file not found!\n");
+				}
+			}
+			if(gPlayer3Controller->buttonPressed & R_TRIG){
+				stop_sounds_in_bank(Bank);
+				stop_sounds_in_continuous_banks();
+			}
+			break;
+		case 4:
+			//sequence reading/loading is done in load.c around line 1440
+			if(gPlayer3Controller->buttonPressed & U_CBUTTONS){
+				Extm64 += 10;
+			}
+			if(gPlayer3Controller->buttonPressed & D_CBUTTONS){
+				Extm64 -= 10;
+			}
+			if(gPlayer3Controller->buttonPressed & A_BUTTON){
+				Extm64 += 1;
+			}
+			if(gPlayer3Controller->buttonPressed & B_BUTTON){
+				Extm64 -= 1;
+			}
+			if(gPlayer3Controller->buttonPressed & Z_TRIG){
+				Extm64 = 0;
+			}
+			if(gPlayer3Controller->buttonPressed & L_TRIG){
+				play_music(1, SEQUENCE_ARGS(4, gSequenceCount+1), 0);
+			}
+			if(gPlayer3Controller->buttonPressed & R_TRIG){
+				play_music(1, 0, 0);
+			}
+			break;
+		case 5:
+			selected = 0;
+			break;
+		#else
 		case 3:
 			selected = 0;
 			break;
+		#endif
 	}
 	u8 i = 0;
 	UserInputs[0][0][0] = running&3;
@@ -316,8 +398,27 @@ s32 intro_play_its_a_me_mario(void) {
 	UserInputs[0][3][2] = (u8)m64%10;
 	UserInputs[0][3][3] = 0x45;
 	
+	#ifndef TARGET_N64
+	if(selected == 3){
+		UserInputs[0][4][0] = 0x53;
+	}else{
+		UserInputs[0][4][0] = 0x9E;
+	}
+	UserInputs[0][4][1] = 0x45;
 	
+	if(selected == 4){
+		UserInputs[0][5][0] = 0x53;
+	}else{
+		UserInputs[0][5][0] = 0x9E;
+	}
+	UserInputs[0][5][1] = (u8)Extm64/10;
+	UserInputs[0][5][2] = (u8)Extm64%10;
+	UserInputs[0][5][3] = 0x45;
+
+	handle_menu_scrolling(2,&selected,0,5);
+	#else
 	handle_menu_scrolling(2,&selected,0,3);
+	#endif
 
 	return 0;
 }

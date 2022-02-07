@@ -4694,6 +4694,11 @@ typedef union {
     _SHIFTL(dsdx, 16, 16) | _SHIFTL(dtdy, 0, 16)			\
 }}
 
+# define gSPScisTextureRectangle(pkt, xl, yl, xh, yh, tile, s, t, dsdx, dtdy) \
+{                                                                            \
+    gSPTextureRectangle(pkt, xl, yl, xh, yh, tile, s, t, dsdx, dtdy)  \
+}
+
 # define gSPTextureRectangleFlip(pkt, xl, yl, xh, yh, tile, s, t, dsdx, dtdy) \
 {									\
     Gfx *_g0 = (Gfx *)(pkt), *_g1 = (Gfx *)(pkt), *_g2 = (Gfx *)(pkt);	\

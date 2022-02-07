@@ -4,7 +4,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 void game_deinit(void);
 void game_exit(void);
 
