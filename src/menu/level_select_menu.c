@@ -324,6 +324,7 @@ s32 intro_play_its_a_me_mario(void) {
 					fseek(ptr_sfx_dyncall,0,0);
 					dyncall_read = malloc(i);
 					fread(dyncall_read,i,1,ptr_sfx_dyncall);
+					fclose(ptr_sfx_dyncall);
 					play_sound(SOUND_ARG_LOAD(10,0, 0xFF, SOUND_DISCRETE), gGlobalSoundSource);
 				}else{
 					printf("file not found!\n");

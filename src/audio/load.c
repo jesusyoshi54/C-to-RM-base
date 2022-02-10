@@ -1438,7 +1438,9 @@ void *sequence_dma_immediate(s32 seqId, s32 arg1) {
 		fseek(ptr_ext_m64,0,0);
 		ptr = alloc_bank_or_seq(&gSeqLoadedPool, 1, seqLength, arg1, seqId);
 		fread(ptr,seqLength,1,ptr_ext_m64);
+		fclose(ptr_ext_m64);
 		printf("external load %p\n",ptr);
+		gSequenceCount -= 1;
 		#endif
 	}else{
 		seqLength = gSeqFileHeader->seqArray[seqId].len + 0xf;
