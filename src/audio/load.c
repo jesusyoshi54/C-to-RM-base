@@ -1334,16 +1334,25 @@ struct AudioBank *bank_load_immediate(s32 bankId, s32 arg1) {
 
     // (This is broken if the length is 1 (mod 16), but that never happens --
     // it's always divisible by 4.)
-    alloc = gAlCtlHeader->seqArray[bankId].len + 0xf;
-    alloc = ALIGN16(alloc);
-    alloc -= 0x10;
-    ctlData = gAlCtlHeader->seqArray[bankId].offset;
-    ret = alloc_bank_or_seq(&gBankLoadedPool, 1, alloc, arg1, bankId);
-    if (ret == NULL) {
-        return NULL;
-    }
-
-    audio_dma_copy_immediate((uintptr_t) ctlData, buf, 0x10);
+	
+	//bank 0x26 is an external bank, I'm going to hardcode it because its just easier and I don't feel like learning how stuff works
+	if(bank==0x26){
+		#ifndef TARGET_N64
+		printf("externally loading bank from bank.bin\n")
+		
+		
+		#endif
+	}else{
+		alloc = gAlCtlHeader->seqArray[bankId].len + 0xf;
+		alloc = ALIGN16(alloc);
+		alloc -= 0x10;
+		ctlData = gAlCtlHeader->seqArray[bankId].offset;
+		ret = alloc_bank_or_seq(&gBankLoadedPool, 1, alloc, arg1, bankId);
+		if (ret == NULL) {
+			return NULL;
+		}
+		audio_dma_copy_immediate((uintptr_t) ctlData, buf, 0x10);
+	}
     numInstruments = buf[0];
     numDrums = buf[1];
     audio_dma_copy_immediate((uintptr_t)(ctlData + 0x10), ret, alloc);
@@ -1431,6 +1440,7 @@ void *sequence_dma_immediate(s32 seqId, s32 arg1) {
 	if(gExternalSeqLoad){
 		#ifndef TARGET_N64
 		FILE *ptr_ext_m64;
+		//bank_load_immediate to do external load of bank?
 
 		ptr_ext_m64 = fopen("test.m64","rb");
 		fseek(ptr_ext_m64,0,SEEK_END);
@@ -2064,8 +2074,8 @@ void audio_init() {
 
     // Load bank sets for each sequence (assets/bank_sets.s)
     data = LOAD_DATA(gBankSetsData);
-    gAlBankSets = soundAlloc(&gAudioInitPool, 0x200);
-    audio_dma_copy_immediate((uintptr_t) data, gAlBankSets, 0x200);
+    gAlBankSets = soundAlloc(&gAudioInitPool, 0x250);
+    audio_dma_copy_immediate((uintptr_t) data, gAlBankSets, 0x250);
 
     init_sequence_players();
     gAudioLoadLock = AUDIO_LOCK_NOT_LOADING;

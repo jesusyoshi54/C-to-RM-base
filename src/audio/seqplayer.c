@@ -1724,9 +1724,15 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                         // bank set. Note that in the binary format (not in the JSON!)
                         // the banks are listed backwards, so we counts from the back.
                         // (gAlBankSets[offset] is number of banks)
-                        sp38 = ((u16 *) gAlBankSets)[seqPlayer->seqId];
-                        loBits = *(sp38 + gAlBankSets);
-                        cmd = gAlBankSets[(s32)sp38 + loBits - cmd];
+						
+						//at max you have 10 banks used in seq player, so if you go to 11 just take that as external load, which will be bank 0x26
+						if(cmd>10){
+							cmd = 0x26;
+						}else{
+							sp38 = ((u16 *) gAlBankSets)[seqPlayer->seqId];
+							loBits = *(sp38 + gAlBankSets);
+							cmd = gAlBankSets[(s32)sp38 + loBits - cmd];
+						}
 
 #ifdef VERSION_SH
                         if (get_bank_or_seq(1, 2, cmd) != NULL)
