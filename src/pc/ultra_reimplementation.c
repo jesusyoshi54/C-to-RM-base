@@ -59,7 +59,7 @@ s32 osRecvMesg(UNUSED OSMesgQueue *mq, UNUSED OSMesg *msg, UNUSED s32 flag) {
     return 0;
 }
 
-uintptr_t osVirtualToPhysical(void *addr) {
+u32 osVirtualToPhysical(void *addr) {
     return (uintptr_t) addr;
 }
 

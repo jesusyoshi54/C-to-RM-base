@@ -77,8 +77,6 @@ bool         configGD = false;
 bool         configMB = false;
 bool         configSM = false;
 bool         configDD = false;
-bool         configDD = false;
-bool         configDD = false;
 bool         configHUGE = false;
 bool         configTINY = false;
 

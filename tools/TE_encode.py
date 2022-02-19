@@ -140,7 +140,7 @@ def Write(out,header,Test,name):
 	global Place
 	global Ptrs
 	E='char %s[] = {\n'%name
-	Z = 'u32 %s[] = {\n'%(name+'_ptrlist')
+	Z = 'u32 *%s[] = {\n'%(name+'_ptrlist')
 	cmt = "/* %s interpreted string\n"%name
 	header.write('extern char %s[];\n'%name)
 	for cmd in Test:
@@ -184,7 +184,7 @@ def Write(out,header,Test,name):
 	if Ptrs:
 		Z+= ','.join(Ptrs)
 		o.write(Z + '\n};\n')
-		o.write("u32 %s = &%s;\n"%(name+'_ptrptr',name+'_ptrlist'))
+		o.write("u32 *%s = &%s;\n"%(name+'_ptrptr',name+'_ptrlist'))
 	o.write(E)
 	o.write(cmt+'*/\n')
 
@@ -200,6 +200,11 @@ if __name__ == "__main__":
 		q = 'build/us' / Path(file)
 		if q==Path(o):
 			z = file
+		else:
+			#try pc build path (need to potentially edit to support other platforms??)
+			q = 'build/us_pc' / Path(file)
+			if q==Path(o):
+				z = file
 	if not z:
 		pass
 	else:
