@@ -43,7 +43,7 @@ static struct TEState *AccessEngine; //for outside functions to access
 #include "text_engine_helpers.inc.h"
 
 void SetupTextEngine(s16 x, s16 y, u8 *str, u8 state){
-	TE_flush_eng(&TE_Engines[state]);
+	TE_flush_buffers(&TE_Engines[state]);
 	str = segmented_to_virtual(str);
 	TE_Engines[state].state = state;
 	TE_Engines[state].LastVI = gNumVblanks;
