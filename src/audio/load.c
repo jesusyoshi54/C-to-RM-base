@@ -1336,9 +1336,9 @@ struct AudioBank *bank_load_immediate(s32 bankId, s32 arg1) {
     // it's always divisible by 4.)
 	
 	//bank 0x26 is an external bank, I'm going to hardcode it because its just easier and I don't feel like learning how stuff works
-	if(bank==0x26){
+	if(bankId==0x26){
 		#ifndef TARGET_N64
-		printf("externally loading bank from bank.bin\n")
+		printf("externally loading bank from bank.bin\n");
 		
 		
 		#endif

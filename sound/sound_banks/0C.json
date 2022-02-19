@@ -254,28 +254,26 @@
             "sound": "24_strings_2",
             "sound_hi": "25_strings_3"
         },
-        "Hi-Hat": {
+        "Acoustic Guitar": {
             "release_rate": 19,
             "normal_range_lo": 29,
             "normal_range_hi": 63,
             "envelope": "envelope9",
-            "sound_lo": "3B",
-            "sound": "3C",
+            "sound_lo": "3B_banjo_2",
+            "sound": "3C_acoustic_guitar",
             "sound_hi": "3D"
         },
-        "Crash Cymbal": {
+        "Jingles": {
             "release_rate": 208,
             "envelope": "envelope10",
             "sound": "2F_sleigh_bells"
         },
-        "Triangle&Cabasa": {
+        "Hi-Hat": {
             "release_rate": 208,
-            "normal_range_lo": 60,
-            "normal_range_hi": 60,
+            "normal_range_lo": 24,
             "envelope": "envelope11",
             "sound_lo": "0E_hihat_closed",
-            "sound": "0F_hihat_open",
-            "sound_hi": "0F_hihat_open"
+            "sound": "0F_hihat_open"
         },
         "percussion": [
             {"release_rate": 10, "pan": 62, "envelope": "envelope11", "sound": {"sample": "06_kick_drum_1", "tuning": 0.210224}},
@@ -343,16 +341,16 @@
             {"release_rate": 10, "pan": 82, "envelope": "envelope11", "sound": {"sample": "0C_conga_stick", "tuning": 1.498307}},
             {"release_rate": 10, "pan": 128, "envelope": "envelope11", "sound": "0D_clave"}
         ],
-        "Acoustic Guitar": {
+        "Crash Cymbal": {
             "release_rate": 19,
-            "normal_range_lo": 29,
-            "normal_range_hi": 63,
+            "normal_range_lo": 28,
+            "normal_range_hi": 28,
             "envelope": "envelope0",
             "sound_lo": "10_cymbal_bell",
             "sound": "11_splash_cymbal",
             "sound_hi": "10_cymbal_bell"
         },
-        "Jingles": {
+        "Triangle&Cabasa": {
             "release_rate": 208,
             "normal_range_lo": 60,
             "normal_range_hi": 60,
@@ -581,11 +579,11 @@
         "French Horn",
         "Pan Flute",
         "Strings",
-        "Hi-Hat",
-        "Crash Cymbal",
-		"Triangle&Cabasa",
-		"Acoustic Guitar",
+        "Acoustic Guitar",
         "Jingles",
+		"Hi-Hat",
+		"Crash Cymbal",
+        "Triangle&Cabasa",
         "Celesta",
         "Banjo",
         "Fiddle",

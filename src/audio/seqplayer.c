@@ -1912,6 +1912,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                             sp5A = m64_read_s16(state);
                             seqData = GetSeqorExtData(seqPlayer) + sp5A;
                             *seqData = (u8)value + cmd;
+							printf("value wrote %d\n",value + cmd);
                         }
                         break;
 
@@ -1944,6 +1945,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                     case 0xcb: // chan_readseq
                         sp38 = (u16)m64_read_s16(state) + value;
                         value = GetSeqorExtData(seqPlayer)[sp38];
+						printf("value read %d offset %d\n",value,sp38);
                         break;
 
 #ifdef VERSION_SH
