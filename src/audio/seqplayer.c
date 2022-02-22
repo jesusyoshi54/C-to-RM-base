@@ -1912,7 +1912,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                             sp5A = m64_read_s16(state);
                             seqData = GetSeqorExtData(seqPlayer) + sp5A;
                             *seqData = (u8)value + cmd;
-							printf("value wrote %d\n",value + cmd);
+							//printf("value wrote %d off %d\n",value + cmd, sp5A);
                         }
                         break;
 
@@ -1922,6 +1922,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                         temp = m64_read_u8(state);
                         if (cmd == 0xc8) {
                             value -= temp;
+							//printf("subtract value %d tmp %d\n",value, temp);
                         } else if (cmd == 0xcc) {
                             value = temp;
                         } else {
@@ -1945,7 +1946,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                     case 0xcb: // chan_readseq
                         sp38 = (u16)m64_read_s16(state) + value;
                         value = GetSeqorExtData(seqPlayer)[sp38];
-						printf("value read %d offset %d\n",value,sp38);
+						//printf("value read %d offset %d\n",value,sp38);
                         break;
 
 #ifdef VERSION_SH
@@ -2194,6 +2195,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                     // sh: 0x70
                     case 0x70: // chan_iowriteval; write data back to audio lib
                         seqChannel->soundScriptIO[loBits] = value;
+						//printf("slot %d wrote with value %d\n",loBits,value);
                         break;
 
 #ifdef VERSION_SH
@@ -2272,6 +2274,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                     case 0x40: // chan_ioreadval2; read data from audio lib from another channel
                         cmd = m64_read_u8(state);
                         value = seqPlayer->channels[loBits]->soundScriptIO[cmd];
+						//printf("int variation %d\n",value);
                         break;
                 }
 #ifdef VERSION_SH

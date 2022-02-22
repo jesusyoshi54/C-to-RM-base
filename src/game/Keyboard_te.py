@@ -34,10 +34,18 @@ TEST_STR = ["[JumpLink('TEST_BOX')][JumpLink('TEST_TEX_BOX')]\
 [SetEnv(30,255,255,255)][StartKeyboard(0)][WordWrap(296)]Empy test for now. Nothing happening\
 [end]"]
 
-msg = ["running [UsrStr(0)]\n\
+msg_SFX = ["running [UsrStr(0)]\n\
 A to inc, B to dec, Z to reset, L to Play.\nC up down to change by 10.\n\
-R to stop playing a sequence.\n\n\
+R to stop playing.\n\n\
+Start to swap to SEQ control\n\
 Play SFX Bank [UsrStr(1)] Index [UsrStr(2)]\n\n\
-Play SEQ [UsrStr(3)]\n\n\
-Load External Sfx [UsrStr(4)] LOAD  (PC ONLY)\n\n\
-Load External M64 w/ BANK [UsrStr(5)]     LOAD  (PC ONLY)[end][end]"]
+Load External Sfx [UsrStr(3)] LOAD  (PC ONLY)\n\
+File must be named dyncall.bin[end]"]
+
+msg_SEQ = ["running [UsrStr(0)]\n\
+A to inc, B to dec, Z to reset, L to Play.\nC up down to change by 10.\n\
+R to stop playing.\n\n\
+Start to swap to SFX control\n\
+Play SEQ [UsrStr(1)]\n\n\
+Load External M64 w/ BANK [UsrStr(2)]    LOAD  (PC ONLY)\n\
+File must be named test.m64[end]"]
