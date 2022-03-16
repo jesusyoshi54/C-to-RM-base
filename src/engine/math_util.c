@@ -696,6 +696,7 @@ static ALWAYS_INLINE float construct_float(const float f)
     return f_out;
 }
 
+#ifdef TARGET_N64
 void mtxf_to_mtx(s16* dst, float* src)
 {
     int i;
@@ -734,7 +735,15 @@ void mtxf_to_mtx(s16* dst, float* src)
     //  to set the top half.
     dst[15] = 1;
 }
+#else
+// fixed point is not used on PC
+void mtxf_to_mtx(s16* dst, float* src)
+{
+	mtxf_copy(dst,src);
+}
+#endif
 
+#ifdef TARGET_N64
 /**
  * Set 'mtx' to a transformation matrix that rotates around the z axis.
  */
@@ -757,6 +766,21 @@ void mtxf_rotate_xy(Mtx *mtx, s32 angle) {
     ((s16 *) mtx)[10] = 1;
     ((s16 *) mtx)[15] = 1;
 }
+#else
+/**
+ * Set 'mtx' to a transformation matrix that rotates around the z axis.
+ */
+void mtxf_rotate_xy(Mtx *mtx, s32 angle) {
+    Mat4 temp;
+
+    mtxf_identity(temp);
+    temp[0][0] = coss(angle);
+    temp[0][1] = sins(angle);
+    temp[1][0] = -temp[0][1];
+    temp[1][1] = temp[0][0];
+    mtxf_to_mtx(mtx, temp);
+}
+#endif
 
 /**
  * Extract a position given an object's transformation matrix and a camera matrix.

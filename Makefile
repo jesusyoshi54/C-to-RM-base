@@ -15,7 +15,7 @@ default: all
 # However, the build clean output is there in it's own way
 
 # Build debug version
-DEBUG ?= 0
+DEBUG ?= 1
 # Version of the game to build
 VERSION ?= us
 # Graphics microcode used
