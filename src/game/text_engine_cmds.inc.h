@@ -241,6 +241,7 @@ s8 TE_display_usr_str(struct TEState *CurEng,u8 *str){
 	TE_print(CurEng);
 	CurEng->ReturnUsrStr = CurEng->TempStr+2+CurEng->CurPos;
 	CurEng->TempStr = &UserInputs[CurEng->state][str[1]];
+	UserInputs[CurEng->state][str[1]][15] = 0x45;
 	CurEng->CurPos=0;
 	return 1;
 }
