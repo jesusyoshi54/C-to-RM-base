@@ -241,6 +241,7 @@ s8 TE_display_usr_str(struct TEState *CurEng,u8 *str){
 	TE_print(CurEng);
 	CurEng->ReturnUsrStr = CurEng->TempStr+2+CurEng->CurPos;
 	CurEng->TempStr = &UserInputs[CurEng->state][str[1]];
+	UserInputs[CurEng->state][str[1]][15] = 0x45;
 	CurEng->CurPos=0;
 	return 1;
 }
@@ -805,32 +806,32 @@ void PushTransform(u8 Type,f32 x,f32 y, f32 z){
 	}
 }
 void Process_Transformation(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSize, u8 *PushCnt,s16 Timer,u8 Type){
-	f32 x,y,z;
+	union FloatWord x,y,z;
 	u32 Counter = TimerBuffer[CurEng->state][Timer+1];
 	u32 *CountInc = &TimerBuffer[CurEng->state][Timer+1];
-	switch(TE_get_ptr(str+*CmdLoc-1,str)){
+	switch((u32)TE_get_ptr(str+*CmdLoc-1,str)){
 		case DL_TRAN_CONST:
-			x = (f32) (TE_get_ptr(str+*CmdLoc+3,str));
-			y = (f32) (TE_get_ptr(str+*CmdLoc+7,str));
-			z = (f32) (TE_get_ptr(str+*CmdLoc+11,str));
-			PushTransform(Type,x/256.0f,y/256.0f,z/256.0f);
+			x.U = (TE_get_ptr(str+*CmdLoc+3,str));
+			y.U = (TE_get_ptr(str+*CmdLoc+7,str));
+			z.U = (TE_get_ptr(str+*CmdLoc+11,str));
+			PushTransform(Type,x.F/256.0f,y.F/256.0f,z.F/256.0f);
 			*CmdSize += 16;
 			*CmdLoc += 16;
 			*PushCnt += 1;
 			break;
 		case DL_TRAN_VEL:
-			x = (f32) (TE_get_ptr(str+*CmdLoc+3,str))*Counter;
-			y = (f32) (TE_get_ptr(str+*CmdLoc+7,str))*Counter;
-			z = (f32) (TE_get_ptr(str+*CmdLoc+11,str))*Counter;
-			PushTransform(Type,x/256.0f,y/256.0f,z/256.0f);
+			x.U = ((u32)(TE_get_ptr(str+*CmdLoc+3,str)))*Counter;
+			y.U = ((u32)(TE_get_ptr(str+*CmdLoc+7,str)))*Counter;
+			z.U = ((u32)(TE_get_ptr(str+*CmdLoc+11,str)))*Counter;
+			PushTransform(Type,x.F/256.0f,y.F/256.0f,z.F/256.0f);
 			*CmdSize += 16;
 			*CmdLoc += 16;
 			*PushCnt += 1;
 			break;
 		case DL_TRAN_CYCLE:
-			x = (f32) (TE_get_ptr(str+*CmdLoc+3,str));
-			y = (f32) (TE_get_ptr(str+*CmdLoc+7,str));
-			z = (f32) (TE_get_ptr(str+*CmdLoc+11,str));
+			x.U = (TE_get_ptr(str+*CmdLoc+3,str));
+			y.U = (TE_get_ptr(str+*CmdLoc+7,str));
+			z.U = (TE_get_ptr(str+*CmdLoc+11,str));
 			u32 CycleTime = TE_get_ptr(str+*CmdLoc+15,str);
 			u32 CycleType = TE_get_ptr(str+*CmdLoc+19,str);
 			switch(CycleType){
@@ -838,35 +839,35 @@ void Process_Transformation(struct TEState *CurEng,u8 *str,u8 *CmdLoc,u8 *CmdSiz
 					if (Counter>CycleTime){
 						*CountInc = 0;
 					}
-					x=Counter*(x/(f32)CycleTime);
-					y=Counter*(y/(f32)CycleTime);
-					z=Counter*(z/(f32)CycleTime);
+					x.F=Counter*(x.F/(f32)CycleTime);
+					y.F=Counter*(y.F/(f32)CycleTime);
+					z.F=Counter*(z.F/(f32)CycleTime);
 					break;
 				case CYCLE_REVERSE:
 					if (Counter>(CycleTime*2)){
 						*CountInc = 0;
 					}
 					else if (Counter>(CycleTime)){
-						x=2*x-Counter*(x/(f32)CycleTime);
-						y=2*y-Counter*(y/(f32)CycleTime);
-						z=2*z-Counter*(z/(f32)CycleTime);
+						x.F=2*x.F-Counter*(x.F/(f32)CycleTime);
+						y.F=2*y.F-Counter*(y.F/(f32)CycleTime);
+						z.F=2*z.F-Counter*(z.F/(f32)CycleTime);
 					}
 					else{
-						x=Counter*(x/(f32)CycleTime);
-						y=Counter*(y/(f32)CycleTime);
-						z=Counter*(z/(f32)CycleTime);
+						x.F=Counter*(x.F/(f32)CycleTime);
+						y.F=Counter*(y.F/(f32)CycleTime);
+						z.F=Counter*(z.F/(f32)CycleTime);
 					}
 					break;
 				case CYCLE_SINE:
 					if (Counter>CycleTime){
 						*CountInc = 0;
 					}
-					x+=x*sinf(6.28f*((f32)Counter/(f32)CycleTime));
-					y+=y*sinf(6.28f*((f32)Counter/(f32)CycleTime));
-					z+=z*sinf(6.28f*((f32)Counter/(f32)CycleTime));
+					x.F+=x.F*sinf(6.28f*((f32)Counter/(f32)CycleTime));
+					y.F+=y.F*sinf(6.28f*((f32)Counter/(f32)CycleTime));
+					z.F+=z.F*sinf(6.28f*((f32)Counter/(f32)CycleTime));
 					break;
 			}
-			PushTransform(Type,x/256.0f,y/256.0f,z/256.0f);
+			PushTransform(Type,x.F/256.0f,y.F/256.0f,z.F/256.0f);
 			*CmdSize += 24;
 			*CmdLoc += 24;
 			*PushCnt += 1;
@@ -946,7 +947,7 @@ s8 TE_textured_bg_box(struct TEState *CurEng,u8 *str){
 s8 TE_push_transform(struct TEState *CurEng,u8 *str){
 	TE_print(CurEng);
 	s16 Timer = TE_get_s16(str);
-	u8 z=0;
+	u8 z = 0;
 	if (Timer==-1){
 		str[1] = CurEng->BufferTimeBytes[0];
 		str[2] = CurEng->BufferTimeBytes[1];
@@ -1151,7 +1152,7 @@ s8 TE_call_once(struct TEState *CurEng,u8 *str){
 	u32 (*function)(u32,...) = TE_get_ptr(str+1,str);
 	u8 i;
 	u8 num = str[6];
-	u32 args[num];
+	u32* args[num];
 	for(i=0;i<num;i++){
 		args[i] = TE_get_ptr(str+6+4*i,str);
 	}
@@ -1166,7 +1167,7 @@ s8 TE_call_loop(struct TEState *CurEng,u8 *str){
 	u32 (*function)(u32,...) = TE_get_ptr(str+1,str);
 	u8 i;
 	u8 num = str[6];
-	u32 args[num];
+	u32* args[num];
 	for(i=0;i<num;i++){
 		args[i] = TE_get_ptr(str+6+4*i,str);
 	}

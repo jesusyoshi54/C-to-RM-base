@@ -29,7 +29,7 @@ TE_KEYBOARD_upper = ["[ShadedBGBox(0x3E,0x104,0x18,0x78,0x20,0x20,0x20,0x80)]","
 #These are test strings used to test TE features. They can be viewed by setting TE_debug to 1 in
 #text_engine.h and pressing D pad down inside a level.
 TEST_BOX = ["[ShadedBGBox(32,298,32,228,0x20,0x20,0x20,0x80)][Pop()]"]
-TEST_TEX_BOX = ["[MosaicBGBox(32,96,96,160,0x09000000,3,3)][Pop()]"]
-TEST_STR = ["[JumpLink('TEST_BOX')][JumpLink('TEST_TEX_BOX')]\
-[SetEnv(30,255,255,255)][StartKeyboard(0)][WordWrap(296)]Empy test for now. Nothing happening\
+TEST_TEX_BOX = ["[MosaicBGBox(32,96,96,160,grass_09000000,3,3)][Pop()]"]
+TEST_STR = ["test box[JumpLink('TEST_BOX')][JumpLink('TEST_TEX_BOX')]\
+[SetEnv(30,255,255,255)][WordWrap(296)]Empy test for now. Nothing happening\
 [end]"]

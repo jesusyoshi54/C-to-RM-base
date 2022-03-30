@@ -82,9 +82,11 @@ void send_display_list(struct SPTask *spTask) {
 #define SAMPLES_HIGH 544
 #define SAMPLES_LOW 528
 #endif
+u32 gNumVblanks = 0;
 
 void produce_one_frame(void) {
     gfx_start_frame();
+	gNumVblanks++;
 
     const f32 master_mod = (f32)configMasterVolume / 127.0f;
     set_sequence_player_volume(SEQ_PLAYER_LEVEL, (f32)configMusicVolume / 127.0f * master_mod);

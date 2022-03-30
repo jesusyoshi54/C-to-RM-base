@@ -487,12 +487,27 @@ u32 TE_get_u32(u8 *str){
 	return res;
 }
 
-u32 TE_get_ptr(u8 *strArgs,u8 *str){
+u32* TE_get_ptr(u8 *strArgs,u8 *str){
 	u16 pos = TE_get_u16(strArgs);
 	u16 ptrID = TE_get_u16(strArgs+2);
-	str = (u32)str-4-pos;
+	str = (u32*)(str-sizeof(u32*)-pos); //to move to start of ptrptr
+	//PC specific behavior, there can be anywhere from 0 to 0x18 bytes
+	//of padding, I don't know how to detect it or place a pointer to my pointers
+	//in a way that will actually compile
+	#ifndef TARGET_N64
+	//still in padding, check a max of 3 times
+	if(*(u32*)str == NULL){
+		str -= 8;
+	}
+	if(*(u32*)str == NULL){
+		str -= 8;
+	}
+	if(*(u32*)str == NULL){
+		str -= 8;
+	}
+	#endif
 	u32 **Ptrptr = str;
-	u32 *ptr =  segmented_to_virtual(*Ptrptr);
+	u32 **ptr = segmented_to_virtual(*Ptrptr);
 	return ptr[ptrID];
 }
 

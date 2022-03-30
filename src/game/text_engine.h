@@ -117,6 +117,10 @@ union WordByte{
 	u32 w0;
 	char col[4];
 };
+union FloatWord{
+	u32 U;
+	f32 F;
+};
 #include "text_engine_helpers.h"
 
 extern u8 StrBuffer[NumEngines][0x100];
@@ -153,7 +157,7 @@ s8 TE_print_adv(struct TEState *CurEng,u16 len);
 u16 TE_get_u16(u8 *str);
 s16 TE_get_s16(u8 *str);
 u32 TE_get_u32(u8 *str);
-u32 TE_get_ptr(u8 *strArgs,u8 *str);
+u32* TE_get_ptr(u8 *strArgs,u8 *str);
 s32 TE_get_s32(u8 *str);
 s8 TE_end_str(struct TEState *CurEng);
 s8 TE_reset_str(struct TEState *CurEng);
