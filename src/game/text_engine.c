@@ -69,8 +69,6 @@ void RunTextEngine(void){
 	u8 CurChar;
 	s8 loop;
 	u8 *str;
-	//for puppyprint
-	asciiToggle = 1;
 	for(i=0;i<NumEngines;i++){
 		CurEng = &TE_Engines[i];
 		AccessEngine = CurEng;
@@ -191,8 +189,6 @@ void RunTextEngine(void){
 		CurEng->CurPos = 0;
 		// end:
 	}
-	//for puppyprint
-	asciiToggle = 0;
 }
 
 //inits the variables needed at the start of a frame
@@ -221,7 +217,7 @@ void TE_transition_print(struct TEState *CurEng){
 		if(CurEng->TrEnd.TransLength == 0){
 			TE_set_env(CurEng);
 			// print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY, &StrBuffer[CurEng->state]);
-			print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY, &StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+			print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY, &StrBuffer[CurEng->state]);
 			return;
 		}else{
 			TE_transition_active(CurEng,&CurEng->TrEnd,0);
@@ -232,7 +228,7 @@ void TE_transition_print(struct TEState *CurEng){
 		if(CurEng->TrStart.TransLength == 0){
 			TE_set_env(CurEng);
 			// print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
-			print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+			print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
 			return;
 		}else{
 			TE_transition_active(CurEng,&CurEng->TrStart,1);
@@ -241,7 +237,7 @@ void TE_transition_print(struct TEState *CurEng){
 	}
 	TE_set_env(CurEng);
 	// print_generic_string(CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
-	print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+	print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state]);
 	return;
 }
 void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
@@ -281,7 +277,7 @@ void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 	CurEng->EnvColorWord = Env;
 	CurEng->TrPct = Pct;
 	// print_generic_string(CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state]);
-	print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state], PRINT_TEXT_ALIGN_LEFT, PRINT_ALL);
+	print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state]);
 }
 
 void TE_print(struct TEState *CurEng){
@@ -461,6 +457,169 @@ void TE_setup_ia8(void){
 }
 void TE_end_ia8(void){
 	gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+}
+
+void print_small_text_TE(f32 xScale, f32 yScale, s32 x, s32 y, const char *str)
+{
+    s32 textX = 0;
+    s32 textY = 0;
+    s32 offsetY = 0;
+    s32 i = 0;
+    s32 textPos[2] = {0,0};
+    s32 spaceX = 0;
+    s32 wideX[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
+    s32 tx = 100; //just generic limit. Should be stopped by terminator way earlier
+    s32 shakePos[2];
+    s32 wavePos;
+    s32 lines = 0;
+    s32 xlu = currEnv[3];
+    s32 prevxlu = 256; //Set out of bounds, so it will *always* be different at first.
+
+	gDPSetTexturePersp(gDisplayListHead++, G_TP_NONE);
+	gDPSetTextureFilter(gDisplayListHead++, G_TF_POINT);
+    gDPLoadTextureBlock_4b(gDisplayListHead++, segmented_to_virtual(small_font), G_IM_FMT_I, 128, 60, G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, 0, 0, 0, 0, 0);
+	u32 dsdx = (u32)((1.0f/xScale)*1024.0f);
+	u32 dsdy = (u32)((1.0f/yScale)*1024.0f);
+	s32 xInc = (s32) (8.0f*xScale);
+	s32 yInc = (s32) (12.0f*yScale);
+    for (i = 0; i < tx; i++)
+    {
+        if (str[i] == -1)
+			break;
+        if (shakeToggle)
+        {
+            shakePos[0] = -1+(random_u16() % 2);
+            shakePos[1] = -1+(random_u16() % 2);
+        }
+        else
+        {
+            shakePos[0] = 0;
+            shakePos[1] = 0;
+        }
+        if (waveToggle)
+        {
+            wavePos = (sins((gGlobalTimer*3000)+(i*10000)))*2;
+        }
+        else
+        {
+            wavePos = 0;
+        }
+        get_char_from_byte_sm64(str[i], &textX, &textY, &spaceX, &offsetY);
+        if (xlu != prevxlu)
+        {
+            prevxlu = xlu;
+        }
+		if(str[i]!=-98){
+			gSPScisTextureRectangle(gDisplayListHead++, ((x+shakePos[0]+textPos[0])) << 2, (SCREEN_HEIGHT-(y+yInc+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, ((x+textPos[0]+shakePos[0]+xInc)) << 2, (SCREEN_HEIGHT-(y+wavePos+offsetY+shakePos[1]+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, dsdx, dsdy);
+		}
+		textPos[0]+=((s32)(spaceX*xScale))+1;
+    }
+}
+
+//same as below but uses SM64 strings as input, also uses even kerning
+/* Unsupported characters
+[x] / cross
+[Cur*] / cur star count
+[you][the] / you or the in one byte
+[·] / a coin symbol
+[A][B][C][Z][R] / bold letters to indicate buttons to press
+< > / bold left right chevrons to indicate C button direction
+★ ☆ / hollow and full stars
+” “ / directional quotes (instead we have generic non angled quotes)
+--extra characters in ascii that sm64 doesn't have
+semi colon
+*/
+void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32 *offsetY)
+{
+    *offsetY = 0;
+    //Line 1. numbers match
+    if (letter >= 0 && letter <= 9)
+    {
+        *textX = letter * 4;
+        *textY = 0;
+        *spaceX = textLen[letter];
+		return;
+    }
+	else
+    //Line 2. 'A' starts at 16 in texture, at 10 in sm64
+    if (letter >= 10 && letter <= 0x19)
+    {
+        *textX = (letter-10) * 4;
+        *textY = 6;
+        *spaceX = textLen[letter + 6];
+		return;
+    }
+	else
+    //Line 3, 'Q' starts at 32 in texture, at 26 in sm64
+    if (letter >= 26 && letter <= 35)
+    {
+        *textX = ((letter - 26) * 4);
+        *textY = 12;
+        *spaceX = textLen[letter + 6];
+		return;
+    }
+	else
+    //Line 4, 'a' starts at 48 in texture, at 36 in sm64
+    if (letter >= 36 && letter <= 51)
+    {
+        *textX = ((letter - 36) * 4);
+        *textY = 18;
+        *spaceX = textLen[letter + 12];
+		return;
+    }
+    else
+    //Line 5, 'q' starts at 64 in texture, at 52 in sm64
+    if (letter >= 52 && letter <= 61)
+    {
+        *textX = ((letter - 52) * 4);
+        *textY = 24;
+        *spaceX = textLen[letter + 12];
+		return;
+    }
+    else if (letter==0x9e)
+    {//Space, the final frontier.
+        *textX = 128;
+        *textY = 0;
+        *spaceX = 3;
+    }
+	//just replaced the ascii case with sm64 byte
+    switch (letter)
+    {
+        case 0xFF: *textX = 128; *textY = 0; *spaceX = 3; break; //END, shouldn't be encountered anyway
+        case 0x9F: *textX = 40; *textY = 0; *spaceX = textLen[10]; break; //Hyphen
+        case 0xE4: *textX = 44; *textY = 0; *spaceX = textLen[11]; break; //Plus
+        case 0xE1: *textX = 48; *textY = 0; *spaceX = textLen[12]; break; //Open Bracket
+        case 0xE3: *textX = 52; *textY = 0; *spaceX = textLen[13]; break; //Close Bracket
+        case 0xF2: *textX = 56; *textY = 0; *spaceX = textLen[14]; break; //Exclamation mark
+        case 0xF4: *textX = 60; *textY = 0; *spaceX = textLen[15]; break; //Question mark
+
+        case 0xF5: *textX = 40; *textY = 12; *spaceX = textLen[42]; break; //Speech mark
+        case 0xF6: *textX = 40; *textY = 12; *spaceX = textLen[42]; break; //Speech mark
+        case 0x3E: *textX = 44; *textY = 12; *spaceX = textLen[43]; break; //Apostrophe
+        case 0xE6: *textX = 48; *textY = 12; *spaceX = textLen[44]; break; //Colon
+        case 0x3F: *textX = 56; *textY = 12; *spaceX = textLen[46]; break; //Period
+        case 0x6F: *textX = 60; *textY = 12; *spaceX = textLen[47]; break; //Comma
+
+        case 0xF7: *textX = 40; *textY = 24; *spaceX = textLen[74]; break; //Tilde
+        case 0x50: *textX = 48; *textY = 24; *spaceX = textLen[76]; break; //Caret
+        case 0x51: *textX = 44; *textY = 24; *spaceX = textLen[76]; break; //Down
+        case 0xD0: *textX = 52; *textY = 24; *spaceX = textLen[77]; break; //Slash
+        case 0xF3: *textX = 56; *textY = 24; *spaceX = textLen[78]; break; //percent
+        case 0xE5: *textX = 60; *textY = 24; *spaceX = textLen[79]; break; //Ampersand
+		
+        //unsupported but wanted to make them draw something
+		case 0x54: *textX = 0; *textY = 6; *spaceX = textLen[79]; break; //A bold
+        case 0x55: *textX = 4; *textY = 6; *spaceX = textLen[79]; break; //B bold
+        case 0x56: *textX = 8; *textY = 6; *spaceX = textLen[79]; break; //C bold
+        case 0x57: *textX = 12; *textY = 6; *spaceX = textLen[79]; break; //Z bold
+        case 0x58: *textX = 16; *textY = 6; *spaceX = textLen[79]; break; //R bold
+
+        //This is for the letters that sit differently on the line. It just moves them down a bit.
+        case 0x2A: *offsetY = 1; break;
+        case 0x34: *offsetY = 1; break;
+        case 0x33: *offsetY = 3; break;
+        case 0x3C: *offsetY = 1; break;
+    }
 }
 
 u16 TE_get_u16(u8 *str){

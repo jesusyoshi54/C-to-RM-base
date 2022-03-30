@@ -15,7 +15,7 @@ default: all
 # However, the build clean output is there in it's own way
 
 # Build debug version
-DEBUG ?= 1
+DEBUG ?= 0
 # Version of the game to build
 VERSION ?= us
 # Graphics microcode used
@@ -30,7 +30,7 @@ COMPILER_N64 ?= gcc
 # Accept RM2C level folder output
 RM2C ?= 0
 #add in text engine
-TE ?= 0
+TE ?= 1
 #Debug stuff to make testing easier
 #inside pause menu of levels
 LEVEL_SELECT ?= 0

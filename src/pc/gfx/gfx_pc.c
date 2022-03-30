@@ -1252,8 +1252,8 @@ static void gfx_dp_load_tlut(uint8_t tile, uint32_t high_index) {
 static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t dxt) {
     if (tile == 1) return;
     SUPPORT_CHECK(tile == G_TX_LOADTILE);
-    SUPPORT_CHECK(uls == 0);
-    SUPPORT_CHECK(ult == 0);
+    // SUPPORT_CHECK(uls == 0);
+    // SUPPORT_CHECK(ult == 0);
     
     // The lrs field rather seems to be number of pixels to load
     uint32_t word_size_shift;
@@ -1281,8 +1281,8 @@ static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t
 static void gfx_dp_load_tile(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t lrt) {
     if (tile == 1) return;
     SUPPORT_CHECK(tile == G_TX_LOADTILE);
-    SUPPORT_CHECK(uls == 0);
-    SUPPORT_CHECK(ult == 0);
+    // SUPPORT_CHECK(uls == 0);
+    // SUPPORT_CHECK(ult == 0);
 
     uint32_t word_size_shift;
     switch (rdp.texture_to_load.siz) {

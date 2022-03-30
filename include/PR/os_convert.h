@@ -98,7 +98,7 @@ extern "C" {
 
 /* Address translation routines and macros */
 
-extern u32		 osVirtualToPhysical(void *);
+extern uintptr_t		 osVirtualToPhysical(void *);
 extern void *		 osPhysicalToVirtual(u32);
 
 

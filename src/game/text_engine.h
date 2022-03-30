@@ -128,6 +128,9 @@ extern u8 CmdBuffer[NumEngines][0x400];
 extern u32 TimerBuffer[NumEngines][64]; //stores timers necessary for certain cmds with their own cycles and stuff
 extern u8 UserInputs[NumEngines][16][16]; //16 length 16 strings
 
+extern void print_small_text_TE(f32 xScale, f32 yScale,s32 x, s32 y, const char *str);
+extern void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32 *offsetY);
+
 extern u16 sCurrentMusic;
 extern const Gfx dl_draw_text_bg_box_TE[];
 extern char TE_KEYBOARD_lower[];

@@ -78,7 +78,6 @@ extern void prepare_blank_box(void);
 extern void finish_blank_box(void);
 extern void render_blank_box(s16 x1, s16 y1, s16 x2, s16 y2, u8 r, u8 g, u8 b, u8 a);
 extern void print_small_text(s32 x, s32 y, const char *str, s32 align, s32 amount, s32 font);
-extern void print_small_text_TE(f32 xScale, f32 yScale,s32 x, s32 y, const char *str, s32 align, s32 amount);
 extern void render_multi_image(Texture *image, s32 x, s32 y, s32 width, s32 height, s32 scaleX, s32 scaleY, s32 mode);
 extern s32 get_text_height(const char *str);
 extern s32 get_text_width(const char *str, s32 font);
