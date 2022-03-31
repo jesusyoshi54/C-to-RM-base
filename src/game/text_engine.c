@@ -516,6 +516,13 @@ void print_small_text_TE(f32 xScale, f32 yScale, s32 x, s32 y, const char *str)
     }
 }
 
+u8 textLen_TE[] = {
+    /*0*/ 7, /*1*/ 6, /*2*/ 7, /*3*/ 7, /*4*/ 7, /*5*/ 7, /*6*/ 8, /*7*/ 7, /*8*/ 7, /*9*/ 7, /*-*/ 8, /*+*/ 8, /*(*/ 5, /*)*/ 5, /*!*/ 4, /*?*/ 7,
+    /*A*/ 7, /*B*/ 7, /*C*/ 7, /*D*/ 7, /*E*/ 6, /*F*/ 5, /*G*/ 8, /*H*/ 6, /*I*/ 6, /*J*/ 5, /*K*/ 7, /*L*/ 6, /*M*/ 7, /*N*/ 7, /*O*/ 7, /*P*/ 6,
+    /*Q*/ 8, /*R*/ 6, /*S*/ 7, /*T*/ 7, /*U*/ 7, /*V*/ 7, /*W*/ 8, /*X*/ 7, /*Y*/ 7, /*Z*/ 7, /*"*/ 5, /*'*/ 2, /*:*/ 3, /*;*/ 3, /*.*/ 3, /*,*/ 3,
+    /*a*/ 7, /*b*/ 7, /*c*/ 6, /*d*/ 7, /*e*/ 7, /*f*/ 7, /*g*/ 7, /*h*/ 7, /*i*/ 3, /*j*/ 5, /*k*/ 8, /*l*/ 4, /*m*/ 7, /*n*/ 7, /*o*/ 7, /*p*/ 7,
+    /*q*/ 7, /*r*/ 6, /*s*/ 6, /*t*/ 6, /*u*/ 6, /*v*/ 7, /*w*/ 8, /*x*/ 6, /*y*/ 8, /*z*/ 7, /*~*/ 8, /*..*/ 8, /*^*/ 8, /*/*/ 8, /*%*/ 8, /*&*/ 8,
+};
 //same as below but uses SM64 strings as input, also uses even kerning
 /* Unsupported characters
 [x] / cross
@@ -537,7 +544,7 @@ void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32
     {
         *textX = letter * 4;
         *textY = 0;
-        *spaceX = textLen[letter];
+        *spaceX = textLen_TE[letter];
 		return;
     }
 	else
@@ -546,7 +553,7 @@ void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32
     {
         *textX = (letter-10) * 4;
         *textY = 6;
-        *spaceX = textLen[letter + 6];
+        *spaceX = textLen_TE[letter + 6];
 		return;
     }
 	else
@@ -555,7 +562,7 @@ void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32
     {
         *textX = ((letter - 26) * 4);
         *textY = 12;
-        *spaceX = textLen[letter + 6];
+        *spaceX = textLen_TE[letter + 6];
 		return;
     }
 	else
@@ -564,7 +571,7 @@ void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32
     {
         *textX = ((letter - 36) * 4);
         *textY = 18;
-        *spaceX = textLen[letter + 12];
+        *spaceX = textLen_TE[letter + 12];
 		return;
     }
     else
@@ -573,7 +580,7 @@ void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32
     {
         *textX = ((letter - 52) * 4);
         *textY = 24;
-        *spaceX = textLen[letter + 12];
+        *spaceX = textLen_TE[letter + 12];
 		return;
     }
     else if (letter==0x9e)
@@ -586,33 +593,33 @@ void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32
     switch (letter)
     {
         case 0xFF: *textX = 128; *textY = 0; *spaceX = 3; break; //END, shouldn't be encountered anyway
-        case 0x9F: *textX = 40; *textY = 0; *spaceX = textLen[10]; break; //Hyphen
-        case 0xE4: *textX = 44; *textY = 0; *spaceX = textLen[11]; break; //Plus
-        case 0xE1: *textX = 48; *textY = 0; *spaceX = textLen[12]; break; //Open Bracket
-        case 0xE3: *textX = 52; *textY = 0; *spaceX = textLen[13]; break; //Close Bracket
-        case 0xF2: *textX = 56; *textY = 0; *spaceX = textLen[14]; break; //Exclamation mark
-        case 0xF4: *textX = 60; *textY = 0; *spaceX = textLen[15]; break; //Question mark
+        case 0x9F: *textX = 40; *textY = 0; *spaceX = textLen_TE[10]; break; //Hyphen
+        case 0xE4: *textX = 44; *textY = 0; *spaceX = textLen_TE[11]; break; //Plus
+        case 0xE1: *textX = 48; *textY = 0; *spaceX = textLen_TE[12]; break; //Open Bracket
+        case 0xE3: *textX = 52; *textY = 0; *spaceX = textLen_TE[13]; break; //Close Bracket
+        case 0xF2: *textX = 56; *textY = 0; *spaceX = textLen_TE[14]; break; //Exclamation mark
+        case 0xF4: *textX = 60; *textY = 0; *spaceX = textLen_TE[15]; break; //Question mark
 
-        case 0xF5: *textX = 40; *textY = 12; *spaceX = textLen[42]; break; //Speech mark
-        case 0xF6: *textX = 40; *textY = 12; *spaceX = textLen[42]; break; //Speech mark
-        case 0x3E: *textX = 44; *textY = 12; *spaceX = textLen[43]; break; //Apostrophe
-        case 0xE6: *textX = 48; *textY = 12; *spaceX = textLen[44]; break; //Colon
-        case 0x3F: *textX = 56; *textY = 12; *spaceX = textLen[46]; break; //Period
-        case 0x6F: *textX = 60; *textY = 12; *spaceX = textLen[47]; break; //Comma
+        case 0xF5: *textX = 40; *textY = 12; *spaceX = textLen_TE[42]; break; //Speech mark
+        case 0xF6: *textX = 40; *textY = 12; *spaceX = textLen_TE[42]; break; //Speech mark
+        case 0x3E: *textX = 44; *textY = 12; *spaceX = textLen_TE[43]; break; //Apostrophe
+        case 0xE6: *textX = 48; *textY = 12; *spaceX = textLen_TE[44]; break; //Colon
+        case 0x3F: *textX = 56; *textY = 12; *spaceX = textLen_TE[46]; break; //Period
+        case 0x6F: *textX = 60; *textY = 12; *spaceX = textLen_TE[47]; break; //Comma
 
-        case 0xF7: *textX = 40; *textY = 24; *spaceX = textLen[74]; break; //Tilde
-        case 0x50: *textX = 48; *textY = 24; *spaceX = textLen[76]; break; //Caret
-        case 0x51: *textX = 44; *textY = 24; *spaceX = textLen[76]; break; //Down
-        case 0xD0: *textX = 52; *textY = 24; *spaceX = textLen[77]; break; //Slash
-        case 0xF3: *textX = 56; *textY = 24; *spaceX = textLen[78]; break; //percent
-        case 0xE5: *textX = 60; *textY = 24; *spaceX = textLen[79]; break; //Ampersand
+        case 0xF7: *textX = 40; *textY = 24; *spaceX = textLen_TE[74]; break; //Tilde
+        case 0x50: *textX = 48; *textY = 24; *spaceX = textLen_TE[76]; break; //Caret
+        case 0x51: *textX = 44; *textY = 24; *spaceX = textLen_TE[76]; break; //Down
+        case 0xD0: *textX = 52; *textY = 24; *spaceX = textLen_TE[77]; break; //Slash
+        case 0xF3: *textX = 56; *textY = 24; *spaceX = textLen_TE[78]; break; //percent
+        case 0xE5: *textX = 60; *textY = 24; *spaceX = textLen_TE[79]; break; //Ampersand
 		
         //unsupported but wanted to make them draw something
-		case 0x54: *textX = 0; *textY = 6; *spaceX = textLen[79]; break; //A bold
-        case 0x55: *textX = 4; *textY = 6; *spaceX = textLen[79]; break; //B bold
-        case 0x56: *textX = 8; *textY = 6; *spaceX = textLen[79]; break; //C bold
-        case 0x57: *textX = 12; *textY = 6; *spaceX = textLen[79]; break; //Z bold
-        case 0x58: *textX = 16; *textY = 6; *spaceX = textLen[79]; break; //R bold
+		case 0x54: *textX = 0; *textY = 6; *spaceX = textLen_TE[79]; break; //A bold
+        case 0x55: *textX = 4; *textY = 6; *spaceX = textLen_TE[79]; break; //B bold
+        case 0x56: *textX = 8; *textY = 6; *spaceX = textLen_TE[79]; break; //C bold
+        case 0x57: *textX = 12; *textY = 6; *spaceX = textLen_TE[79]; break; //Z bold
+        case 0x58: *textX = 16; *textY = 6; *spaceX = textLen_TE[79]; break; //R bold
 
         //This is for the letters that sit differently on the line. It just moves them down a bit.
         case 0x2A: *offsetY = 1; break;
