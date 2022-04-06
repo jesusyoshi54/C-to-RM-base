@@ -39,8 +39,6 @@ static struct TEState *AccessEngine; //for outside functions to access
 //my char and ptr arrays
 #include "src/game/Keyboard_te.py"
 #include "src/game/TE_strings.inc.h"
-#include "text_engine_cmds.inc.h"
-#include "text_engine_helpers.inc.h"
 
 void SetupTextEngine(s16 x, s16 y, u8 *str, u8 state){
 	TE_flush_buffers(&TE_Engines[state]);
@@ -459,6 +457,9 @@ void TE_end_ia8(void){
 	gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
 }
 
+static s8 shakeToggle = 0;
+static s8 waveToggle = 0;
+static u8 currEnv[4];
 void print_small_text_TE(f32 xScale, f32 yScale, s32 x, s32 y, const char *str)
 {
     s32 textX = 0;
@@ -676,6 +677,10 @@ u32* TE_get_ptr(u8 *strArgs,u8 *str){
 	u32 **ptr = segmented_to_virtual(*Ptrptr);
 	return ptr[ptrID];
 }
+
+//includes
+#include "text_engine_cmds.inc.h"
+#include "text_engine_helpers.inc.h"
 
 #if TE_DEBUG
 extern uintptr_t sSegmentTable[32];

@@ -42,7 +42,7 @@ a modern game engine's developer's console.
 #include "debug_box.h"
 #include "PR/os_convert.h"
 
-u8 currEnv[4];
+static u8 currEnv[4];
 u8 fDebug = 0;
 
 #if PUPPYPRINT_DEBUG
@@ -634,8 +634,8 @@ u8 textLen[] = {
 
 #include "level_update.h"
 
-s8 shakeToggle = 0;
-s8 waveToggle = 0;
+static s8 shakeToggle = 0;
+static s8 waveToggle = 0;
 
 void get_char_from_byte(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32 *offsetY)
 {
