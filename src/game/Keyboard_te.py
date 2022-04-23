@@ -9,9 +9,9 @@ non iterables are ignored. If you have a tuple with a single item, put a comma a
 or else it will be ignored
 """
 #This is externs delcared in this file
-externs = ("extern const Gfx star_seg3_dl_0302B870[];",)
+externs = ("extern const Gfx star_seg3_dl_0302B870[];","extern u8 *print_script_IO_TE(u16 siz);","extern u8 *print_script_chan_TE(u16 siz);","extern u8 *print_cur_sel(u16 siz);","extern u8 *print_script_seq_TE(u16 siz);")
 #These are header files included in this file. Use single quotes so double quotes are delimited for filename
-headers = (r'#include "actors/common1.h"',)
+headers = (r'#include "actors/common1.h"',r'#include "textures.h"',)
 #This keyboard is required for Text Engine usage. Do not delete
 TE_KEYBOARD_lower = ["[ShadedBGBox(0x3E,0x104,0x18,0x78,0x20,0x20,0x20,0x80)][ShadedBGBox(0x28,0x118,0x98,0xb8,0x20,0x20,0x20,0x80)][ScaleText(1.75,1.25)][this is a test comment][TransAbs(0x41,96)] 0 1 2 3 4 5 6 7 8 9\n",
 #You can also put comments in with a '#'. 
@@ -40,7 +40,8 @@ R to stop playing.\n\n\
 Start to swap to SEQ control\n\
 Play SFX Bank [UsrStr(1)] Index [UsrStr(2)]\n\n\
 Load External Sfx [UsrStr(3)] LOAD  (PC ONLY)\n\
-File must be named dyncall.bin[end]"]
+File must be named dyncall.bin\n\n\
+C left/right to swap screens[end]"]
 
 msg_SEQ = ["running [UsrStr(0)]\n\
 A to inc, B to dec, Z to reset, L to Play.\nC up down to change by 10.\n\
@@ -48,4 +49,23 @@ R to stop playing.\n\n\
 Start to swap to SFX control\n\
 Play SEQ [UsrStr(1)]\n\n\
 Load External M64 w/ BANK [UsrStr(2)]    LOAD  (PC ONLY)\n\
-File must be named test.m64[end]"]
+File must be named test.m64\n\n\
+C left/right to swap screens[end]"]
+
+msg_script_IO_cntrl = ["[WordWrap(310)]running [UsrStr(0)] - \
+A to inc, B to dec, Z to reset, L to Play. C up down to change by 10.\n\
+[ScaleText(0.55,0.6)][SprintF(0,'print_script_IO_TE',0,[])]\n\
+[ScaleText(1.0,1.0)] L to play, R to stop\n\
+[SprintF(0,'print_cur_sel',0,[])][end]"]
+
+msg_chan_ctrl = ["[WordWrap(310)]running [UsrStr(0)] \
+A to inc, B to dec, Z to reset, L to Play. C up down to change by 10.\n\
+[ScaleText(0.55,0.6)][SprintF(0,'print_script_chan_TE',0,[])]\n\
+[ScaleText(1.0,1.0)] L to play, R to stop\n\
+[SprintF(0,'print_cur_sel',0,[])][end]"]
+
+msg_seq_ctrl = ["[WordWrap(310)]running [UsrStr(0)] - \
+A to inc, B to dec, Z to reset, L to Play. C up down to change by 10.\n\
+[ScaleText(0.55,0.6)][SprintF(0,'print_script_seq_TE',0,[])]\n\
+[ScaleText(1.0,1.0)] L to play, R to stop\n\
+[SprintF(0,'print_cur_sel',0,[])][end]"]

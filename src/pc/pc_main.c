@@ -83,6 +83,7 @@ void send_display_list(struct SPTask *spTask) {
 #define SAMPLES_LOW 528
 #endif
 u32 gNumVblanks = 0;
+
 void produce_one_frame(void) {
     gfx_start_frame();
 	gNumVblanks++;

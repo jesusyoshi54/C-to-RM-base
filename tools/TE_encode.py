@@ -4,8 +4,15 @@ import TE_defs as t
 import sys
 import importlib as IL
 from pathlib import Path
-import time
-a = lambda s: functools.partial(struct.pack,s)
+
+a = lambda s: functools.partial(pack_pass,s)
+
+def pack_pass(s,b):
+	if type(b) == str:
+		return b
+	else:
+		return struct.pack(s,b)
+
 Types = "bBhHlLf"
 for c in Types:
 	globals()[c] = a(">%s"%c)
@@ -19,13 +26,27 @@ def z(args):
 	for a in args:
 		res+=p(a)
 	return res
-def Pack(*Bytes):
-	return b''.join(*Bytes)
+def Pack(MSB,VAR):
+	b = bytes()
+	s = ''
+	L = 0 #length of bytes
+	for v in VAR:
+		if type(v) == str:
+			L += 1
+			if b:
+				s += SF(b.hex()) + f",{v}"
+				b = bytes()
+			else:
+				s += v
+		else:
+			b += v
+			L += len(v)
+	return (f"{SF(MSB.hex())}{','*(len(s)>0 or len(b)>0)}{s}{','*(len(s)>0 and len(b)>0)}{SF(b.hex())}",len(MSB)+L)
 def Ret(Funcs,MSB,*args):
 	if type(MSB)==int:
-		return Pack([bytes([MSB])]+[l(b) for l,b in zip(Funcs,args)])
+		return Pack(bytes([MSB]),[l(b) for l,b in zip(Funcs,args)])
 	else:
-		return Pack([bytes(MSB)]+[l(b) for l,b in zip(Funcs,args)])
+		return Pack(bytes(MSB),[l(b) for l,b in zip(Funcs,args)])
 def Make(MSB,*Funcs):
 	return functools.partial(Ret,[*Funcs],MSB)
 def SF(s):
@@ -40,8 +61,8 @@ Funcs = {
 	'SetRainbow':(0x46,H),
 	'SetOrigin':(0x47,H,H),
 	'Jump':(0x48,p),
-	'TransOffs':(0x49,H,H),
-	'TransAbs':(0x4A,H,H),
+	'TransOffs':(0x49,h,h),
+	'TransAbs':(0x4A,h,h),
 	#needs editing
 	'PopTransform':(0x4B,),
 	'FFSpd':(0x4c,h),
@@ -53,7 +74,7 @@ Funcs = {
 	'Blank':(0x72,H),
 	'BtnBranchOpen':(0x73,H),
 	'Pause':(0x74,H),
-	'BtnBranchClose':(0x76,),
+	'BtnBranchClose':(0x75,),
 	'EnBlip':(0x76,),
 	'DisBlip':(0x77,),
 	'PersistMusic':(0x78,),
@@ -85,16 +106,18 @@ Funcs = {
 	'GotoRtrn':(0x98,B),
 	'ShadowText':(0x99,B),
 	'WobbleText':(0x9A,B),
-	'EndBoxTransition':(0x9B,B,B,B,B),
-	'StartBoxTransition':(0x9C,B,B,B,B),
+	'EndTransition':(0x9B,B,B,B,B),
+	'StartTransition':(0x9C,B,B,B,B),
 	'CallOnce':(0xA0,B,p,B,z),
 	'CallLoop':(0xA1,B,p,B,z),
 	'MatchRtrn':(0xA2,B,l),
 	'MarioAction':(0xA6,p),
+	'BoxTransition':(0xAA,h,h,h,h),
 	'JumpLink':(0xAC,p),
 	'Pop':(0xAD,),
 	'ShakeText':(0xAE,B),
 	'WordWrap':(0xB0,H),
+	'SprintF':(0xB1,H,p,B,z),
 	'PrintGlyph':(0xAF,p),
 }
 def FindEnd(string):
@@ -129,10 +152,10 @@ def Write(out,header,Test,name):
 				if c>0:
 					try:
 						q = cmd[iter+1:c]
-						Ecmd=eval(q)
+						Ecmd,chars=eval(q)
 						cmt+=' '+q
-						Place+=len(Ecmd)
-						E+=SF(Ecmd.hex())+','
+						Place+=chars
+						E+=(Ecmd+',')
 						iter+=len(q)+2
 					except:
 						q = cmd[iter:c+1]
@@ -179,7 +202,7 @@ if __name__ == "__main__":
 		if q==Path(o):
 			z = file
 		else:
-			#try pc build path
+			#try pc build path (need to potentially edit to support other platforms??)
 			q = 'build/us_pc' / Path(file)
 			if q==Path(o):
 				z = file

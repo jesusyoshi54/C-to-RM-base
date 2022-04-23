@@ -42,7 +42,7 @@ a modern game engine's developer's console.
 #include "debug_box.h"
 #include "PR/os_convert.h"
 
-u8 currEnv[4];
+static u8 currEnv[4];
 u8 fDebug = 0;
 
 #if PUPPYPRINT_DEBUG
@@ -634,125 +634,13 @@ u8 textLen[] = {
 
 #include "level_update.h"
 
-s8 shakeToggle = 0;
-s8 waveToggle = 0;
-s8 asciiToggle = 0;
 
-//same as below but uses SM64 strings as input, also uses even kerning
-/* Unsupported characters
-[x] / cross
-[Cur*] / cur star count
-[you][the] / you or the in one byte
-[·] / a coin symbol
-[A][B][C][Z][R] / bold letters to indicate buttons to press
-< > / bold left right chevrons to indicate C button direction
-★ ☆ / hollow and full stars
-” “ / directional quotes (instead we have generic non angled quotes)
---extra characters in ascii that sm64 doesn't have
-semi colon
-*/
-void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32 *offsetY)
-{
-    *offsetY = 0;
-    //Line 1. numbers match
-    if (letter >= 0 && letter <= 9)
-    {
-        *textX = letter * 4;
-        *textY = 0;
-        *spaceX = textLen[letter];
-		return;
-    }
-	else
-    //Line 2. 'A' starts at 16 in texture, at 10 in sm64
-    if (letter >= 10 && letter <= 0x19)
-    {
-        *textX = (letter-10) * 4;
-        *textY = 6;
-        *spaceX = textLen[letter + 6];
-		return;
-    }
-	else
-    //Line 3, 'Q' starts at 32 in texture, at 26 in sm64
-    if (letter >= 26 && letter <= 35)
-    {
-        *textX = ((letter - 26) * 4);
-        *textY = 12;
-        *spaceX = textLen[letter + 6];
-		return;
-    }
-	else
-    //Line 4, 'a' starts at 48 in texture, at 36 in sm64
-    if (letter >= 36 && letter <= 51)
-    {
-        *textX = ((letter - 36) * 4);
-        *textY = 18;
-        *spaceX = textLen[letter + 12];
-		return;
-    }
-    else
-    //Line 5, 'q' starts at 64 in texture, at 52 in sm64
-    if (letter >= 52 && letter <= 61)
-    {
-        *textX = ((letter - 52) * 4);
-        *textY = 24;
-        *spaceX = textLen[letter + 12];
-		return;
-    }
-    else if (letter==0x9e)
-    {//Space, the final frontier.
-        *textX = 128;
-        *textY = 0;
-        *spaceX = 3;
-    }
-	//just replaced the ascii case with sm64 byte
-    switch (letter)
-    {
-        case 0xFF: *textX = 128; *textY = 0; *spaceX = 3; break; //END, shouldn't be encountered anyway
-        case 0x9F: *textX = 40; *textY = 0; *spaceX = textLen[10]; break; //Hyphen
-        case 0xE4: *textX = 44; *textY = 0; *spaceX = textLen[11]; break; //Plus
-        case 0xE1: *textX = 48; *textY = 0; *spaceX = textLen[12]; break; //Open Bracket
-        case 0xE3: *textX = 52; *textY = 0; *spaceX = textLen[13]; break; //Close Bracket
-        case 0xF2: *textX = 56; *textY = 0; *spaceX = textLen[14]; break; //Exclamation mark
-        case 0xF4: *textX = 60; *textY = 0; *spaceX = textLen[15]; break; //Question mark
-
-        case 0xF5: *textX = 40; *textY = 12; *spaceX = textLen[42]; break; //Speech mark
-        case 0xF6: *textX = 40; *textY = 12; *spaceX = textLen[42]; break; //Speech mark
-        case 0x3E: *textX = 44; *textY = 12; *spaceX = textLen[43]; break; //Apostrophe
-        case 0xE6: *textX = 48; *textY = 12; *spaceX = textLen[44]; break; //Colon
-        case 0x3F: *textX = 56; *textY = 12; *spaceX = textLen[46]; break; //Period
-        case 0x6F: *textX = 60; *textY = 12; *spaceX = textLen[47]; break; //Comma
-
-        case 0x53: *textX = 40; *textY = 24; *spaceX = textLen[74]; break; //ARROW
-        case 0xF7: *textX = 40; *textY = 24; *spaceX = textLen[74]; break; //ARROW
-        case 0x50: *textX = 48; *textY = 24; *spaceX = textLen[76]; break; //Caret
-        case 0x51: *textX = 44; *textY = 24; *spaceX = textLen[76]; break; //Down
-        case 0xD0: *textX = 52; *textY = 24; *spaceX = textLen[77]; break; //Slash
-        case 0xF3: *textX = 56; *textY = 24; *spaceX = textLen[78]; break; //percent
-        case 0xE5: *textX = 60; *textY = 24; *spaceX = textLen[79]; break; //Ampersand
-		
-        //unsupported but wanted to make them draw something
-		case 0x54: *textX = 0; *textY = 6; *spaceX = textLen[79]; break; //A bold
-        case 0x55: *textX = 4; *textY = 6; *spaceX = textLen[79]; break; //B bold
-        case 0x56: *textX = 8; *textY = 6; *spaceX = textLen[79]; break; //C bold
-        case 0x57: *textX = 12; *textY = 6; *spaceX = textLen[79]; break; //Z bold
-        case 0x58: *textX = 16; *textY = 6; *spaceX = textLen[79]; break; //R bold
-
-        //This is for the letters that sit differently on the line. It just moves them down a bit.
-        case 0x2A: *offsetY = 1; break;
-        case 0x34: *offsetY = 1; break;
-        case 0x33: *offsetY = 3; break;
-        case 0x3C: *offsetY = 1; break;
-    }
-}
+static s8 shakeToggle = 0;
+static s8 waveToggle = 0;
 
 void get_char_from_byte(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32 *offsetY)
 {
     //use sm64 characters as input instead of ascii
-	if (asciiToggle)
-	{
-		get_char_from_byte_sm64(letter,textX,textY,spaceX,offsetY);
-		return;
-	}
 	*offsetY = 0;
     //Line 1
     if (letter >= '0' && letter <= '9')
@@ -1065,151 +953,6 @@ void print_small_text(s32 x, s32 y, const char *str, s32 align, s32 amount, s32 
     gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
 }
 
-void print_small_text_TE(f32 xScale, f32 yScale, s32 x, s32 y, const char *str, s32 align, s32 amount)
-{
-    s32 textX = 0;
-    s32 textY = 0;
-    s32 offsetY = 0;
-    s32 i = 0;
-    s32 textPos[2] = {0,0};
-    s32 spaceX = 0;
-    s32 wideX[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
-    s32 tx = amount;
-    s32 shakePos[2];
-    s32 wavePos;
-    s32 lines = 0;
-    s32 xlu = currEnv[3];
-    s32 prevxlu = 256; //Set out of bounds, so it will *always* be different at first.
-
-    if (amount == PRINT_ALL){
-		tx = (signed)strlen(str)-(asciiToggle);
-
-		if (asciiToggle)
-			tx=100; //just generic limit. Should be stopped by terminator way earlier
-		else{
-			if (tx==0){
-				return;
-			}
-		}
-	}
-	gDPSetTexturePersp(gDisplayListHead++, G_TP_NONE);
-	gDPSetTextureFilter(gDisplayListHead++, G_TF_POINT);
-	if (!asciiToggle){
-		gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
-		gDPSetCombineMode(gDisplayListHead++, G_CC_FADEA, G_CC_FADEA);
-	}
-    if (align == PRINT_TEXT_ALIGN_CENTRE)
-    {
-        for (i = 0; i < (signed)strlen(str); i++)
-        {
-        if (str[i] == '#')
-        {
-            i++;
-            textPos[0] = 0;
-            lines++;
-        }
-        // if (str[i] == '<')
-        // {
-            // i+= text_iterate_command(str, i, FALSE);
-        // }
-        get_char_from_byte(str[i], &textX, &textY, &spaceX, &offsetY);
-        textPos[0]+=spaceX+1;
-        wideX[lines] = MAX(textPos[0], wideX[lines]);
-        }
-        textPos[0] = -(wideX[0]/2);
-    }
-    else
-    if (align == PRINT_TEXT_ALIGN_RIGHT)
-    {
-        for (i = 0; i < (signed)strlen(str); i++)
-        {
-        if (str[i] == '#')
-        {
-            i++;
-            textPos[0] = 0;
-            lines++;
-        }
-        else
-        {
-            textPos[0]+=spaceX+1;
-        }
-        // if (str[i] == '<')
-        // {
-            // i+= text_iterate_command(str, i, FALSE);
-        // }
-        get_char_from_byte(str[i], &textX, &textY, &spaceX, &offsetY);
-
-        wideX[lines] = MAX(textPos[0], wideX[lines]);
-        }
-        textPos[0] = -wideX[0];
-    }
-    lines = 0;
-    gDPLoadTextureBlock_4b(gDisplayListHead++, segmented_to_virtual(small_font), G_IM_FMT_I, 128, 60, G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, 0, 0, 0, 0, 0);
-	u32 dsdx = (u32)((1.0f/xScale)*1024.0f);
-	u32 dsdy = (u32)((1.0f/yScale)*1024.0f);
-	s32 xInc = (s32) (8.0f*xScale);
-	s32 yInc = (s32) (12.0f*yScale);
-    for (i = 0; i < tx; i++)
-    {
-        if (str[i] == -1)
-			break;
-        // if (str[i] == '#')
-        // {
-            // i++;
-            // lines++;
-            // if (align == PRINT_TEXT_ALIGN_RIGHT)
-                // textPos[0] = -(wideX[lines]);
-            // else
-                // textPos[0] = -(wideX[lines]/2);
-            // textPos[1] += 12;
-        // }
-        if (shakeToggle)
-        {
-            shakePos[0] = -1+(random_u16() % 2);
-            shakePos[1] = -1+(random_u16() % 2);
-        }
-        else
-        {
-            shakePos[0] = 0;
-            shakePos[1] = 0;
-        }
-        if (waveToggle)
-        {
-            wavePos = (sins((gGlobalTimer*3000)+(i*10000)))*2;
-        }
-        else
-        {
-            wavePos = 0;
-        }
-        get_char_from_byte(str[i], &textX, &textY, &spaceX, &offsetY);
-        if (xlu != prevxlu)
-        {
-            prevxlu = xlu;
-            // if (xlu > 250)
-            // {
-                // gDPSetRenderMode(gDisplayListHead++, G_RM_TEX_EDGE, G_RM_TEX_EDGE2);
-            // }
-            // else
-            // {
-				if (!asciiToggle)
-					gDPSetRenderMode(gDisplayListHead++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
-            // }
-        }
-		if (asciiToggle){
-			if(str[i]!=-98){
-				gSPScisTextureRectangle(gDisplayListHead++, ((x+shakePos[0]+textPos[0])) << 2, (SCREEN_HEIGHT-(y+yInc+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, ((x+textPos[0]+shakePos[0]+xInc)) << 2, (SCREEN_HEIGHT-(y+wavePos+offsetY+shakePos[1]+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, dsdx, dsdy);
-			}
-		}
-		else{
-			if(str[i]!=' '){
-				gSPScisTextureRectangle(gDisplayListHead++, ((x+shakePos[0]+textPos[0])) << 2, ((y+shakePos[1]+offsetY+textPos[1]+wavePos)) << 2, ((x+textPos[0]+shakePos[0]+xInc)) << 2, ((y+wavePos+offsetY+shakePos[1]+yInc+textPos[1])) << 2, G_TX_RENDERTILE, textX << 6, textY << 6, dsdx, dsdy);
-			}
-		}
-		textPos[0]+=((s32)(spaceX*xScale))+1;
-    }
-    if (!asciiToggle)
-		gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
-}
 
 void render_multi_image(Texture *image, s32 x, s32 y, s32 width, s32 height, s32 scaleX, s32 scaleY, s32 mode)
 {

@@ -277,7 +277,7 @@ static int ivrt(u8 axis) {
             return -1;
     }
 }
-
+u8 sDpadMove = 0;
 static void newcam_rotate_button(void)
 {
 	if(!newcam_analogue){
@@ -307,19 +307,29 @@ static void newcam_rotate_button(void)
 			newcam_centering = 1;
 		}
 	}
-	if ((gPlayer1Controller->buttonDown & L_JPAD) && newcam_analogue == 0)
+	if ((gPlayer1Controller->buttonPressed & L_JPAD || sDpadMove&2) && newcam_analogue == 0)
 	{
-		newcam_yaw_target = newcam_yaw_target+(ivrt(0)*0x80);
-		newcam_centering = 1;
+		if(gPlayer1Controller->buttonDown & L_JPAD){
+			sDpadMove = 2;
+			newcam_yaw_target = newcam_yaw_target+(ivrt(0)*0x80);
+			newcam_centering = 1;
+		}else{
+			sDpadMove &= ~2;
+		}
 	}
 	else
-	if ((gPlayer1Controller->buttonDown & R_JPAD) && newcam_analogue == 0)
+	if ((gPlayer1Controller->buttonPressed & R_JPAD || sDpadMove) && newcam_analogue == 0)
 	{
-		newcam_yaw_target = newcam_yaw_target-(ivrt(0)*0x80);
-		newcam_centering = 1;
+		if(gPlayer1Controller->buttonDown & R_JPAD){
+			sDpadMove = 1;
+			newcam_yaw_target = newcam_yaw_target-(ivrt(0)*0x80);
+			newcam_centering = 1;
+		}else{
+			sDpadMove &= ~1;
+		}
 	}
 	else
-	if ((gPlayer1Controller->buttonPressed & D_JPAD)  && newcam_analogue == 0)
+	if ((gPlayer1Controller->buttonPressed & D_JPAD) && newcam_analogue == 0)
 	{
 		newcam_yaw_target = (newcam_yaw_target+0x1000)&0xE000;
 		newcam_centering = 1;
@@ -330,7 +340,7 @@ static void newcam_rotate_button(void)
 		}
 	}
 	else
-	if (gPlayer1Controller->buttonDown & U_JPAD && newcam_analogue == 0)
+	if ((gPlayer1Controller->buttonPressed & U_JPAD) && newcam_analogue == 0)
 	{
 		newcam_yaw_target = -gMarioState->faceAngle[1]-0x4000; //conversion from sm64 angles to newcam angle system
 		newcam_centering = 1;
@@ -430,10 +440,10 @@ static void newcam_zoom_button(void)
     else
         newcam_yaw_target = newcam_yaw;
 }
-
+static s16 waterflag;
 static void newcam_update_values(void) {
     //For tilt, this just limits it so it doesn't go further than 90 degrees either way. 90 degrees is actually 16384, but can sometimes lead to issues, so I just leave it shy of 90.
-    u8 waterflag = 0;
+
 	newcam_mode = newcam_intendedmode;
 	newcam_modeflags = newcam_mode;
 	if (!newcam_active){
@@ -476,10 +486,15 @@ static void newcam_update_values(void) {
         case ACT_FLYING: waterflag = 1; break;
     }
 
-    if (gMarioState->action & ACT_FLAG_SWIMMING) {
+    if (gMarioState->action & ACT_FLAG_SWIMMING && !waterflag) {
         if (gMarioState->forwardVel > 2)
-        waterflag = 1;
-    }
+			waterflag = newcam_tilt;
+    }else{
+		if(waterflag && !(gMarioState->action & ACT_FLAG_SWIMMING)){
+			newcam_tilt = waterflag;
+			waterflag = 0;
+		}
+	}
 
     if (waterflag && newcam_modeflags & NC_FLAG_XTURN && !(newcam_modeflags & NC_FLAG_ZOOM_ULTRA)) {
         newcam_yaw = (approach_s16_symmetric(newcam_yaw,-gMarioState->faceAngle[1]-0x4000,(gMarioState->forwardVel*128)));

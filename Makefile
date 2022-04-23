@@ -96,7 +96,7 @@ CONTROLLER_API ?= SDL2
 .PHONY: RM2CPC
 RM2CPC:
 	$(info "Running make -j4 TARGET_N64=0 TARGET_ARCH=native WINDOWS_BUILD=1 TARGET_GAME_CONSOLE=0 DEBUG=1 NODRAWINGDISTANCE=1")
-	make TARGET_N64=0 TARGET_ARCH=native WINDOWS_BUILD=1 TARGET_GAME_CONSOLE=0 DEBUG=1 NODRAWINGDISTANCE=1 -j4 2>&1 | grep --color -iP "\^|warning:|error:|"
+	make TARGET_N64=0 TARGET_ARCH=native WINDOWS_BUILD=1 TARGET_GAME_CONSOLE=0 DEBUG=1 NODRAWINGDISTANCE=1 -j48 2>&1 | GREP_COLOR='3;1;33' grep --color=always -iP "\^|warning:|"  | GREP_COLOR='1;4;51;31' grep --color=always -iP "\?|error:|"
 
 
 ifeq ($(TARGET_WII_U),1)
@@ -1219,7 +1219,9 @@ $(TEH_FILES):$(TE_FILES)
 	$(call print,Converting TE string:,$?,$@)
 	python3 $(TECONV) $? $@
 endif
-#make menu strings dependent on TE files so they're built into final file
+#make text engine dependent on TE files so they're built into final file
+$(BUILD_DIR)/src/game/text_engine.o:  $(TEH_FILES)
+
 $(BUILD_DIR)/include/text_strings.h: $(BUILD_DIR)/include/text_menu_strings.h
 $(BUILD_DIR)/include/text_strings.h: $(BUILD_DIR)/include/text_options_strings.h
 
@@ -1239,7 +1241,7 @@ $(BUILD_DIR)/src/menu/file_select.o: $(BUILD_DIR)/include/text_strings.h
 $(BUILD_DIR)/src/menu/star_select.o: $(BUILD_DIR)/include/text_strings.h
 $(BUILD_DIR)/src/game/ingame_menu.o: $(BUILD_DIR)/include/text_strings.h
 ifeq ($(TE),1)
-$(BUILD_DIR)/src/game/options_menu.o: $(BUILD_DIR)/include/text_strings.h $(TEH_FILES)
+$(BUILD_DIR)/src/game/options_menu.o: $(BUILD_DIR)/include/text_strings.h
 else
 $(BUILD_DIR)/src/game/options_menu.o: $(BUILD_DIR)/include/text_strings.h
 endif

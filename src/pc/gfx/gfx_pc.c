@@ -1218,7 +1218,6 @@ static void gfx_dp_set_texture_image(uint32_t format, uint32_t size, uint32_t wi
 static void gfx_dp_set_tile(uint8_t fmt, uint32_t siz, uint32_t line, uint32_t tmem, uint8_t tile, uint32_t palette, uint32_t cmt, uint32_t maskt, uint32_t shiftt, uint32_t cms, uint32_t masks, uint32_t shifts) {
     
     if (tile == G_TX_RENDERTILE) {
-        // SUPPORT_CHECK(palette == 0); // palette should set upper 4 bits of color index in 4b mode
         rdp.texture_tile.fmt = fmt;
         rdp.texture_tile.siz = siz;
         rdp.texture_tile.cms = cms;
@@ -1253,8 +1252,8 @@ static void gfx_dp_load_tlut(uint8_t tile, uint32_t high_index) {
 static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t dxt) {
     if (tile == 1) return;
     SUPPORT_CHECK(tile == G_TX_LOADTILE);
-    SUPPORT_CHECK(uls == 0);
-    SUPPORT_CHECK(ult == 0);
+    // SUPPORT_CHECK(uls == 0);
+    // SUPPORT_CHECK(ult == 0);
     
     // The lrs field rather seems to be number of pixels to load
     uint32_t word_size_shift;
@@ -1282,8 +1281,8 @@ static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t
 static void gfx_dp_load_tile(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t lrt) {
     if (tile == 1) return;
     SUPPORT_CHECK(tile == G_TX_LOADTILE);
-    SUPPORT_CHECK(uls == 0);
-    SUPPORT_CHECK(ult == 0);
+    // SUPPORT_CHECK(uls == 0);
+    // SUPPORT_CHECK(ult == 0);
 
     uint32_t word_size_shift;
     switch (rdp.texture_to_load.siz) {

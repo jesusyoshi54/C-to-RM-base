@@ -25,7 +25,8 @@ struct TEState{
 	/* 0x0A */ u8  KeyboardState;
 	/* NEW  */ s8  KeyboardChar; //which letter is being drawn on the keyboard
 	/* NEW  */ s8  KeyboardReset; //also used to keep track of box ends
-	/* 0x0B */ u8  Unused; //wobble but deprecated because puppyprint supports it now
+	/* 0x0B */ u8  Ascii; //printing ascii, only does text using current settings
+	/* NEW  */ u8  *AsciiRet; //where you return after ascii is done
 	/* 0x0C */ u8 *TempStr;
 	/* 0x10 */ s16 TempX;
 	/* 0x12 */ s16 TempY;
@@ -117,12 +118,20 @@ union WordByte{
 	u32 w0;
 	char col[4];
 };
+union FloatWord{
+	u32 U;
+	f32 F;
+};
 #include "text_engine_helpers.h"
 
 extern u8 StrBuffer[NumEngines][0x100];
 extern u8 CmdBuffer[NumEngines][0x400];
 extern u32 TimerBuffer[NumEngines][64]; //stores timers necessary for certain cmds with their own cycles and stuff
 extern u8 UserInputs[NumEngines][16][16]; //16 length 16 strings
+
+extern void print_small_text_TE(f32 xScale, f32 yScale,s32 x, s32 y, const char *str,struct TEState *CurEng);
+extern void get_char_from_byte_sm64(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32 *offsetY);
+extern void get_char_from_byte_ascii(u8 letter, s32 *textX, s32 *textY, s32 *spaceX, s32 *offsetY);
 
 extern u16 sCurrentMusic;
 extern const Gfx dl_draw_text_bg_box_TE[];
@@ -153,7 +162,7 @@ s8 TE_print_adv(struct TEState *CurEng,u16 len);
 u16 TE_get_u16(u8 *str);
 s16 TE_get_s16(u8 *str);
 u32 TE_get_u32(u8 *str);
-u32 TE_get_ptr(u8 *strArgs,u8 *str);
+u32* TE_get_ptr(u8 *strArgs,u8 *str);
 s32 TE_get_s32(u8 *str);
 s8 TE_end_str(struct TEState *CurEng);
 s8 TE_reset_str(struct TEState *CurEng);
@@ -235,6 +244,7 @@ s8 TE_pop_str(struct TEState *CurEng,u8 *str);
 s8 TE_enable_shake(struct TEState *CurEng,u8 *str);
 s8 TE_print_glyph(struct TEState *CurEng,u8 *str);
 s8 TE_word_wrap(struct TEState *CurEng,u8 *str);
+s8 TE_SprintF(struct TEState *CurEng,u8 *str);
 s8 TE_line_break(struct TEState *CurEng,u8 *str);
 s8 TE_terminator(struct TEState *CurEng,u8 *str);
 

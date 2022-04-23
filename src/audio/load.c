@@ -1555,7 +1555,7 @@ u8 get_missing_bank(u32 seqId, s32 *nonNullCount, s32 *nullCount) {
 #endif
 
 #ifndef VERSION_SH
-extern u16 Extm64;
+extern s8 Extm64;
 struct AudioBank *load_banks_immediate(s32 seqId, u8 *arg1) {
     void *ret;
     u32 bankId;
