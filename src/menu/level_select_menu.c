@@ -226,11 +226,22 @@ static s8 selected = 0;
 static s8 type = -1; //0 for m64, 1 for sfx
 static s8 chan = 0;
 static s8 IO = 0;
+static s8 param = 0;
+static s8 Seq_Param = 0;
+static s8 Mem = 0;
 extern void stop_sounds_in_bank(u8 bank);
 extern u16 gSequenceCount;
 #include "src/game/Keyboard_te.h"
 #include "src/game/text_engine.h"
 #include "src/audio/load.h"
+#include "src/audio/heap.h"
+extern struct SoundAllocPool gAudioSessionPool;
+extern struct SoundAllocPool gAudioInitPool;
+extern struct SoundAllocPool gNotesAndBuffersPool;
+
+extern struct SoundMultiPool gSeqLoadedPool;
+extern struct SoundMultiPool gBankLoadedPool;
+extern struct SoundMultiPool gUnusedLoadedPool;
 #ifndef TARGET_N64
 #include <stdio.h>
 #include <stdlib.h>
@@ -238,6 +249,8 @@ extern u16 gSequenceCount;
 FILE *ptr_sfx_dyncall;
 u8 *dyncall_read;
 #endif
+
+#define MAX_SCREEN 4
 
 static void resolve_screen_swap(void){
 	TE_end_str(&TE_Engines[0]);
@@ -251,6 +264,9 @@ static void resolve_screen_swap(void){
 		case 3:
 			SetupTextEngine(0,220,&msg_seq_ctrl,0);
 			break;
+		case 4:
+			SetupTextEngine(0,220,&msg_mem_ctrl,0);
+			break;
 		case 0:
 			if(type == 0){
 				SetupTextEngine(16,220,&msg_SEQ,0);
@@ -260,17 +276,74 @@ static void resolve_screen_swap(void){
 	}
 }
 
-static void btn_controls(s8 *var){
+static void btn_controls_float(f32 *var){
 	if(gPlayer3Controller->buttonPressed & L_CBUTTONS){
 		screen -= 1;
 		if(screen<0){
-			screen = 3;
+			screen = MAX_SCREEN;
 		}
 		resolve_screen_swap();
 	}
 	if(gPlayer3Controller->buttonPressed & R_CBUTTONS){
 		screen += 1;
-		if(screen>3){
+		if(screen>MAX_SCREEN){
+			screen = 0;
+		}
+		resolve_screen_swap();
+	}
+	if(gPlayer3Controller->buttonPressed & U_CBUTTONS){
+		*var += 0.1f;
+	}if(gPlayer3Controller->buttonPressed & D_CBUTTONS){
+		*var -= 0.1f;
+	}if(gPlayer3Controller->buttonPressed & A_BUTTON){
+		*var += 0.01f;
+	}if(gPlayer3Controller->buttonPressed & B_BUTTON){
+		*var -= 0.01f;
+	}if(gPlayer3Controller->buttonPressed & Z_TRIG){
+		*var = 0;
+	}
+}
+
+static void btn_controls_u16(u16 *var, u32 scale){
+	if(gPlayer3Controller->buttonPressed & L_CBUTTONS){
+		screen -= 1;
+		if(screen<0){
+			screen = MAX_SCREEN;
+		}
+		resolve_screen_swap();
+		play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource);
+	}
+	if(gPlayer3Controller->buttonPressed & R_CBUTTONS){
+		screen += 1;
+		if(screen>MAX_SCREEN){
+			screen = 0;
+		}
+		resolve_screen_swap();
+		play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource);
+	}
+	if(gPlayer3Controller->buttonPressed & U_CBUTTONS){
+		*var += 10*scale;
+	}if(gPlayer3Controller->buttonPressed & D_CBUTTONS){
+		*var -= 10*scale;
+	}if(gPlayer3Controller->buttonPressed & A_BUTTON){
+		*var += 1*scale;
+	}if(gPlayer3Controller->buttonPressed & B_BUTTON){
+		*var -= 1*scale;
+	}if(gPlayer3Controller->buttonPressed & Z_TRIG){
+		*var = 0;
+	}
+}
+static void btn_controls(s8 *var){
+	if(gPlayer3Controller->buttonPressed & L_CBUTTONS){
+		screen -= 1;
+		if(screen<0){
+			screen = MAX_SCREEN;
+		}
+		resolve_screen_swap();
+	}
+	if(gPlayer3Controller->buttonPressed & R_CBUTTONS){
+		screen += 1;
+		if(screen>MAX_SCREEN){
 			screen = 0;
 		}
 		resolve_screen_swap();
@@ -288,15 +361,61 @@ static void btn_controls(s8 *var){
 	}
 }
 
+static void Control_Mem_Params(void){
+	btn_controls(&Mem);
+}
 static void Control_Chan_Params(void){
-	handle_menu_scrolling(2,&chan,0,15);
-	handle_menu_scrolling(1,&IO,0,7);
-	btn_controls(&(gSequencePlayers[type+1].channels[chan]->soundScriptIO[IO]));
+	handle_menu_scrolling(1,&chan,0,15);
+	handle_menu_scrolling(2,&param,-1,4);
+	switch(param){
+		case -1:
+			param = 3;
+			break;
+		case 0:
+			btn_controls(&(gSequencePlayers[type+1].channels[chan]->reverb));
+			break;
+		case 1:
+			btn_controls_float(&(gSequencePlayers[type+1].channels[chan]->volume));
+			break;
+		case 2:
+			btn_controls_float(&(gSequencePlayers[type+1].channels[chan]->pan));
+			break;
+		case 3:
+			btn_controls(&(gSequencePlayers[type+1].channels[chan]->transposition));
+			break;
+		case 4:
+			param = 0;
+			break;
+	}
 }
 static void Control_Seq_Params(void){
-	handle_menu_scrolling(2,&chan,0,15);
-	handle_menu_scrolling(1,&IO,0,7);
-	btn_controls(&(gSequencePlayers[type+1].channels[chan]->soundScriptIO[IO]));
+	handle_menu_scrolling(2,&Seq_Param,-1,6);
+	switch(Seq_Param){
+		case -1:
+			Seq_Param = 5;
+			break;
+		case 0:
+			btn_controls_u16(&(gSequencePlayers[type+1].tempo),TEMPO_SCALE);
+			break;
+		case 1:
+			btn_controls_float(&(gSequencePlayers[type+1].fadeVolume));
+			break;
+		case 2:
+			btn_controls(&(gSequencePlayers[type+1].transposition));
+			break;
+		case 3:
+			btn_controls_float(&(gSequencePlayers[type+1].muteVolumeScale));
+			break;
+		case 4:
+			btn_controls(&(gSequencePlayers[type+1].muteBehavior));
+			break;
+		case 5:
+			btn_controls(&(gSequencePlayers[type+1].seqVariation));
+			break;
+		case 6:
+			Seq_Param = 0;
+			break;
+	}
 }
 static void Control_Script_IO(void){
 	handle_menu_scrolling(2,&chan,0,15);
@@ -313,6 +432,7 @@ static void Control_SFX(void){
 			}if(gPlayer3Controller->buttonPressed & R_TRIG){
 				stop_sounds_in_bank(Bank);
 				stop_sounds_in_continuous_banks();
+				sound_reset(0);
 			}
 			break;
 		case 1:
@@ -386,7 +506,6 @@ static void Control_SFX(void){
 	handle_menu_scrolling(2,&selected,0,2);
 	#endif
 }
-extern struct SoundMultiPool gSeqLoadedPool;
 
 static void Control_SEQ(void){
 	switch(selected){
@@ -406,7 +525,6 @@ static void Control_SEQ(void){
 				play_music(1, SEQUENCE_ARGS(4, gSequenceCount+1), 0);
 			}if(gPlayer3Controller->buttonPressed & R_TRIG){
 				play_music(1, 0, 0);
-				audio_reset_session();
 			}
 			break;
 		case 2:
@@ -435,19 +553,72 @@ static void Control_SEQ(void){
 	#endif
 }
 
-char buf[(16 * 8 * 12) +(16*7)+ 40];
-
-
+char buf[(16 * 8 * 12) +(16*7)+ 600];
 
 u8 *print_script_chan_TE(u16 siz){
 	u16 e = 0;
-	e += sprintf(buf,"test channels");
+	u8 b = 0;
+	for(b = 0; b<16; b++){
+		struct SequenceChannel *sel_chan = gSequencePlayers[1].channels[b];
+		u8 q = (chan == b);
+		if(q){
+			e += sprintf(buf+e,">");
+		}else{
+			e += sprintf(buf+e,"  ");
+		}
+		e += sprintf(buf+e,"chan %d - %c Reverb %d - %c Volume %0.2f - %c Panning %0.2f - %c Transposition %d\n",b, /* 38 == "&"*/
+		38*(param==0 && q),sel_chan->reverb,
+		38*(param==1 && q),sel_chan->volume,
+		38*(param==2 && q),sel_chan->pan,
+		38*(param==3 && q),sel_chan->transposition);
+	}
 	buf[e] = 0xFF; //end with -1
+	return &buf;
 }
 
 u8 *print_script_seq_TE(u16 siz){
 	u16 e = 0;
-	e += sprintf(buf,"test sequences");
+	e += sprintf(buf,"Seq Params: %c Tempo %d, %c Volume %0.2f, %c Transposition %d\n\
+	%c Mute Volume %0.2f, %c Mute Behavior 0x%X, %c Variation %d\n",
+	38*(Seq_Param==0),gSequencePlayers[type+1].tempo / TEMPO_SCALE,
+	38*(Seq_Param==1),gSequencePlayers[type+1].fadeVolume,
+	38*(Seq_Param==2),gSequencePlayers[type+1].transposition,
+	38*(Seq_Param==3),gSequencePlayers[type+1].muteVolumeScale,
+	38*(Seq_Param==4),gSequencePlayers[type+1].muteBehavior,
+	38*(Seq_Param==5),gSequencePlayers[type+1].seqVariation
+	);
+	buf[e] = 0xFF; //end with -1
+	return &buf;
+}
+
+
+static void print_pool(u8 *e,struct SoundAllocPool pool){
+	*e += sprintf(buf+*e,"0x%x / 0x%x\n",pool.cur-pool.start,pool.size);
+}
+
+u8 *print_script_mem_TE(u16 siz){
+	u16 e = 0;
+	e += sprintf(buf,"Session Pool - ");
+	print_pool(&e,gAudioSessionPool);
+	
+	e += sprintf(buf+e,"Init Pool - ");
+	print_pool(&e,gAudioInitPool);
+	
+	e += sprintf(buf+e,"Notes Pool - ");
+	print_pool(&e,gNotesAndBuffersPool);
+	
+	e += sprintf(buf+e,"Seq Temp Pool - ");
+	print_pool(&e,gSeqLoadedPool.temporary.pool);
+	
+	e += sprintf(buf+e,"Seq Persis Pool - ");
+	print_pool(&e,gSeqLoadedPool.persistent.pool);
+	
+	e += sprintf(buf+e,"Bank Temp Pool - ");
+	print_pool(&e,gBankLoadedPool.temporary.pool);
+	
+	e += sprintf(buf+e,"Bank Persis Pool - ");
+	print_pool(&e,gBankLoadedPool.persistent.pool);
+	
 	buf[e] = 0xFF; //end with -1
 	return &buf;
 }
@@ -458,15 +629,53 @@ u8 *print_cur_sel(u16 siz){
 		case 0:
 			if(selected == 1){
 				e += sprintf(buf+e,"M64 Ext Load - bank: %d",Extm64);
+				if(gPlayer3Controller->buttonPressed & L_TRIG){
+					play_music(1, SEQUENCE_ARGS(4, gSequenceCount+1), 0);
+				}if(gPlayer3Controller->buttonPressed & R_TRIG){
+					play_music(1, 0, 0);
+					audio_init();
+				}
 			}else{
 				e += sprintf(buf+e,"M64 Play - Seq: %d",m64);
+				if(gPlayer3Controller->buttonPressed & L_TRIG){
+					play_music(1, SEQUENCE_ARGS(4, m64), 0);
+				}if(gPlayer3Controller->buttonPressed & R_TRIG){
+					play_music(1, 0, 0);
+					audio_init();
+				}
 			}
 			break;
 		case 1:
 			if(selected == 2){
 				e += sprintf(buf+e,"Sfx Play - Ext Load");
+				if(gPlayer3Controller->buttonPressed & L_TRIG){
+					ptr_sfx_dyncall = fopen("dyncall.bin","rb");
+					if (ptr_sfx_dyncall){
+						printf("file loaded %p\n",ptr_sfx_dyncall);
+						int i;
+						fseek(ptr_sfx_dyncall,0,SEEK_END);
+						i = ftell(ptr_sfx_dyncall);
+						fseek(ptr_sfx_dyncall,0,0);
+						dyncall_read = malloc(i);
+						fread(dyncall_read,i,1,ptr_sfx_dyncall);
+						fclose(ptr_sfx_dyncall);
+						play_sound(SOUND_ARG_LOAD(10,0, 0xFF, SOUND_DISCRETE), gGlobalSoundSource);
+					}else{
+						printf("file not found!\n");
+					}
+				}
+				if(gPlayer3Controller->buttonPressed & R_TRIG){
+					stop_sounds_in_bank(Bank);
+					stop_sounds_in_continuous_banks();
+				}
 			}else{
 				e += sprintf(buf+e,"Sfx Play - bank: %d ID: %d",Bank,Index);
+				if(gPlayer3Controller->buttonPressed & L_TRIG){
+					play_sound(SOUND_ARG_LOAD(Bank,Index, 0xFF, SOUND_DISCRETE), gGlobalSoundSource);
+				}if(gPlayer3Controller->buttonPressed & R_TRIG){
+					stop_sounds_in_bank(Bank);
+					stop_sounds_in_continuous_banks();
+				}
 			}
 			break;
 	
@@ -527,6 +736,9 @@ s32 intro_play_its_a_me_mario(void) {
 				case 3:
 					Control_Seq_Params();
 					break;
+				case 4:
+					Control_Mem_Params();
+					break;
 			}
 				if(gPlayer3Controller->buttonPressed & START_BUTTON){
 					TE_end_str(&TE_Engines[0]);
@@ -547,6 +759,9 @@ s32 intro_play_its_a_me_mario(void) {
 					break;
 				case 3:
 					Control_Seq_Params();
+					break;
+				case 4:
+					Control_Mem_Params();
 					break;
 			}
 			if(gPlayer3Controller->buttonPressed & START_BUTTON){

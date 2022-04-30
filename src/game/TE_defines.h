@@ -4,7 +4,9 @@
 #define TE_STATE_MAIN 0
 #define TE_STATE_AUX 1
 #define TE_STATE_BG 2
-#define IS_TE_CMD(Char) \
+#define IS_TE_CMD(Char) !IS_NOT_TE_CMD(Char)
+
+#define IS_NOT_TE_CMD(Char) \
 (Char<0x40||\
 (Char>0x4F&&Char<0x70)||\
 (Char>0xCF&&Char<0xFE)\

@@ -9,7 +9,7 @@ non iterables are ignored. If you have a tuple with a single item, put a comma a
 or else it will be ignored
 """
 #This is externs delcared in this file
-externs = ("extern const Gfx star_seg3_dl_0302B870[];","extern u8 *print_script_IO_TE(u16 siz);","extern u8 *print_script_chan_TE(u16 siz);","extern u8 *print_cur_sel(u16 siz);","extern u8 *print_script_seq_TE(u16 siz);")
+externs = ("extern const Gfx star_seg3_dl_0302B870[];","extern u8 *print_script_IO_TE(u16 siz);","extern u8 *print_script_chan_TE(u16 siz);","extern u8 *print_cur_sel(u16 siz);","extern u8 *print_script_seq_TE(u16 siz);","extern u8 *print_script_mem_TE(u16 siz);")
 #These are header files included in this file. Use single quotes so double quotes are delimited for filename
 headers = (r'#include "actors/common1.h"',r'#include "textures.h"',)
 #This keyboard is required for Text Engine usage. Do not delete
@@ -52,20 +52,26 @@ Load External M64 w/ BANK [UsrStr(2)]    LOAD  (PC ONLY)\n\
 File must be named test.m64\n\n\
 C left/right to swap screens[end]"]
 
-msg_script_IO_cntrl = ["[WordWrap(310)]running [UsrStr(0)] - \
+msg_script_IO_cntrl = ["[WordWrap(310)] Script IO Control - \n\
 A to inc, B to dec, Z to reset, L to Play. C up down to change by 10.\n\
 [ScaleText(0.55,0.6)][SprintF(0,'print_script_IO_TE',0,[])]\n\
 [ScaleText(1.0,1.0)] L to play, R to stop\n\
-[SprintF(0,'print_cur_sel',0,[])][end]"]
+[SprintF(0,'print_cur_sel',0,[])]\nC left/right to swap screens[end]"]
 
-msg_chan_ctrl = ["[WordWrap(310)]running [UsrStr(0)] \
+msg_chan_ctrl = ["[WordWrap(310)]Chan Control - \n\
 A to inc, B to dec, Z to reset, L to Play. C up down to change by 10.\n\
 [ScaleText(0.55,0.6)][SprintF(0,'print_script_chan_TE',0,[])]\n\
 [ScaleText(1.0,1.0)] L to play, R to stop\n\
-[SprintF(0,'print_cur_sel',0,[])][end]"]
+[SprintF(0,'print_cur_sel',0,[])]\nC left/right to swap screens[end]"]
 
-msg_seq_ctrl = ["[WordWrap(310)]running [UsrStr(0)] - \
-A to inc, B to dec, Z to reset, L to Play. C up down to change by 10.\n\
-[ScaleText(0.55,0.6)][SprintF(0,'print_script_seq_TE',0,[])]\n\
+msg_seq_ctrl = ["[WordWrap(310)]Seq Control - \n\
+A to inc, B to dec, Z to reset, L to Play. C up down to change by 10.\n\n\
+[ScaleText(0.8,0.8)][SprintF(0,'print_script_seq_TE',0,[])]\n\
 [ScaleText(1.0,1.0)] L to play, R to stop\n\
-[SprintF(0,'print_cur_sel',0,[])][end]"]
+[SprintF(0,'print_cur_sel',0,[])]\nC Left or Right to change screen[end]"]
+
+msg_mem_ctrl = ["[WordWrap(310)]Mem Viewing - \n\
+Only Seq and Bank pools alloc as needed, others on init.\n\n\
+[ScaleText(0.8,0.8)][SprintF(0,'print_script_mem_TE',0,[])]\n\
+[ScaleText(1.0,1.0)] L to play, R to stop\n\
+[SprintF(0,'print_cur_sel',0,[])]\nC Left or Right to change screen[end]"]

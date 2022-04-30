@@ -118,7 +118,7 @@ void RunTextEngine(void){
 				loop = TE_make_keyboard(CurEng,str);
 				goto loopswitch;
 			}
-			if(!IS_TE_CMD(CurChar)){
+			if(IS_TE_CMD(CurChar)){
 				loop = TE_jump_cmds(CurEng,CurChar,str);
 				loopswitch:
 					if (loop==1)
@@ -253,6 +253,7 @@ void TE_transition_print(struct TEState *CurEng){
 	print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+CurEng->TransX,CurEng->TempY+CurEng->TransY,&StrBuffer[CurEng->state],CurEng);
 	return;
 }
+
 void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 	//on a start transition, you start from the struct alpha and end at env stored one
 	s16 TarAlpha;
@@ -365,6 +366,7 @@ void TE_add_char2buf(struct TEState *CurEng){
 		}
 	}
 }
+
 u8 TE_find_next_space(struct TEState *CurEng,u8 *str){
 	u8 x = 0;
 	u8 CharWrite = str[CurEng->CurPos+x];
@@ -377,8 +379,14 @@ u8 TE_find_next_space(struct TEState *CurEng,u8 *str){
 	while(CharWrite != space){
 		CharWrite = str[CurEng->CurPos+x];
 		//generic
-		if(!IS_TE_CMD(CharWrite) && (!CurEng->Ascii && (CharWrite==0xFF | CharWrite=='\n'))){
-			break;
+		if(CurEng->Ascii){
+			if(CharWrite == 0xFF | CharWrite == "\n"){
+				break;
+			}
+		}else{
+			if(IS_TE_CMD(CharWrite)){
+				break;
+			}
 		}
 		x++;
 		if(x>100){
@@ -552,7 +560,6 @@ void print_small_text_TE(f32 xScale, f32 yScale, s32 x, s32 y, const char *str,s
 		}
 		textPos[0]+=((s32)(spaceX*xScale))+1;
     }
-	printf("print pos %d, end pos %d len str %d, ascii %d\n",textPos[0],CurEng->TotalXOff,i, CurEng->Ascii);
 }
 
 u8 textLen_TE[] = {
