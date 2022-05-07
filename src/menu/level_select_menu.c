@@ -366,10 +366,10 @@ static void Control_Mem_Params(void){
 }
 static void Control_Chan_Params(void){
 	handle_menu_scrolling(1,&chan,0,15);
-	handle_menu_scrolling(2,&param,-1,4);
+	handle_menu_scrolling(2,&param,-1,5);
 	switch(param){
 		case -1:
-			param = 3;
+			param = 4;
 			break;
 		case 0:
 			btn_controls(&(gSequencePlayers[type+1].channels[chan]->reverb));
@@ -384,6 +384,9 @@ static void Control_Chan_Params(void){
 			btn_controls(&(gSequencePlayers[type+1].channels[chan]->transposition));
 			break;
 		case 4:
+			btn_controls(&(gSequencePlayers[type+1].channels[chan]->volumeScale));
+			break;
+		case 5:
 			param = 0;
 			break;
 	}
@@ -566,11 +569,12 @@ u8 *print_script_chan_TE(u16 siz){
 		}else{
 			e += sprintf(buf+e,"  ");
 		}
-		e += sprintf(buf+e,"chan %d - %c Reverb %d - %c Volume %0.2f - %c Panning %0.2f - %c Transposition %d\n",b, /* 38 == "&"*/
+		e += sprintf(buf+e,"chan %d - %c Reverb %d - %c Volume %0.2f - %c Panning %0.2f - %c Transposition %d - %c VolScale %0.2f\n",b, /* 38 == "&"*/
 		38*(param==0 && q),sel_chan->reverb,
 		38*(param==1 && q),sel_chan->volume,
 		38*(param==2 && q),sel_chan->pan,
-		38*(param==3 && q),sel_chan->transposition);
+		38*(param==3 && q),sel_chan->transposition,
+		38*(param==4 && q),sel_chan->volumeScale);
 	}
 	buf[e] = 0xFF; //end with -1
 	return &buf;
