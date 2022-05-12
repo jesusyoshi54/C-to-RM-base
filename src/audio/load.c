@@ -78,7 +78,7 @@ OSMesg gUnkMesgBufs2[0x10];
 OSMesgQueue gCurrAudioFrameDmaQueue;
 OSMesg gCurrAudioFrameDmaMesgBufs[AUDIO_FRAME_DMA_QUEUE_SIZE];
 OSIoMesg gCurrAudioFrameDmaIoMesgBufs[AUDIO_FRAME_DMA_QUEUE_SIZE];
-u8 gExternalSeqLoad = 0;
+
 OSMesgQueue gAudioDmaMesgQueue;
 OSMesg gAudioDmaMesg;
 OSIoMesg gAudioDmaIoMesg;
@@ -1334,25 +1334,16 @@ struct AudioBank *bank_load_immediate(s32 bankId, s32 arg1) {
 
     // (This is broken if the length is 1 (mod 16), but that never happens --
     // it's always divisible by 4.)
-	
-	//bank 0x26 is an external bank, I'm going to hardcode it because its just easier and I don't feel like learning how stuff works
-	if(bankId==0x26){
-		#ifndef TARGET_N64
-		printf("externally loading bank from bank.bin\n");
-		
-		
-		#endif
-	}else{
-		alloc = gAlCtlHeader->seqArray[bankId].len + 0xf;
-		alloc = ALIGN16(alloc);
-		alloc -= 0x10;
-		ctlData = gAlCtlHeader->seqArray[bankId].offset;
-		ret = alloc_bank_or_seq(&gBankLoadedPool, 1, alloc, arg1, bankId);
-		if (ret == NULL) {
-			return NULL;
-		}
-		audio_dma_copy_immediate((uintptr_t) ctlData, buf, 0x10);
-	}
+    alloc = gAlCtlHeader->seqArray[bankId].len + 0xf;
+    alloc = ALIGN16(alloc);
+    alloc -= 0x10;
+    ctlData = gAlCtlHeader->seqArray[bankId].offset;
+    ret = alloc_bank_or_seq(&gBankLoadedPool, 1, alloc, arg1, bankId);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    audio_dma_copy_immediate((uintptr_t) ctlData, buf, 0x10);
     numInstruments = buf[0];
     numDrums = buf[1];
     audio_dma_copy_immediate((uintptr_t)(ctlData + 0x10), ret, alloc);
@@ -1425,46 +1416,20 @@ struct AudioBank *bank_load_async(s32 bankId, s32 arg1, struct SequencePlayer *s
 #endif
 
 #ifndef VERSION_SH
-
-#ifndef TARGET_N64
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#endif
-
-
 void *sequence_dma_immediate(s32 seqId, s32 arg1) {
     s32 seqLength;
     void *ptr;
     u8 *seqData;
-	if(gExternalSeqLoad){
-		#ifndef TARGET_N64
-		FILE *ptr_ext_m64;
-		//bank_load_immediate to do external load of bank?
 
-		ptr_ext_m64 = fopen("test.m64","rb");
-		fseek(ptr_ext_m64,0,SEEK_END);
-		seqLength = ftell(ptr_ext_m64);
-		fseek(ptr_ext_m64,0,0);
-		ptr = alloc_bank_or_seq(&gSeqLoadedPool, 1, seqLength, arg1, seqId);
-		fread(ptr,seqLength,1,ptr_ext_m64);
-		fclose(ptr_ext_m64);
-		printf("external load %p\n",ptr);
-		gSequenceCount -= 1;
-		#endif
-	}else{
-		seqLength = gSeqFileHeader->seqArray[seqId].len + 0xf;
-		seqLength = ALIGN16(seqLength);
-		seqData = gSeqFileHeader->seqArray[seqId].offset;
-		ptr = alloc_bank_or_seq(&gSeqLoadedPool, 1, seqLength, arg1, seqId);
-	}
+    seqLength = gSeqFileHeader->seqArray[seqId].len + 0xf;
+    seqLength = ALIGN16(seqLength);
+    seqData = gSeqFileHeader->seqArray[seqId].offset;
+    ptr = alloc_bank_or_seq(&gSeqLoadedPool, 1, seqLength, arg1, seqId);
     if (ptr == NULL) {
         return NULL;
     }
 
-    if(!gExternalSeqLoad){
-		audio_dma_copy_immediate((uintptr_t) seqData, ptr, seqLength);
-	}
+    audio_dma_copy_immediate((uintptr_t) seqData, ptr, seqLength);
     gSeqLoadStatus[seqId] = SOUND_LOAD_STATUS_COMPLETE;
     return ptr;
 }
@@ -1555,37 +1520,37 @@ u8 get_missing_bank(u32 seqId, s32 *nonNullCount, s32 *nullCount) {
 #endif
 
 #ifndef VERSION_SH
-extern s8 Extm64;
 struct AudioBank *load_banks_immediate(s32 seqId, u8 *arg1) {
     void *ret;
     u32 bankId;
     u16 offset;
     u8 i;
 
-    if(gExternalSeqLoad){
-		bankId = Extm64;
-		ret = get_bank_or_seq(&gBankLoadedPool, 2, Extm64);
-		if (ret == NULL) {
-			ret = bank_load_immediate(bankId, 2);
-		}
-	}else{
-		offset = ((u16 *) gAlBankSets)[seqId];
-		offset++;
-		for (i = gAlBankSets[offset - 1]; i != 0; i--) {
-			offset++;
-			bankId = gAlBankSets[offset - 1];
+    offset = ((u16 *) gAlBankSets)[seqId];
+#ifdef VERSION_EU
+    for (i = gAlBankSets[offset++]; i != 0; i--) {
+        bankId = gAlBankSets[offset++];
+#else
+    offset++;
+    for (i = gAlBankSets[offset - 1]; i != 0; i--) {
+        offset++;
+        bankId = gAlBankSets[offset - 1];
+#endif
 
-			if (IS_BANK_LOAD_COMPLETE(bankId) == TRUE) {
-				ret = get_bank_or_seq(&gBankLoadedPool, 2, gAlBankSets[offset - 1]);
-			} else {
-				ret = NULL;
-			}
+        if (IS_BANK_LOAD_COMPLETE(bankId) == TRUE) {
+#ifdef VERSION_EU
+            ret = get_bank_or_seq(&gBankLoadedPool, 2, bankId);
+#else
+            ret = get_bank_or_seq(&gBankLoadedPool, 2, gAlBankSets[offset - 1]);
+#endif
+        } else {
+            ret = NULL;
+        }
 
-			if (ret == NULL) {
-				ret = bank_load_immediate(bankId, 2);
-			}
-		}
-	}
+        if (ret == NULL) {
+            ret = bank_load_immediate(bankId, 2);
+        }
+    }
     *arg1 = bankId;
     return ret;
 }
@@ -1644,13 +1609,8 @@ void load_sequence_internal(u32 player, u32 seqId, s32 loadAsync) {
     UNUSED u32 padding[2];
 
     if (seqId >= gSequenceCount) {
-        gExternalSeqLoad = 1;
-		#ifdef TARGET_N64
-		return;
-		#endif
-    }else{
-		gExternalSeqLoad = 0;
-	}
+        return;
+    }
 
     sequence_player_disable(seqPlayer);
     if (loadAsync) {
@@ -1690,8 +1650,7 @@ void load_sequence_internal(u32 player, u32 seqId, s32 loadAsync) {
     eu_stubbed_printf_2("Seq %d:Default Load Id is %d\n", seqId, seqPlayer->defaultBank[0]);
     eu_stubbed_printf_0("Seq Loading Start\n");
 
-
-	seqPlayer->seqId = seqId;
+    seqPlayer->seqId = seqId;
 #ifndef VERSION_SH
     sequenceData = get_bank_or_seq(&gSeqLoadedPool, 2, seqId);
 #endif
@@ -1715,7 +1674,7 @@ void load_sequence_internal(u32 player, u32 seqId, s32 loadAsync) {
         }
     }
 
-	eu_stubbed_printf_1("SEQ  %d ALREADY CACHED\n", seqId);
+    eu_stubbed_printf_1("SEQ  %d ALREADY CACHED\n", seqId);
     init_sequence_player(player);
     seqPlayer->scriptState.depth = 0;
     seqPlayer->delay = 0;
@@ -2074,8 +2033,8 @@ void audio_init() {
 
     // Load bank sets for each sequence (assets/bank_sets.s)
     data = LOAD_DATA(gBankSetsData);
-    gAlBankSets = soundAlloc(&gAudioInitPool, 0x250);
-    audio_dma_copy_immediate((uintptr_t) data, gAlBankSets, 0x250);
+    gAlBankSets = soundAlloc(&gAudioInitPool, 0x200);
+    audio_dma_copy_immediate((uintptr_t) data, gAlBankSets, 0x200);
 
     init_sequence_players();
     gAudioLoadLock = AUDIO_LOCK_NOT_LOADING;

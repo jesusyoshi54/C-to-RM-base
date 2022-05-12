@@ -152,16 +152,6 @@ s32 seq_channel_set_layer(struct SequenceChannel *seqChannel, s32 layerIndex) {
     return 0;
 }
 
-static u8 *GetSeqorExtData(struct SequencePlayer *seqPlayer){
-	if(seqPlayer->extData){
-		return seqPlayer->extData;
-	}
-	else{
-		return seqPlayer->seqData;
-	}
-	
-}
-
 void seq_channel_layer_disable(struct SequenceChannelLayer *layer) {
     if (layer != NULL) {
         seq_channel_layer_note_decay(layer);
@@ -556,7 +546,7 @@ void seq_channel_layer_process_script(struct SequenceChannelLayer *layer) {
                 }
                 sp3A = m64_read_s16(state);
                 state->stack[state->depth++] = state->pc;
-                state->pc = GetSeqorExtData(seqPlayer) + sp3A;
+                state->pc = seqPlayer->seqData + sp3A;
                 break;
 
             case 0xf8: // layer_loop; loop start, N iterations (or 256 if N = 0)
@@ -577,7 +567,7 @@ void seq_channel_layer_process_script(struct SequenceChannelLayer *layer) {
 
             case 0xfb: // layer_jump
                 sp3A = m64_read_s16(state);
-                state->pc = GetSeqorExtData(seqPlayer) + sp3A;
+                state->pc = seqPlayer->seqData + sp3A;
                 break;
 
 #if defined(VERSION_EU) || defined(VERSION_SH)
@@ -686,7 +676,7 @@ void seq_channel_layer_process_script(struct SequenceChannelLayer *layer) {
 #if defined(VERSION_EU) || defined(VERSION_SH)
             case 0xcb:
                 sp3A = m64_read_s16(state);
-                layer->adsr.envelope = (struct AdsrEnvelope *) (GetSeqorExtData(seqPlayer) + sp3A);
+                layer->adsr.envelope = (struct AdsrEnvelope *) (seqPlayer->seqData + sp3A);
                 layer->adsr.releaseRate = m64_read_u8(state);
                 break;
 
@@ -1055,7 +1045,7 @@ s32 seq_channel_layer_process_script_part2(struct SequenceChannelLayer *layer) {
                 }
                 sp3A = m64_read_s16(state);
                 state->stack[state->depth++] = state->pc;
-                state->pc = GetSeqorExtData(seqPlayer) + sp3A;
+                state->pc = seqPlayer->seqData + sp3A;
                 break;
 
             case 0xf8: // layer_loop; loop start, N iterations (or 256 if N = 0)
@@ -1076,7 +1066,7 @@ s32 seq_channel_layer_process_script_part2(struct SequenceChannelLayer *layer) {
 
             case 0xfb: // layer_jump
                 sp3A = m64_read_s16(state);
-                state->pc = GetSeqorExtData(seqPlayer) + sp3A;
+                state->pc = seqPlayer->seqData + sp3A;
                 break;
 
             case 0xf4:
@@ -1172,7 +1162,7 @@ s32 seq_channel_layer_process_script_part2(struct SequenceChannelLayer *layer) {
 
             case 0xcb:
                 sp3A = m64_read_s16(state);
-                layer->adsr.envelope = (struct AdsrEnvelope *) (GetSeqorExtData(seqPlayer) + sp3A);
+                layer->adsr.envelope = (struct AdsrEnvelope *) (seqPlayer->seqData + sp3A);
                 layer->adsr.releaseRate = m64_read_u8(state);
                 break;
 
@@ -1494,13 +1484,7 @@ void set_instrument(struct SequenceChannel *seqChannel, u8 instId) {
 void sequence_channel_set_volume(struct SequenceChannel *seqChannel, u8 volume) {
     seqChannel->volume = FLOAT_CAST(volume) / US_FLOAT(127.0);
 }
-#ifndef TARGET_N64
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-extern FILE *ptr_sfx_dyncall;
-extern u8 *dyncall_read;
-#endif
+
 void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
     struct M64ScriptState *state;
     struct SequencePlayer *seqPlayer;
@@ -1537,16 +1521,8 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 
     state = &seqChannel->scriptState;
     if (seqChannel->delay == 0) {
-
         for (;;) {
             cmd = m64_read_u8(state);
-			if(seqPlayer->tmpData && !seqPlayer->extData){
-				if(state->pc-seqPlayer->tmpData == seqPlayer->tmpDiff){
-					seqPlayer->extData = seqPlayer->tmpData;
-					seqPlayer->tmpData = NULL;
-					seqPlayer->tmpDiff = 0;
-				}
-			}
 #if !defined(VERSION_EU) && !defined(VERSION_SH)
             if (cmd == 0xff) // chan_end
             {
@@ -1558,31 +1534,16 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
             }
             if (cmd == 0xfe) // chan_delay1
             {
-				if(seqPlayer->extData){
-					seqPlayer->tmpData = seqPlayer->extData;
-					seqPlayer->tmpDiff = state->pc-seqPlayer->tmpData+1;
-					seqPlayer->extData = NULL;
-				}
-				break;
+                break;
             }
             if (cmd == 0xfd) // chan_delay
             {
                 seqChannel->delay = m64_read_compressed_u16(state);
-				if(seqPlayer->extData){
-					seqPlayer->tmpData = seqPlayer->extData;
-					seqPlayer->tmpDiff = state->pc-seqPlayer->tmpData+1;
-					seqPlayer->extData = NULL;
-				}
                 break;
             }
             if (cmd == 0xf3) // chan_hang
             {
                 seqChannel->stopScript = TRUE;
-				if(seqPlayer->extData){
-					seqPlayer->tmpData = seqPlayer->extData;
-					seqPlayer->tmpDiff = state->pc-seqPlayer->tmpData+1;
-					seqPlayer->extData = NULL;
-				}
                 break;
             }
 #endif
@@ -1627,7 +1588,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 #else
                         state->depth++, state->stack[state->depth - 1] = state->pc;
 #endif
-                        state->pc = GetSeqorExtData(seqPlayer) + sp5A;
+                        state->pc = seqPlayer->seqData + sp5A;
                         break;
 
                     case 0xf8: // chan_loop; loop start, N iterations (or 256 if N = 0)
@@ -1666,7 +1627,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                             break;
                         if (cmd == 0xf5 && value < 0)
                             break;
-                        state->pc = GetSeqorExtData(seqPlayer) + sp5A;
+                        state->pc = seqPlayer->seqData + sp5A;
                         break;
 
 #if defined(VERSION_EU) || defined(VERSION_SH)
@@ -1701,7 +1662,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 
                     case 0xc2: // chan_setdyntable
                         sp5A = m64_read_s16(state);
-                        seqChannel->dynTable = (void *) (GetSeqorExtData(seqPlayer) + sp5A);
+                        seqChannel->dynTable = (void *) (seqPlayer->seqData + sp5A);
                         break;
 
                     case 0xc5: // chan_dynsetdyntable
@@ -1709,10 +1670,10 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 #if defined(VERSION_EU) || defined(VERSION_SH)
                             seqData = (*seqChannel->dynTable)[value];
                             sp38 = (u16)((seqData[0] << 8) + seqData[1]);
-                            seqChannel->dynTable = (void *) (GetSeqorExtData(seqPlayer) + sp38);
+                            seqChannel->dynTable = (void *) (seqPlayer->seqData + sp38);
 #else
                             sp5A = (u16)((((*seqChannel->dynTable)[value])[0] << 8) + (((*seqChannel->dynTable)[value])[1]));
-                            seqChannel->dynTable = (void *) (GetSeqorExtData(seqPlayer) + sp5A);
+                            seqChannel->dynTable = (void *) (seqPlayer->seqData + sp5A);
 #endif
                         }
                         break;
@@ -1724,15 +1685,9 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                         // bank set. Note that in the binary format (not in the JSON!)
                         // the banks are listed backwards, so we counts from the back.
                         // (gAlBankSets[offset] is number of banks)
-						
-						//at max you have 10 banks used in seq player, so if you go to 11 just take that as external load, which will be bank 0x26
-						if(cmd>10){
-							cmd = 0x26;
-						}else{
-							sp38 = ((u16 *) gAlBankSets)[seqPlayer->seqId];
-							loBits = *(sp38 + gAlBankSets);
-							cmd = gAlBankSets[(s32)sp38 + loBits - cmd];
-						}
+                        sp38 = ((u16 *) gAlBankSets)[seqPlayer->seqId];
+                        loBits = *(sp38 + gAlBankSets);
+                        cmd = gAlBankSets[(s32)sp38 + loBits - cmd];
 
 #ifdef VERSION_SH
                         if (get_bank_or_seq(1, 2, cmd) != NULL)
@@ -1827,7 +1782,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 
                     case 0xda: // chan_setenvelope
                         sp5A = m64_read_s16(state);
-                        seqChannel->adsr.envelope = (struct AdsrEnvelope *) (GetSeqorExtData(seqPlayer) + sp5A);
+                        seqChannel->adsr.envelope = (struct AdsrEnvelope *) (seqPlayer->seqData + sp5A);
                         break;
 
                     case 0xd9: // chan_setdecayrelease
@@ -1910,9 +1865,8 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 #endif
                             cmd = m64_read_u8(state);
                             sp5A = m64_read_s16(state);
-                            seqData = GetSeqorExtData(seqPlayer) + sp5A;
+                            seqData = seqPlayer->seqData + sp5A;
                             *seqData = (u8)value + cmd;
-							//printf("value wrote %d off %d\n",value + cmd, sp5A);
                         }
                         break;
 
@@ -1922,7 +1876,6 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                         temp = m64_read_u8(state);
                         if (cmd == 0xc8) {
                             value -= temp;
-							//printf("subtract value %d tmp %d\n",value, temp);
                         } else if (cmd == 0xcc) {
                             value = temp;
                         } else {
@@ -1945,8 +1898,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 
                     case 0xcb: // chan_readseq
                         sp38 = (u16)m64_read_s16(state) + value;
-                        value = GetSeqorExtData(seqPlayer)[sp38];
-						//printf("value read %d offset %d\n",value,sp38);
+                        value = seqPlayer->seqData[sp38];
                         break;
 
 #ifdef VERSION_SH
@@ -1956,7 +1908,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 
                     case 0xcf:
                         sp5A = m64_read_s16(state);
-                        seqData = GetSeqorExtData(seqPlayer) + sp5A;
+                        seqData = seqPlayer->seqData + sp5A;
                         seqData[0] = (seqChannel->unkC8 >> 8) & 0xffff;
                         seqData[1] = (seqChannel->unkC8) & 0xffff;
                         break;
@@ -1982,23 +1934,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                         seqChannel->reverbIndex = m64_read_u8(state);
                         break;
 #endif
-                    #ifndef TARGET_N64
-					case 0xcd: // chan_external, used once just for this repo to jump to external file which I load
-                        if (value != -1) {
-                            state->depth++, state->stack[state->depth - 1] = state->pc;
-                            state->pc = dyncall_read;
-                            seqPlayer->extData = dyncall_read;
-                        }
-                        break;
-					case 0xce: // chan_external_pop, used once just for this repo to jump to external file which I load
-							state->depth--, state->pc = state->stack[state->depth];
-                            seqPlayer->extData = NULL;
-                            seqPlayer->tmpData = NULL;
-                            seqPlayer->tmpDiff = 0;
-                        break;
-					#endif
-
-						case 0xe4: // chan_dyncall
+                    case 0xe4: // chan_dyncall
                         if (value != -1) {
 #if defined(VERSION_EU) || defined(VERSION_SH)
                             if (state->depth >= 4) {
@@ -2009,7 +1945,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 #if defined(VERSION_EU) || defined(VERSION_SH)
                             state->stack[state->depth++] = state->pc;
                             sp38 = (u16)((seqData[0] << 8) + seqData[1]);
-                            state->pc = GetSeqorExtData(seqPlayer) + sp38;
+                            state->pc = seqPlayer->seqData + sp38;
 
                             if (0 && sp38 >= gSeqFileHeader->seqArray[seqPlayer->seqId].len) {
                                 eu_stubbed_printf_3("Err :Sub %x ,address %x:Undefined SubTrack Function %x", seqChannel, state->pc, sp38);
@@ -2017,7 +1953,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 #else
                             state->depth++, state->stack[state->depth - 1] = state->pc;
                             sp5A = ((seqData[0] << 8) + seqData[1]);
-                            state->pc = GetSeqorExtData(seqPlayer) + sp5A;
+                            state->pc = seqPlayer->seqData + sp5A;
 #endif
                         }
                         break;
@@ -2029,7 +1965,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 
                     case 0xe7:
                         sp5A = m64_read_s16(state);
-                        seqData = GetSeqorExtData(seqPlayer) + sp5A;
+                        seqData = seqPlayer->seqData + sp5A;
                         seqChannel->muteBehavior = *seqData++;
                         seqChannel->noteAllocPolicy = *seqData++;
                         seqChannel->notePriority = *seqData++;
@@ -2090,7 +2026,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 
                     case 0xb0:
                         sp5A = m64_read_s16(state);
-                        seqData = GetSeqorExtData(seqPlayer) + sp5A;
+                        seqData = seqPlayer->seqData + sp5A;
                         seqChannel->filter = (s16 *) (seqData);
                         break;
 
@@ -2115,11 +2051,11 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                         i = (value * 2);
                         sp5A = m64_read_s16(state);
                         sp38 = sp5A + i;
-                        seqChannel->unkC8 = *(u16 *) (GetSeqorExtData(seqPlayer) + sp38);
+                        seqChannel->unkC8 = *(u16 *) (seqPlayer->seqData + sp38);
                         break;
 
                     case 0xb4:
-                        seqChannel->dynTable = (void *) (GetSeqorExtData(seqPlayer) + seqChannel->unkC8);
+                        seqChannel->dynTable = (void *) (seqPlayer->seqData + seqChannel->unkC8);
                         break;
 
                     case 0xb5:
@@ -2148,7 +2084,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                             sp5A = m64_read_s16(state);
                             if (seq_channel_set_layer(seqChannel, loBits) == 0) {
                                 if (1) {}
-                                seqChannel->layers[loBits]->scriptState.pc = GetSeqorExtData(seqPlayer) + sp5A;
+                                seqChannel->layers[loBits]->scriptState.pc = seqPlayer->seqData + sp5A;
                             }
                             break;
 
@@ -2160,7 +2096,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                             if (value != -1 && seq_channel_set_layer(seqChannel, loBits) != -1) {
                                 seqData = (*seqChannel->dynTable)[value];
                                 sp5A = ((seqData[0] << 8) + seqData[1]);
-                                seqChannel->layers[loBits]->scriptState.pc = GetSeqorExtData(seqPlayer) + sp5A;
+                                seqChannel->layers[loBits]->scriptState.pc = seqPlayer->seqData + sp5A;
                             }
                             break;
                     }
@@ -2195,7 +2131,6 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                     // sh: 0x70
                     case 0x70: // chan_iowriteval; write data back to audio lib
                         seqChannel->soundScriptIO[loBits] = value;
-						//printf("slot %d wrote with value %d\n",loBits,value);
                         break;
 
 #ifdef VERSION_SH
@@ -2228,7 +2163,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
 #ifdef VERSION_EU
                             if (1) {}
 #endif
-                            seqChannel->layers[loBits]->scriptState.pc = GetSeqorExtData(seqPlayer) + sp5A;
+                            seqChannel->layers[loBits]->scriptState.pc = seqPlayer->seqData + sp5A;
                         }
                         break;
 
@@ -2240,7 +2175,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                         if (value != -1 && seq_channel_set_layer(seqChannel, loBits) != -1) {
                             seqData = (*seqChannel->dynTable)[value];
                             sp5A = ((seqData[0] << 8) + seqData[1]);
-                            seqChannel->layers[loBits]->scriptState.pc = GetSeqorExtData(seqPlayer) + sp5A;
+                            seqChannel->layers[loBits]->scriptState.pc = seqPlayer->seqData + sp5A;
                         }
                         break;
 
@@ -2257,7 +2192,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                     case 0x10: // chan_startchannel
 #endif
                         sp5A = m64_read_s16(state);
-                        sequence_channel_enable(seqPlayer, loBits, GetSeqorExtData(seqPlayer) + sp5A);
+                        sequence_channel_enable(seqPlayer, loBits, seqPlayer->seqData + sp5A);
                         break;
 
 #ifndef VERSION_SH
@@ -2274,7 +2209,6 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
                     case 0x40: // chan_ioreadval2; read data from audio lib from another channel
                         cmd = m64_read_u8(state);
                         value = seqPlayer->channels[loBits]->soundScriptIO[cmd];
-						//printf("int variation %d\n",value);
                         break;
                 }
 #ifdef VERSION_SH

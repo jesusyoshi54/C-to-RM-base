@@ -39,7 +39,7 @@ PUPPYDEBUG ?= 0
 
 
 # Build for original N64 (no pc code)
-TARGET_N64 = 0
+TARGET_N64 = 1
 # Build and optimize for Raspberry Pi(s)
 TARGET_RPI ?= 0
 # Build for Emscripten/WebGL

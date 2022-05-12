@@ -1032,7 +1032,7 @@ s32 play_mode_normal(void) {
     }
 
     #ifdef TE
-	#ifdef TE_DEBUG
+	#if TE_DEBUG
 	if (gPlayer1Controller->buttonPressed&D_JPAD){
 		SetupTextEngine(34,64,TE_Strings[0],TE_STATE_MAIN);
 	}

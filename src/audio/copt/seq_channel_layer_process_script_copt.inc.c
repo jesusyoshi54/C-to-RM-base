@@ -195,7 +195,7 @@ void seq_channel_layer_process_script(struct SequenceChannelLayer *layer) {
             case 0xfc: // layer_call
                 M64_READ_S16(state, sp3A);
                 state->depth++, state->stack[state->depth - 1] = state->pc;
-                state->pc = GetSeqorExtData(seqPlayer) + sp3A;
+                state->pc = seqPlayer->seqData + sp3A;
                 break;
 
             case 0xf8: // layer_loop; loop start, N iterations (or 256 if N = 0)
@@ -213,7 +213,7 @@ void seq_channel_layer_process_script(struct SequenceChannelLayer *layer) {
 
             case 0xfb: // layer_jump
                 M64_READ_S16(state, sp3A);
-                state->pc = GetSeqorExtData(seqPlayer) + sp3A;
+                state->pc = seqPlayer->seqData + sp3A;
                 break;
 
             case 0xc1: // layer_setshortnotevelocity

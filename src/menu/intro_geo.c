@@ -49,7 +49,6 @@ Gfx *geo_intro_super_mario_64_logo(s32 state, struct GraphNode *node, UNUSED voi
     f32 scaleX;
     f32 scaleY;
     f32 scaleZ;
-	return dl;
 
     if (state != 1) {
         sIntroFrameCounter = 0;
@@ -100,7 +99,6 @@ Gfx *geo_intro_tm_copyright(s32 state, struct GraphNode *node, UNUSED void *cont
     struct GraphNode *graphNode = node;
     Gfx *dl = NULL;
     Gfx *dlIter = NULL;
-	return dl;
 
     if (state != 1) {  // reset
         sTmCopyrightAlpha = 0;

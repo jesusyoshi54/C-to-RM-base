@@ -320,10 +320,10 @@ STATIC_ASSERT(ARRAY_COUNT(sBackgroundMusicDefaultVolume) == SEQ_COUNT,
 
 u8 sCurrentBackgroundMusicSeqId = SEQUENCE_NONE;
 u8 sMusicDynamicDelay = 0;
-u8 sSoundBankUsedListBack[SOUND_BANK_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-u8 sSoundBankFreeListFront[SOUND_BANK_COUNT] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-u8 sNumSoundsInBank[SOUND_BANK_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // only used for debugging
-u8 sMaxChannelsForSoundBank[SOUND_BANK_COUNT] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+u8 sSoundBankUsedListBack[SOUND_BANK_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+u8 sSoundBankFreeListFront[SOUND_BANK_COUNT] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+u8 sNumSoundsInBank[SOUND_BANK_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // only used for debugging
+u8 sMaxChannelsForSoundBank[SOUND_BANK_COUNT] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 // Banks 2 and 7 both grew from 0x30 sounds to 0x40 in size in US.
 #ifdef VERSION_JP
@@ -332,7 +332,7 @@ u8 sMaxChannelsForSoundBank[SOUND_BANK_COUNT] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
 #define BANK27_SIZE 0x40
 #endif
 u8 sNumSoundsPerBank[SOUND_BANK_COUNT] = {
-    0x70, 0x30, BANK27_SIZE, 0x80, 0x20, 0x80, 0x20, BANK27_SIZE, 0x80, 0x80,1
+    0x70, 0x30, BANK27_SIZE, 0x80, 0x20, 0x80, 0x20, BANK27_SIZE, 0x80, 0x80,
 };
 #undef BANK27_SIZE
 
@@ -2249,7 +2249,7 @@ void stop_sounds_from_source(f32 *pos) {
 /**
  * Called from threads: thread3_main, thread5_game_loop
  */
-void stop_sounds_in_bank(u8 bank) {
+static void stop_sounds_in_bank(u8 bank) {
     u8 soundIndex = sSoundBanks[bank][0].next;
 
     while (soundIndex != 0xff) {
