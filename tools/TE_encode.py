@@ -96,6 +96,7 @@ Funcs = {
 	'DialogResponse':(0x86,B),
 	'GenericText':(0x87,),
 	'ScreenShake':(0x88,B),
+	'LowerVolume':(0x89,),
 	#Camera Cmds
 	'TriggerWarp':(0x8F,H,B),
 	'StartGenBracket':(0x93,B),

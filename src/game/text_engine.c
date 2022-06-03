@@ -20,7 +20,6 @@
 #include "puppyprint.h"
 #include "rendering_graph_node.h"
 
-extern u8 gDialogCharWidths[256];
 extern struct MarioState *gMarioState;
 extern s16 sDelayedWarpOp;
 extern s16 sDelayedWarpTimer;
@@ -33,7 +32,6 @@ u32 TimerBuffer[NumEngines][64]; //stores timers necessary for certain cmds with
 u8 UserInputs[NumEngines][16][16]; //16 length 16 strings
 //object array
 u32 FunctionReturns[NumEngines][8];
-static struct TEState *AccessEngine; //for outside functions to access
 //during callback functions
 
 //my char and ptr arrays
@@ -69,7 +67,6 @@ void RunTextEngine(void){
 	u8 *str;
 	for(i=0;i<NumEngines;i++){
 		CurEng = &TE_Engines[i];
-		AccessEngine = CurEng;
 		if (CurEng->OgStr==0){
 			continue;
 		}
@@ -269,11 +266,11 @@ void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 	u32 Time = (gNumVblanks-Tr->TransVI);
 	f32 Pct = ((f32) Time) / ((f32) Tr->TransLength);
 	f32 Spd = ((f32)Tr->TransSpeed)/((f32) Tr->TransLength);
-	u16 Dir = Tr->TransDir<<16;
-	u16 Yoff = (u16) (sins(Dir)*Spd*Time);
-	u16 Xoff = (u16) (coss(Dir)*Spd*Time);
-	//should never be true really
-	if (Pct>1.0f){
+	u16 Dir = Tr->TransDir<<8;
+	s16 Yoff = (s16) (sins(Dir)*Spd*Time);
+	s16 Xoff = (s16) (coss(Dir)*Spd*Time);
+	//should only ever be 1
+	if (Pct >= 1.0f){
 		Pct = 1.0f;
 		Time = Tr->TransLength;
 		//disable start transition and set temp X+Y offsets to match total distance traveled
@@ -285,12 +282,13 @@ void TE_transition_active(struct TEState *CurEng,struct Transition *Tr,u8 flip){
 			Yoff = 0;
 		}
 	}
-	TarAlpha = CurAlpha + (TarAlpha-CurAlpha)*Pct;
+	if(TarAlpha != CurAlpha){
+		TarAlpha = CurAlpha + (TarAlpha-CurAlpha)*Pct;
+	}
 	CurEng->EnvColorWord = (CurEng->EnvColorWord&0xFFFFFF00) | (u8) TarAlpha;
 	TE_set_env(CurEng);
 	CurEng->EnvColorWord = Env;
 	CurEng->TrPct = Pct;
-	// print_generic_string(CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state]);
 	print_small_text_TE(CurEng->ScaleF[0],CurEng->ScaleF[1],CurEng->TempX+Xoff+CurEng->TransX,CurEng->TempY+Yoff+CurEng->TransY,&StrBuffer[CurEng->state],CurEng);
 }
 
@@ -317,11 +315,8 @@ void TE_print(struct TEState *CurEng){
 }
 
 void TE_add_new_char(struct TEState *CurEng,u32 VI_inc){
-	//I should use macros here but I'm not really sure how they work
-	if(CurEng->SfxArg){
-		play_sound((CurEng->SfxArg<<16)+0x81, gGlobalSoundSource);
-		CurEng->SfxArg = 0;
-	}else if(CurEng->CheckBlip && getTEspd(CurEng)){
+	//I should use macros here but I'm not really sure how they work for terrain
+	if(CurEng->CheckBlip && getTEspd(CurEng)){
 		play_sound(0x16FF81, gGlobalSoundSource);
 	}
 	CurEng->StrEnd+=1;
@@ -330,18 +325,22 @@ void TE_add_new_char(struct TEState *CurEng,u32 VI_inc){
 	TE_add_char2buf(CurEng);
 }
 
+static s32 get_char_space(u8 chr, struct TEState *CurEng){
+	s32 textX, textY, offsetY, spaceX;
+	if(!CurEng->Ascii){
+		get_char_from_byte_sm64(chr,&textX, &textY, &spaceX, &offsetY);
+	}else{
+		get_char_from_byte_ascii(chr,&textX, &textY, &spaceX, &offsetY);
+	}
+	return ((s32)(spaceX*CurEng->ScaleF[0]))+1;
+}
+
+
 void TE_add_char2buf(struct TEState *CurEng){
 	u8 CharWrite;
 	//get char
 	CharWrite = CurEng->TempStr[CurEng->CurPos];
-	//increase X pos
-	s32 textX, textY, offsetY, spaceX;
-	if(!CurEng->Ascii){
-		get_char_from_byte_sm64(CharWrite,&textX, &textY, &spaceX, &offsetY);
-	}else{
-		get_char_from_byte_ascii(CharWrite,&textX, &textY, &spaceX, &offsetY);
-	}
-	CurEng->TotalXOff += ((u32)(spaceX*CurEng->ScaleF[0]))+1;
+	CurEng->TotalXOff += get_char_space(CharWrite,CurEng);
 	//write char to buffer
 	StrBuffer[CurEng->state][CurEng->CurPos] = CharWrite;
 	StrBuffer[CurEng->state][CurEng->CurPos+1] = 0xFF;
@@ -357,8 +356,8 @@ void TE_add_char2buf(struct TEState *CurEng){
 		new = 0xFE;
 	}
 	if (CurEng->WordWrap){
-		u8 Nxt = TE_find_next_space(CurEng,CurEng->TempStr);
-		if((CurEng->TempX+(u32)((CurEng->TotalXOff+(Nxt*8))*CurEng->ScaleF[0]))>(CurEng->WordWrap)){
+		s32 Nxt = TE_find_next_space(CurEng,CurEng->TempStr);
+		if((CurEng->TempX+(u32)(CurEng->TotalXOff+Nxt))>(CurEng->WordWrap)){
 			TE_line_break(CurEng,CurEng->OgStr);
 			if(!((CurEng->TempStr[CurEng->CurPos-1]==space)||(CurEng->TempStr[CurEng->CurPos-1]==new))){
 				CurEng->TempStr-=1;
@@ -367,9 +366,10 @@ void TE_add_char2buf(struct TEState *CurEng){
 	}
 }
 
-u8 TE_find_next_space(struct TEState *CurEng,u8 *str){
-	u8 x = 0;
-	u8 CharWrite = str[CurEng->CurPos+x];
+s32 TE_find_next_space(struct TEState *CurEng,u8 *str){
+	s32 x = 0;
+	u8 z = 0;
+	u8 CharWrite = str[CurEng->CurPos+z];
 	u8 space;
 	if(CurEng->Ascii){
 		space = ' ';
@@ -377,7 +377,7 @@ u8 TE_find_next_space(struct TEState *CurEng,u8 *str){
 		space = 0x9E;
 	}
 	while(CharWrite != space){
-		CharWrite = str[CurEng->CurPos+x];
+		CharWrite = str[CurEng->CurPos+z];
 		//generic
 		if(CurEng->Ascii){
 			if(CharWrite == 0xFF | CharWrite == "\n"){
@@ -388,13 +388,15 @@ u8 TE_find_next_space(struct TEState *CurEng,u8 *str){
 				break;
 			}
 		}
-		x++;
-		if(x>100){
+		x += get_char_space(CharWrite,CurEng);
+		z++;
+		if(x>340){
 			break; //fail condition
 		}
 	}
 	return x;
 }
+
 void TE_add_to_cmd_buffer(struct TEState *CurEng,u8 *str,u8 len){
 	u32 i;
 	union PtrByte Offset;

@@ -126,6 +126,9 @@ s8 TE_jump_cmds(struct TEState *CurEng,u8 cmd,u8 *str){
 		case 0x88:
 			Loop = TE_screen_shake(CurEng,str);
 			break;
+		case 0x89:
+			Loop = TE_lower_volume(CurEng,str);
+			break;
 		//camera cmds
 		case 0x8F:
 			Loop = TE_trigger_warp(CurEng,str);
@@ -228,9 +231,9 @@ s8 TE_set_speed(struct TEState *CurEng,u8 *str){
 }
 //41 cmd works
 s8 TE_set_sfx(struct TEState *CurEng,u8 *str){
-	if(CurEng->TempStrEnd==CurEng->CurPos){
-		CurEng->SfxArg = TE_get_u16(str);
-	}
+	play_sound(SOUND_ARG_LOAD(0, 0, 0x80,
+	SOUND_NO_VOLUME_LOSS |SOUND_NO_PRIORITY_LOSS | SOUND_DISCRETE) | (TE_get_u16(str)<<16), gGlobalSoundSource);
+	TE_add_to_cmd_buffer(CurEng,str,3);
 	return TE_advBlen(CurEng,3);
 }
 //42 cmd works
@@ -665,6 +668,9 @@ s8 TE_reset_str(struct TEState *CurEng){
 		stop_background_music(CurEng->NewSeqID);
 		gCurrentArea->musicParam = CurEng->OgSeqID;
 	}
+	if(CurEng->LowerVolume){
+		raise_background_noise(2);
+	}
 	TE_flush_buffers(CurEng);
 	return -2;
 }
@@ -1018,7 +1024,6 @@ s8 TE_enable_dialog_options(struct TEState *CurEng,u8 *str){
 			CurEng->StrEnd = 0;
 			CurEng->NumDialogs = 0;
 			CurEng->DisplayingDialog = 0;
-			CurEng->HoveredDialog = 0;
 			CurEng->LastVI = gNumVblanks;
 			CurEng->ReturnedDialog = CurEng->HoveredDialog;
 			CurEng->HoveredDialog = 0;
@@ -1070,6 +1075,12 @@ s8 TE_dialog_response(struct TEState *CurEng,u8 *str){
 s8 TE_screen_shake(struct TEState *CurEng,u8 *str){
 	CurEng->ShakeScreen = str[1];
 	return TE_advBlen(CurEng,2);
+}
+//89 cmd works
+s8 TE_lower_volume(struct TEState *CurEng,u8 *str){
+	CurEng->LowerVolume = 1;
+	lower_background_noise(2);
+	return TE_advBlen(CurEng,1);
 }
 //8F cmd works
 s8 TE_trigger_warp(struct TEState *CurEng,u8 *str){
@@ -1207,6 +1218,7 @@ s8 TE_function_response(struct TEState *CurEng,u8 *str){
 //a6 cmd works
 s8 TE_set_mario_action(struct TEState *CurEng,u8 *str){
 	gMarioState->action = TE_get_ptr(str,str);
+	TE_add_to_cmd_buffer(CurEng,str,5);
 	return TE_advBlen(CurEng,5);
 }
 //aa cmd works
@@ -1330,7 +1342,7 @@ s8 TE_terminator(struct TEState *CurEng,u8 *str){
 	if(CurEng->HoveredDialog == CurEng->DisplayingDialog){
 		StrBuffer[CurEng->state][0] = 0x53;
 		StrBuffer[CurEng->state][1] = 0xFF;
-		CurEng->TempX -= gDialogCharWidths[0x53];
+		CurEng->TempX -= 8;
 		TE_print(CurEng);
 		CurEng->TempX = CurEng->TempXOrigin-1;
 	}
