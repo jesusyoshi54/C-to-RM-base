@@ -25,7 +25,7 @@ When using the data from RM2C, make sure to set RM2C to 1 in the makefile.
 ### Changes to Master Branch
 
  * CI texture support
- * Skinned Mario Model
+ * New Mario Model - by Yoshi Milkman
  * Custom version of Puppycam
  * Extended Bounds
  * Various Bugfixes
