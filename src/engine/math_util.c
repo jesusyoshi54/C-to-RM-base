@@ -12,6 +12,8 @@ Vec4s *gSplineKeyframe;
 float gSplineKeyframeFraction;
 int gSplineState;
 
+
+extern Mat4 gCameraTransform;
 // These functions have bogus return values.
 // Disable the compiler warning.
 #pragma GCC diagnostic push
@@ -320,6 +322,16 @@ void mtxf_lookat(Mat4 mtx, Vec3f from, Vec3f to, s16 roll) {
     MTXF_END(mtx);
 }
 
+void linear_mtxf_mul_vec3f_and_translate(Mat4 m, Vec3f dst, Vec3f v) {
+    s32 i;
+    for (i = 0; i < 3; i++) {
+        dst[i] = ((m[0][i] * v[0])
+                + (m[1][i] * v[1])
+                + (m[2][i] * v[2])
+                +  m[3][i]);
+    }
+}
+
 /// Build a matrix that rotates around the z axis, then the x axis, then the y axis, and then translates.
 void mtxf_rotate_zxy_and_translate(Mat4 dest, Vec3f trans, Vec3s rot) {
     register f32 sx   = sins(rot[0]);
@@ -439,78 +451,109 @@ void mtxf_rotate_xyz_and_translate_and_mul(Vec3s rot, Vec3f trans, Mat4 dest, Ma
  */
 void mtxf_billboard(Mat4 dest, Mat4 mtx, Vec3f position, Vec3f scale, s16 angle) {
     register s32 i;
+    register s32 j;
     register f32 sx = scale[0];
     register f32 sy = scale[1];
-    register f32 sz = ((f32 *) scale)[2];
-    register f32 *temp2, *temp = (f32 *)dest;
-    for (i = 0; i < 16; i++) {
-        *temp = 0;
-        temp++;
-    }
-    if (angle == 0x0) {
-        // ((u32 *) dest)[0] = FLOAT_ONE;
-        dest[0][0] = sx; // [0][0]
-        dest[0][1] = 0;
-        dest[1][0] = 0;
-        // ((u32 *) dest)[5] = FLOAT_ONE;
-        dest[1][1] = sy; // [1][1]
-    } else {
-        dest[0][0] = (coss(angle) * sx);
-        dest[0][1] = (sins(angle) * sx);
-        dest[1][0] = (-dest[0][1] * sy);
-        dest[1][1] = ( dest[0][0] * sy);
-    }
-    // ((u32 *) dest)[10] = FLOAT_ONE;
-    // dest[2][2] = sz; // [2][2]
-    ((f32 *) dest)[10] = sz; // [2][2]
-    // ((f32 *) dest)[10] = FLOAT_ONE; // [2][2]
-    dest[2][3] = 0;
-    ((u32 *) dest)[15] = FLOAT_ONE; // [3][3]
-
-    temp  = (f32 *)dest;
-    temp2 = (f32 *)mtx;
+    register f32 sz = scale[2];
+    Mat4* cameraMat = &gCameraTransform;
     for (i = 0; i < 3; i++) {
-        temp[12] = ((temp2[ 0] * position[0])
-                  + (temp2[ 4] * position[1])
-                  + (temp2[ 8] * position[2])
-                  +  temp2[12]);
-        temp++;
-        temp2++;
+        for (j = 0; j < 3; j++) {
+            dest[i][j] = (*cameraMat)[j][i];
+        }
+        dest[i][3] = 0.0f;
     }
+    if (angle != 0x0) {
+        float m00 = dest[0][0];
+        float m01 = dest[0][1];
+        float m02 = dest[0][2];
+        float m10 = dest[1][0];
+        float m11 = dest[1][1];
+        float m12 = dest[1][2];
+        float cosa = coss(angle);
+        float sina = sins(angle);
+        dest[0][0] = cosa * m00 + sina * m10; 
+        dest[0][1] = cosa * m01 + sina * m11; 
+        dest[0][2] = cosa * m02 + sina * m12;
+        dest[1][0] = -sina * m00 + cosa * m10;
+        dest[1][1] = -sina * m01 + cosa * m11;
+        dest[1][2] = -sina * m02 + cosa * m12;
+    }
+    for (i = 0; i < 3; i++) {
+        dest[0][i] *= sx;
+        dest[1][i] *= sy;
+        dest[2][i] *= sz;
+    }
+
+    // Translation = input translation + position
+    vec3f_copy(dest[3], position);
+    vec3f_add(dest[3], mtx[3]);
+    dest[3][3] = 1.0f;
 }
+
+
 
 // straight up mtxf_billboard but minus the dest[1][n] lines. transform for cylindrical billboards
 void mtxf_cylboard(Mat4 dest, Mat4 mtx, Vec3f position, Vec3f scale, s16 angle) {
-    register f32 sx = scale[0];
-    register f32 sy = scale[1];
-    register f32 sz = ((f32 *) scale)[2];
-    register f32 *temp2, *temp = (f32 *)dest;
-    register s32 i;
-	dest[0][0] = coss(angle) * sx;
-    dest[0][1] = sins(angle) * sx;
-    dest[0][2] = 0;
-    dest[0][3] = 0;
+	register f32 sx = scale[0];
+	register f32 sy = scale[1];
+	register f32 sz = scale[2];
+	register s32 i;
+	register s32 j;
+	Mat4* cameraMat = &gCameraTransform;
 
-    dest[1][0] = mtx[1][0] * sy;
-    dest[1][1] = mtx[1][1] * sy;
-    dest[1][2] = mtx[1][2] * sy;
-    dest[1][3] = 0;
+	for (i = 0; i < 3; i++) {
+		for (j = 0; j < 3; j++) {
+			dest[i][j] = (*cameraMat)[j][i];
+		}
+		dest[i][3] = 0.0f;
+	}
+	float m00 = dest[0][0];
+	float m01 = dest[0][1];
+	float m02 = dest[0][2];
+	float m10 = dest[1][0];
+	float m11 = dest[1][1];
+	float m12 = dest[1][2];
+	float cosa = coss(angle);
+	float sina = sins(angle);
 
-    dest[2][0] = 0;
-    dest[2][1] = 0;
-    dest[2][2] = sz;
-    dest[2][3] = 0;
+	dest[0][0] = cosa * m00 + sina * m10;
+	dest[0][1] = cosa * m01 + sina * m11;
 
-    temp  = (f32 *)dest;
-    temp2 = (f32 *)mtx;
-    for (i = 0; i < 3; i++) {
-        temp[12] = ((temp2[ 0] * position[0])
-                  + (temp2[ 4] * position[1])
-                  + (temp2[ 8] * position[2])
-                  +  temp2[12]);
-        temp++;
-        temp2++;
-    }
+	dest[1][0] = -sina * m00 + cosa * m10;
+	dest[1][1] = -sina * m01 + cosa * m11;
+	dest[1][2] = -sina * m02 + cosa * m12;
+
+	dest[2][2] = sz;
+
+	// Translation = input translation + position
+	vec3f_copy(dest[3], position);
+	vec3f_add(dest[3], mtx[3]);
+	dest[3][3] = 1.0f;
+}
+
+/**
+ * Mostly the same as 'mtxf_align_terrain_normal', but also applies a scale and multiplication.
+ * 'upDir' is the terrain normal
+ * 'pos' is the object's position in the world
+ * 'scale' is the scale of the shadow
+ * 'yaw' is the angle which it should face
+ */
+void mtxf_shadow(Mat4 dest, Vec3f upDir, Vec3f pos, Vec3f scale, s32 yaw) {
+    Vec3f lateralDir;
+    Vec3f leftDir;
+    Vec3f forwardDir;
+    vec3f_set(lateralDir, sins(yaw), 0.0f, coss(yaw));
+    vec3f_normalize(upDir);
+    vec3f_cross(leftDir, upDir, lateralDir);
+    vec3f_normalize(leftDir);
+    vec3f_cross(forwardDir, leftDir, upDir);
+    vec3f_normalize(forwardDir);
+
+    vec3f_prod(dest[0], leftDir, scale);
+    vec3f_prod(dest[1], upDir, scale);
+    vec3f_prod(dest[2], forwardDir, scale);
+    vec3f_copy(dest[3], pos);
+    MTXF_END(dest);
 }
 
 /**
@@ -782,26 +825,6 @@ void mtxf_rotate_xy(Mtx *mtx, s32 angle) {
 }
 #endif
 
-/**
- * Extract a position given an object's transformation matrix and a camera matrix.
- * This is used for determining the world position of the held object: since objMtx
- * inherits the transformation from both the camera and Mario, it calculates this
- * by taking the camera matrix and inverting its transformation by first rotating
- * objMtx back from screen orientation to world orientation, and then subtracting
- * the camera position.
- */
-void get_pos_from_transform_mtx(Vec3f dest, Mat4 objMtx, Mat4 camMtx) {
-    f32 camX = camMtx[3][0] * camMtx[0][0] + camMtx[3][1] * camMtx[0][1] + camMtx[3][2] * camMtx[0][2];
-    f32 camY = camMtx[3][0] * camMtx[1][0] + camMtx[3][1] * camMtx[1][1] + camMtx[3][2] * camMtx[1][2];
-    f32 camZ = camMtx[3][0] * camMtx[2][0] + camMtx[3][1] * camMtx[2][1] + camMtx[3][2] * camMtx[2][2];
-
-    dest[0] =
-        objMtx[3][0] * camMtx[0][0] + objMtx[3][1] * camMtx[0][1] + objMtx[3][2] * camMtx[0][2] - camX;
-    dest[1] =
-        objMtx[3][0] * camMtx[1][0] + objMtx[3][1] * camMtx[1][1] + objMtx[3][2] * camMtx[1][2] - camY;
-    dest[2] =
-        objMtx[3][0] * camMtx[2][0] + objMtx[3][1] * camMtx[2][1] + objMtx[3][2] * camMtx[2][2] - camZ;
-}
 
 /**
  * Take the vector starting at 'from' pointed at 'to' an retrieve the length

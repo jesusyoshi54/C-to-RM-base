@@ -199,7 +199,6 @@ s32 osContStartReadDataEx(OSMesgQueue* mq) {
 
     return ret;
 }
-__OSContGCNShortPollFormat readformatgcn_pub[4];
 
 void osContGetReadDataEx(OSContPadEx* data) {
     u8* ptr = (u8*)__osContPifRam.ramarray;
@@ -223,7 +222,6 @@ void osContGetReadDataEx(OSContPadEx* data) {
             data->l_trig = readformatgcn.l_trig;
             data->r_trig = readformatgcn.r_trig;
             ptr += sizeof(__OSContGCNShortPollFormat);
-			readformatgcn_pub[i] = readformatgcn;
         } else {
             readformat = *(__OSContReadFormat*)ptr;
             data->errnum = CHNL_ERR(readformat);
