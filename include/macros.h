@@ -13,6 +13,8 @@
 #error Matching build is only possible on IDO; please build with NON_MATCHING=1.
 #endif
 
+#define ALIGNED(x) __attribute__((aligned(x)))
+
 #define ARRAY_COUNT(arr) (s32)(sizeof(arr) / sizeof(arr[0]))
 
 #define GLUE(a, b) a ## b

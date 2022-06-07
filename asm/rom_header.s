@@ -20,15 +20,25 @@
 .word  0x74757C24               /* Checksum 2 */
 .word  0x00000000               /* Unknown */
 .word  0x00000000               /* Unknown */
-.if VERSION_SH == 1
-.ascii "SUPERMARIO64        "   /* Internal ROM name */
-.else
+
 .include "src/internal_name.s"
-# .byte INTERNAL_NAME   /* Internal ROM name */
-.endif
+
+#I will fix later
+# .if USE_GC == 1
+.if  1
+/* Advanced homebrew ROM header bytes: https://n64brew.dev/wiki/ROM_Header#Advanced_Homebrew_ROM_Header */
+.word  0x82000000
+.else
 .word  0x00000000               /* Unknown */
+.endif
 .word  0x0000004E               /* Cartridge */
+
+.if 0
+# .if EEP4K == 1 && USE_GC == 0
 .ascii "SM"                     /* Cartridge ID */
+.else
+.ascii "ED"                     /* Cartridge ID */
+.endif
 
 /* Region */
 .if VERSION_EU == 1

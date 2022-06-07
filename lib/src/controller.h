@@ -147,7 +147,7 @@ typedef struct
     /* 0x101 */ u8 map[256];
 } __OSInodeCache;
 
-extern s32 __osEepStatus(OSMesgQueue *, OSContStatus *);
+// extern s32 __osEepStatus(OSMesgQueue *, OSContStatus *);
 u16 __osSumcalc(u8 *ptr, int length);
 s32 __osIdCheckSum(u16 *ptr, u16 *csum, u16 *icsum);
 s32 __osRepairPackId(OSPfs *pfs, __OSPackId *badid, __OSPackId *newid);
@@ -161,7 +161,7 @@ s32 __osPfsReleasePages(OSPfs *pfs, __OSInode *inode, u8 start_page, u16 *sum, u
 s32 __osBlockSum(OSPfs *pfs, u8 page_no, u16 *sum, u8 bank);
 s32 __osContRamRead(OSMesgQueue *mq, int channel, u16 address, u8 *buffer);
 s32 __osContRamWrite(OSMesgQueue *mq, int channel, u16 address, u8 *buffer, int force);
-void __osContGetInitData(u8 *pattern, OSContStatus *data);
+// void __osContGetInitData(u8 *pattern, OSContStatus *data);
 void __osPackRequestData(u8 cmd);
 void __osPfsRequestData(u8 cmd);
 void __osPfsGetInitData(u8* pattern, OSContStatus* data);

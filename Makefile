@@ -36,7 +36,8 @@ TE ?= 1
 LEVEL_SELECT ?= 0
 #puppyprint debug
 PUPPYDEBUG ?= 0
-
+#use gc controller, no reason to leave off tbh
+USE_GC ?= 1
 
 # Build for original N64 (no pc code)
 TARGET_N64 = 1
@@ -662,6 +663,11 @@ ifeq ($(RM2C),1)
   CFLAGS += -DRM2C
 endif
 
+ifeq ($(USE_GC),1)
+  CC_CHECK += -DUSE_GAMECUBE_CONTROLLER
+  CFLAGS += -DUSE_GAMECUBE_CONTROLLER
+endif
+
 ifeq ($(TE),1)
   CC_CHECK += -DTE
   CFLAGS += -DTE
@@ -899,6 +905,11 @@ endif
 ifeq ($(RM2C),1)
   CC_CHECK += -DRM2C
   CFLAGS += -DRM2C
+endif
+
+ifeq ($(USE_GC),1)
+  CC_CHECK += -DUSE_GAMECUBE_CONTROLLER
+  CFLAGS += -DUSE_GAMECUBE_CONTROLLER
 endif
 
 ifeq ($(TE),1)

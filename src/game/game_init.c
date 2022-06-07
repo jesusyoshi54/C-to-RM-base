@@ -40,7 +40,7 @@ u8 *gGfxPoolEnd;
 #endif
 struct GfxPool *gGfxPool;
 OSContStatus gControllerStatuses[4];
-OSContPad gControllerPads[4];
+OSContPadEx gControllerPads[4];
 u8 gControllerBits;
 s8 gEepromProbe;
 OSMesgQueue gGameVblankQueue;
@@ -525,7 +525,7 @@ void read_controller_inputs(void) {
     // controller information.
     if (gControllerBits) {
         osRecvMesg(&gSIEventMesgQueue, &D_80339BEC, OS_MESG_BLOCK);
-        osContGetReadData(&gControllerPads[0]);
+        osContGetReadDataEx(&gControllerPads[0]);
     }
     run_demo_inputs();
 
@@ -537,8 +537,8 @@ void read_controller_inputs(void) {
         if (controller->controllerData != NULL) {
             controller->rawStickX = controller->controllerData->stick_x;
             controller->rawStickY = controller->controllerData->stick_y;
-            controller->extStickX = controller->controllerData->ext_stick_x;
-            controller->extStickY = controller->controllerData->ext_stick_y;
+            controller->extStickX = controller->controllerData->c_stick_x;
+            controller->extStickY = controller->controllerData->c_stick_y;
             controller->buttonPressed = controller->controllerData->button
                                         & (controller->controllerData->button ^ controller->buttonDown);
             // 0.5x A presses are a good meme
@@ -569,9 +569,11 @@ void read_controller_inputs(void) {
     gPlayer3Controller->buttonPressed = gPlayer1Controller->buttonPressed;
     gPlayer3Controller->buttonDown = gPlayer1Controller->buttonDown;
 }
+
 #ifdef BETTERCAMERA
 #include "pc/configfile.h"
 #endif
+
 // initialize the controller structs to point at the OSCont information.
 void init_controllers(void) {
     s16 port, cont;
@@ -693,7 +695,7 @@ void game_loop_one_iteration(void) {
 #ifdef VERSION_SH
             block_until_rumble_pak_free();
 #endif
-            osContStartReadData(&gSIEventMesgQueue);
+            osContStartReadDataEx(&gSIEventMesgQueue);
         }
 
         audio_game_loop_tick();

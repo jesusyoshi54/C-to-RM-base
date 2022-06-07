@@ -1010,7 +1010,24 @@ void basic_update(UNUSED s16 *arg) {
     }
 }
 #include "text_engine.h"
+typedef struct
+{
+    /* 0x0 */ u8 dummy;
+    /* 0x1 */ u8 txsize;
+    /* 0x2 */ u8 rxsize;
+    /* 0x3 */ u8 cmd;
+    /* 0x4 */ u8 analog_mode;
+    /* 0x5 */ u8 rumble;
+    /* 0x6 */ u16 button;
+    /* 0x8 */ u8 stick_x;
+    /* 0x9 */ u8 stick_y;
+    /* 0xA */ u8 c_stick_x;
+    /* 0xB */ u8 c_stick_y;
+    /* 0xC */ u8 l_trig;
+    /* 0xD */ u8 r_trig;
+} __OSContGCNShortPollFormat;
 int gPressedStart = 0;
+extern __OSContGCNShortPollFormat readformatgcn_pub[4];
 s32 play_mode_normal(void) {
     if (gCurrDemoInput != NULL) {
         print_intro_text();
@@ -1044,6 +1061,17 @@ s32 play_mode_normal(void) {
     if (gCurrentArea != NULL) {
         update_camera(gCurrentArea->camera);
     }
+
+	char buf[32];
+	sprintf(buf,"btns 0x%x type 0x%x",gPlayer1Controller->buttonDown,gControllers[0].statusData->type);
+	print_text(32,32,buf);
+	
+	sprintf(buf,"os type 0x%x stk 0x%x",__osControllerTypes[0],gPlayer1Controller->extStickX);
+	print_text(32,96,buf);
+	
+	sprintf(buf,"pub 0x%x",readformatgcn_pub[0].button);
+	print_text(32,64,buf);
+
 
     initiate_painting_warp();
     initiate_delayed_warp();

@@ -191,6 +191,8 @@ SECTIONS
       BUILD_DIR/src/game/obj_behaviors_2.o(.text);
       BUILD_DIR/src/game/puppyprint.o(.text);
       BUILD_DIR/src/game/debug_box.o(.text);
+	  
+      BUILD_DIR/src/game/gamecube_controller.o(.text);
 #if TE
 	  BUILD_DIR/src/game/text_engine.o(.text);
 #endif
@@ -524,6 +526,8 @@ SECTIONS
       BUILD_DIR/src/game/obj_behaviors_2.o(.data*);
       BUILD_DIR/src/game/puppyprint.o(.data*);
       BUILD_DIR/src/game/debug_box.o(.data*);
+	  
+      BUILD_DIR/src/game/gamecube_controller.o(.data*);
 #if TE
 	  BUILD_DIR/src/game/text_engine.o(.data*);
 #endif
@@ -644,6 +648,8 @@ SECTIONS
       BUILD_DIR/src/game/obj_behaviors_2.o(.rodata*);
       BUILD_DIR/src/game/puppyprint.o(.rodata*);
       BUILD_DIR/src/game/debug_box.o(.rodata*);
+	  
+      BUILD_DIR/src/game/gamecube_controller.o(.rodata*);
 #if TE
 	  BUILD_DIR/src/game/text_engine.o(.rodata*);
 #endif
@@ -703,6 +709,10 @@ SECTIONS
       BUILD_DIR/lib/rsp.o(.rodata*);
    }
    END_SEG(main)
+   
+      /* Overwrite a libultra function with its modified counterpart for GCN controller support */
+      __osContGetInitData = __osContGetInitDataEx;
+	  
    BEGIN_NOLOAD(main)
    {
       

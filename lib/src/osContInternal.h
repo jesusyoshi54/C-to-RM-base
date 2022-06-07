@@ -2,6 +2,7 @@
 #define _ULTRA64_CONTROLLER_INTERNAL_H_
 
 #include <types.h>
+#include "controller.h"
 
 typedef struct
 {
@@ -34,14 +35,15 @@ typedef union {
 
 #ifdef AVOID_UB
 // Fix the OSContPackedStruct array
-extern OSContPackedStruct _osContCmdBuf[8];
-
+// extern OSContPackedStruct _osContCmdBuf[8];
+extern OSPifRam __osContPifRam;
 // And fix the last element
-#define _osContPifCtrl _osContCmdBuf[7].as_raw[1]
+// #define _osContPifCtrl _osContCmdBuf[7].as_raw[1]
 #else
 // Original OSContPackedStruct definitions
-extern OSContPackedStruct _osContCmdBuf[7];
-extern u32 _osContPifCtrl;
+// extern OSContPackedStruct _osContCmdBuf[7];
+extern OSPifRam __osContPifRam;
+// extern u32 _osContPifCtrl;
 #endif
 
 #endif

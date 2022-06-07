@@ -29,7 +29,8 @@ struct Controller
   /*0x10*/ u16 buttonDown;
   /*0x12*/ u16 buttonPressed;
   /*0x14*/ OSContStatus *statusData;
-  /*0x18*/ OSContPad *controllerData;
+  /*0x18*/ OSContPadEx *controllerData;
+  /* sm64 ex values */
   /*0x1C*/ int port;
   /*ext */ s16 extStickX;       // additional (right) stick values
   /*ext */ s16 extStickY;

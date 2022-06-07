@@ -437,7 +437,8 @@ void *memmove(void *str1, const void *str2, size_t n);
 #define VALID_BUTTONS (A_BUTTON   | B_BUTTON   | Z_TRIG     | START_BUTTON | \
                        U_JPAD     | D_JPAD     | L_JPAD     | R_JPAD       | \
                        L_TRIG     | R_TRIG     |                             \
-                       U_CBUTTONS | D_CBUTTONS | L_CBUTTONS | R_CBUTTONS   )
+                       U_CBUTTONS | D_CBUTTONS | L_CBUTTONS | R_CBUTTONS   | \
+					   GCN_X_BUTTON | GCN_Y_BUTTON )
 
 #define JPAD_BUTTONS  (U_JPAD     | D_JPAD     | L_JPAD     | R_JPAD)
 

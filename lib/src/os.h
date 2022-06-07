@@ -31,6 +31,21 @@
 #ifndef _OS_H_
 #define    _OS_H_
 
+#include <PR/os_thread.h>
+#include <PR/os_message.h>
+#include <PR/os_exception.h>
+#include <PR/os_tlb.h>
+#include <PR/os_pi.h>
+#include <PR/os_vi.h>
+#include <PR/os_ai.h>
+#include <PR/os_time.h>
+#include <PR/os_cont.h>
+#include <PR/os_cache.h>
+#include <PR/os_eeprom.h>
+#include <PR/os_convert.h>
+#include <PR/os_rdp.h>
+#include <PR/os_libc.h>
+
 #ifdef _LANGUAGE_C_PLUS_PLUS
 extern "C" {
 #endif
