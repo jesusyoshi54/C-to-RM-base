@@ -1291,8 +1291,16 @@ s32 init_level(void) {
         }
     } else {
         if (gPlayerSpawnInfos[0].areaIndex >= 0) {
-            load_mario_area();
-            init_mario();
+			load_mario_area();
+			struct ObjectWarpNode *spawnNode = area_get_warp_node(sWarpDest.nodeId);
+			gPlayerSpawnInfos[0].startPos[0] = (s16) spawnNode->object->oPosX;
+			gPlayerSpawnInfos[0].startPos[1] = (s16) spawnNode->object->oPosY;
+			gPlayerSpawnInfos[0].startPos[2] = (s16) spawnNode->object->oPosZ;
+
+			gPlayerSpawnInfos[0].startAngle[0] = 0;
+			gPlayerSpawnInfos[0].startAngle[1] = spawnNode->object->oMoveAngleYaw;
+			gPlayerSpawnInfos[0].startAngle[2] = 0;
+			init_mario();
         }
 
         if (gCurrentArea != NULL) {
@@ -1393,6 +1401,7 @@ s32 lvl_init_from_save_file(UNUSED s16 arg0, s32 levelNum) {
     gCurrLevelNum = levelNum;
     gCurrCourseNum = COURSE_NONE;
     gSavedCourseNum = COURSE_NONE;
+    sWarpDest.nodeId = 0x0A;
     gCurrCreditsEntry = NULL;
     gSpecialTripleJump = FALSE;
 
