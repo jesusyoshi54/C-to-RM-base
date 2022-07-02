@@ -2,7 +2,7 @@
 const GeoLayout number_geo[] = {
    GEO_NODE_START(),
    GEO_OPEN_NODE(),
-      GEO_SWITCH_CASE(10, geo_switch_anim_state),
+      GEO_SWITCH_CASE(12, geo_switch_anim_state),
       GEO_OPEN_NODE(),
          GEO_DISPLAY_LIST(LAYER_ALPHA, dl_billboard_num_0),
          GEO_DISPLAY_LIST(LAYER_ALPHA, dl_billboard_num_1),
@@ -14,6 +14,8 @@ const GeoLayout number_geo[] = {
          GEO_DISPLAY_LIST(LAYER_ALPHA, dl_billboard_num_7),
          GEO_DISPLAY_LIST(LAYER_ALPHA, dl_billboard_num_8),
          GEO_DISPLAY_LIST(LAYER_ALPHA, dl_billboard_num_9),
+         GEO_DISPLAY_LIST(LAYER_ALPHA, dl_billboard_num_A),
+         GEO_DISPLAY_LIST(LAYER_ALPHA, dl_billboard_num_B),
       GEO_CLOSE_NODE(),
    GEO_CLOSE_NODE(),
    GEO_END(),

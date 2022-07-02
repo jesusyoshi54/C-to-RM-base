@@ -53,8 +53,12 @@
 #define /*0x08C*/ oFlags                      OBJECT_FIELD_U32(0x01)
 #define /*0x090*/ oDialogResponse             OBJECT_FIELD_S16(0x02, 0)
 #define /*0x092*/ oDialogState                OBJECT_FIELD_S16(0x02, 1)
+
 #define /*0x094*/ oUnk94                      OBJECT_FIELD_U32(0x03)
-// 0x98 unused/removed.
+#define /*0x094*/ oNoRespawn                  OBJECT_FIELD_S16(0x03, 0)
+#define /*0x096*/ oNoExecCol                  OBJECT_FIELD_S16(0x03, 1)
+#define /*0x098*/ oObjScale                   OBJECT_FIELD_F32(0x04)
+
 #define /*0x09C*/ oIntangibleTimer            OBJECT_FIELD_S32(0x05)
 #define /*0x0A0*/ O_POS_INDEX                 0x06
 #define /*0x0A0*/ oPosX                       OBJECT_FIELD_F32(O_POS_INDEX + 0)
@@ -125,7 +129,9 @@
 #define /*0x198*/ oNumLootCoins               OBJECT_FIELD_S32(0x44)
 #define /*0x19C*/ oDrawingDistance            OBJECT_FIELD_F32(0x45)
 #define /*0x1A0*/ oRoom                       OBJECT_FIELD_S32(0x46)
-// 0x1A4 is unused, possibly related to 0x1A8 in removed macro purposes.
+
+#define /*0x1A4*/ oSpeedMultiplier            OBJECT_FIELD_F32(0x47)
+
 #define /*0x1A4*/ oUnk1A4                     OBJECT_FIELD_S32(0x47)
 #define /*0x1A8*/ oUnk1A8                     OBJECT_FIELD_U32(0x48)
 // 0x1AC-0x1B2 (0x48-0x4A) are object specific and defined below the common fields.

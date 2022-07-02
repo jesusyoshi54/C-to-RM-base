@@ -553,7 +553,7 @@ s8 TE_Abtn_goto_next_box(struct TEState *CurEng,u8 *str){
 	}
 	StrBuffer[CurEng->state][CurEng->CurPos] = arrow;
 	StrBuffer[CurEng->state][CurEng->CurPos+1] = 0xFF;
-	if(gPlayer1Controller->buttonPressed&A_BUTTON){
+	if(gPlayer1Controller->buttonPressed&(A_BUTTON | B_BUTTON | START_BUTTON)){
 		return TE_auto_goto_next_box(CurEng,str);
 	}else{
 		return 0;
@@ -694,7 +694,7 @@ s8 TE_Abtn_end_string(struct TEState *CurEng,u8 *str){
 	if(CurEng->TrEnd.TransVI != 0){
 		return TE_end_str(CurEng);
 	}
-	if(gPlayer1Controller->buttonPressed&A_BUTTON){
+	if(gPlayer1Controller->buttonPressed&(A_BUTTON | B_BUTTON | START_BUTTON)){
 		return TE_end_str(CurEng);
 	}
 	return 0;
@@ -1016,7 +1016,7 @@ s8 TE_enable_dialog_options(struct TEState *CurEng,u8 *str){
 	CurEng->TempYOrigin = CurEng->TempY;
 	CurEng->NumDialogs = str[1];
 	if(CurEng->DialogEnd != 0 && (CurEng->LastVI+2)<gNumVblanks){
-		if(gPlayer1Controller->buttonPressed&A_BUTTON){
+		if(gPlayer1Controller->buttonPressed&(A_BUTTON | B_BUTTON | START_BUTTON)){
 			CurEng->OgStr = CurEng->DialogEnd;
 			CurEng->StackLocked = CurEng->StackDepth;
 			CurEng->DialogEnd = 0;

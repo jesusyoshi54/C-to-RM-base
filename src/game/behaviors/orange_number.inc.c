@@ -6,7 +6,10 @@ void bhv_orange_number_init(void) {
 }
 
 void bhv_orange_number_loop(void) {
-    struct Object *sp1C;
+    if(o->oBehParams >> 24 && o->oTimer > 0){
+		o->activeFlags = ACTIVE_FLAG_DEACTIVATED;
+	}
+	struct Object *sp1C;
     o->oPosY += o->oVelY;
     o->oVelY -= 2.0f;
     if (o->oVelY < -21.0f)

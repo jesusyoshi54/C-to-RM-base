@@ -752,7 +752,7 @@ void update_mario_sound_and_camera(struct MarioState *m) {
 
     if (!(action & (ACT_FLAG_SWIMMING | ACT_FLAG_METAL_WATER))) {
         if (camPreset == CAMERA_MODE_BEHIND_MARIO || camPreset == CAMERA_MODE_WATER_SURFACE) {
-            set_camera_mode(m->area->camera, m->area->camera->defMode, 1);
+            set_camera_mode(m->area->camera,  -1, 1);
         }
     }
 }
@@ -1183,7 +1183,7 @@ s32 check_common_hold_action_exits(struct MarioState *m) {
  * Transitions Mario from a submerged action to a walking action.
  */
 s32 transition_submerged_to_walking(struct MarioState *m) {
-    set_camera_mode(m->area->camera, m->area->camera->defMode, 1);
+    set_camera_mode(m->area->camera,  -1, 1);
 
     vec3s_set(m->angleVel, 0, 0, 0);
 
@@ -1497,7 +1497,7 @@ void set_submerged_cam_preset_and_spawn_bubbles(struct MarioState *m) {
 
         if (m->action & ACT_FLAG_METAL_WATER) {
             if (camPreset != CAMERA_MODE_CLOSE) {
-                set_camera_mode(m->area->camera, CAMERA_MODE_CLOSE, 1);
+                set_camera_mode(m->area->camera, -1, 1);
             }
         } else {
             if ((heightBelowWater > 800.0f) && (camPreset != CAMERA_MODE_BEHIND_MARIO)) {
@@ -1505,7 +1505,7 @@ void set_submerged_cam_preset_and_spawn_bubbles(struct MarioState *m) {
             }
 
             if ((heightBelowWater < 400.0f) && (camPreset != CAMERA_MODE_WATER_SURFACE)) {
-                set_camera_mode(m->area->camera, CAMERA_MODE_WATER_SURFACE, 1);
+                set_camera_mode(m->area->camera, -1, 1);
             }
 
             // As long as Mario isn't drowning or at the top
@@ -2134,7 +2134,11 @@ void init_mario_from_save_file(void) {
     gMarioState->spawnInfo = &gPlayerSpawnInfos[0];
     gMarioState->statusForCamera = &gPlayerCameraState[0];
     gMarioState->marioBodyState = &gBodyStates[0];
-    gMarioState->controller = &gControllers[0];
+    if (__osControllerTypes[1] == CONT_TYPE_GCN) {
+        gMarioState->controller = &gControllers[1];
+    } else {
+        gMarioState->controller = &gControllers[0];
+    }
     gMarioState->animation = &D_80339D10;
 
     gMarioState->numCoins = 0;

@@ -10,6 +10,8 @@
 #include "math_util.h"
 #include "game/puppyprint.h"
 
+u8 gCheckingIntangSurfaces = 0;
+
 /**************************************************
  *                      WALLS                     *
  **************************************************/
@@ -30,10 +32,11 @@ static s32 find_wall_collisions_from_list(struct SurfaceNode *surfaceNode,
     register f32 w1, w2, w3;
     register f32 y1, y2, y3;
     s32 numCols = 0;
+	
 
-    // Max collision radius = 200
-    if (radius > 200.0f) {
-        radius = 200.0f;
+    // Max collision radius = 600
+    if (radius > 600.0f) {
+        radius = 600.0f;
     }
 
     // Stay in this loop until out of walls.
@@ -41,9 +44,46 @@ static s32 find_wall_collisions_from_list(struct SurfaceNode *surfaceNode,
         surf = surfaceNode->surface;
         surfaceNode = surfaceNode->next;
 
+
         // Exclude a large number of walls immediately to optimize.
         if (y < surf->lowerY || y > surf->upperY) {
             continue;
+        }
+
+        //exclusions based on types
+		
+		// Determine if checking for the camera or not.
+        if (gCheckingSurfaceCollisionsForCamera) {
+            if (surf->flags & SURFACE_FLAG_NO_CAM_COLLISION) {
+                continue;
+            }
+        } else if (gCheckingIntangSurfaces){
+            if (!(surf->flags & SURFACE_INTANG)) {
+                continue;
+            }
+		}else{
+            // Ignore intang
+            if (surf->flags & SURFACE_INTANG) {
+				continue;
+			}
+			//ignore cam
+            if (surf->type == SURFACE_CAMERA_BOUNDARY) {
+                continue;
+            }
+
+            // If an object can pass through a vanish cap wall, pass through.
+            if (surf->type == SURFACE_VANISH_CAP_WALLS) {
+                // If an object can pass through a vanish cap wall, pass through.
+                if (gCurrentObject != NULL
+                    && (gCurrentObject->activeFlags & ACTIVE_FLAG_MOVE_THROUGH_GRATE)) {
+                    continue;
+                }
+
+                // If Mario has a vanish cap, pass through the vanish cap wall.
+                if (gMarioState->flags & MARIO_VANISH_CAP) {
+                    continue;
+                }
+            }
         }
 
         offset = surf->normal.x * x + surf->normal.y * y + surf->normal.z * z + surf->originOffset;
@@ -110,33 +150,6 @@ static s32 find_wall_collisions_from_list(struct SurfaceNode *surfaceNode,
             }
         }
 
-        // Determine if checking for the camera or not.
-        if (gCheckingSurfaceCollisionsForCamera) {
-            if (surf->flags & SURFACE_FLAG_NO_CAM_COLLISION) {
-                continue;
-            }
-        } else {
-            // Ignore camera only surfaces.
-            if (surf->type == SURFACE_CAMERA_BOUNDARY) {
-                continue;
-            }
-
-            // If an object can pass through a vanish cap wall, pass through.
-            if (surf->type == SURFACE_VANISH_CAP_WALLS) {
-                // If an object can pass through a vanish cap wall, pass through.
-                if (gCurrentObject != NULL
-                    && (gCurrentObject->activeFlags & ACTIVE_FLAG_MOVE_THROUGH_GRATE)) {
-                    continue;
-                }
-
-                // If Mario has a vanish cap, pass through the vanish cap wall.
-                if (gCurrentObject != NULL && gCurrentObject == gMarioObject
-                    && (gMarioState->flags & MARIO_VANISH_CAP)) {
-                    continue;
-                }
-            }
-        }
-
         //! (Wall Overlaps) Because this doesn't update the x and z local variables,
         //  multiple walls can push mario more than is required.
         data->x += surf->normal.x * (radius - offset);
@@ -189,7 +202,8 @@ s32 f32_find_wall_collision(f32 *xPtr, f32 *yPtr, f32 *zPtr, f32 offsetY, f32 ra
  */
 s32 find_wall_collisions(struct WallCollisionData *colData) {
     struct SurfaceNode *node;
-    s16 cellX, cellZ;
+    s16 cellXmin, cellZmin, cellXmax, cellZmax;
+	u8 i,j;
     s32 numCollisions = 0;
     s16 x = colData->x;
     s16 z = colData->z;
@@ -205,16 +219,24 @@ s32 find_wall_collisions(struct WallCollisionData *colData) {
 
     // World (level) consists of a 16x16 grid. Find where the collision is on
     // the grid (round toward -inf)
-    cellX = ((x + LEVEL_BOUNDARY_MAX) / CELL_SIZE) & NUM_CELLS_INDEX;
-    cellZ = ((z + LEVEL_BOUNDARY_MAX) / CELL_SIZE) & NUM_CELLS_INDEX;
+	//look inside of multiple cells if radius extends into multiple cells
+	s16 r = (s16)colData->radius;
+    cellXmin = ((x - r + LEVEL_BOUNDARY_MAX) / CELL_SIZE) & NUM_CELLS_INDEX;
+    cellZmin = ((z - r + LEVEL_BOUNDARY_MAX) / CELL_SIZE) & NUM_CELLS_INDEX;
+    cellXmax = ((x + r + LEVEL_BOUNDARY_MAX) / CELL_SIZE) & NUM_CELLS_INDEX;
+    cellZmax = ((z + r + LEVEL_BOUNDARY_MAX) / CELL_SIZE) & NUM_CELLS_INDEX;
+	
+	for(i = 0; i < (cellXmax-cellXmin + 1); i++){
+		for(j = 0; j < (cellZmax-cellZmin + 1); j++){
+			// Check for surfaces belonging to objects.
+			node = gDynamicSurfacePartition[cellZmin + j][cellXmin + i][SPATIAL_PARTITION_WALLS].next;
+			numCollisions += find_wall_collisions_from_list(node, colData);
 
-    // Check for surfaces belonging to objects.
-    node = gDynamicSurfacePartition[cellZ][cellX][SPATIAL_PARTITION_WALLS].next;
-    numCollisions += find_wall_collisions_from_list(node, colData);
-
-    // Check for surfaces that are a part of level geometry.
-    node = gStaticSurfacePartition[cellZ][cellX][SPATIAL_PARTITION_WALLS].next;
-    numCollisions += find_wall_collisions_from_list(node, colData);
+			// Check for surfaces that are a part of level geometry.
+			node = gStaticSurfacePartition[cellZmin + j][cellXmin + i][SPATIAL_PARTITION_WALLS].next;
+			numCollisions += find_wall_collisions_from_list(node, colData);
+		}
+	}
 
     // Increment the debug tracker.
     gNumCalls.wall += 1;
@@ -239,6 +261,44 @@ static struct Surface *find_ceil_from_list(struct SurfaceNode *surfaceNode, s32 
     while (surfaceNode != NULL) {
         surf = surfaceNode->surface;
         surfaceNode = surfaceNode->next;
+		
+        //exclusions based on types
+		
+		// Determine if checking for the camera or not.
+        if (gCheckingSurfaceCollisionsForCamera) {
+            if (surf->flags & SURFACE_FLAG_NO_CAM_COLLISION) {
+                continue;
+            }
+        } else if (gCheckingIntangSurfaces){
+            if (!(surf->flags & SURFACE_INTANG)) {
+                continue;
+            }
+		}else{
+            // Ignore intang
+            if (surf->flags & SURFACE_INTANG) {
+				continue;
+			}
+			//ignore cam
+            if (surf->type == SURFACE_CAMERA_BOUNDARY) {
+                continue;
+            }
+
+            // If an object can pass through a vanish cap wall, pass through.
+            if (surf->type == SURFACE_VANISH_CAP_WALLS) {
+                // If an object can pass through a vanish cap wall, pass through.
+                if (gCurrentObject != NULL
+                    && (gCurrentObject->activeFlags & ACTIVE_FLAG_MOVE_THROUGH_GRATE)) {
+                    continue;
+                }
+
+                // If Mario has a vanish cap, pass through the vanish cap wall.
+                if (gMarioState->flags & MARIO_VANISH_CAP) {
+                    continue;
+                }
+            }
+        }
+		
+		
         x1 = surf->vertex1[0];
         z1 = surf->vertex1[2];
         z2 = surf->vertex2[2];
@@ -254,16 +314,6 @@ static struct Surface *find_ceil_from_list(struct SurfaceNode *surfaceNode, s32 
             continue;
         }
         if ((z3 - z) * (x1 - x3) - (x3 - x) * (z1 - z3) > 0) {
-            continue;
-        }
-        // Determine if checking for the camera or not.
-        if (gCheckingSurfaceCollisionsForCamera != 0) {
-            if (surf->flags & SURFACE_FLAG_NO_CAM_COLLISION) {
-                continue;
-            }
-        }
-        // Ignore camera only surfaces.
-        else if (surf->type == SURFACE_CAMERA_BOUNDARY) {
             continue;
         }
 		nx = surf->normal.x;
@@ -405,6 +455,43 @@ static struct Surface *find_floor_from_list(struct SurfaceNode *surfaceNode, s32
     while (surfaceNode != NULL) {
         surf = surfaceNode->surface;
         surfaceNode = surfaceNode->next;
+		
+        //exclusions based on types
+		
+		// Determine if checking for the camera or not.
+        if (gCheckingSurfaceCollisionsForCamera) {
+            if (surf->flags & SURFACE_FLAG_NO_CAM_COLLISION) {
+                continue;
+            }
+        } else if (gCheckingIntangSurfaces){
+            if (!(surf->flags & SURFACE_INTANG)) {
+                continue;
+            }
+		}else{
+            // Ignore intang
+            if (surf->flags & SURFACE_INTANG) {
+				continue;
+			}
+			//ignore cam
+            if (surf->type == SURFACE_CAMERA_BOUNDARY) {
+                continue;
+            }
+
+            // If an object can pass through a vanish cap wall, pass through.
+            if (surf->type == SURFACE_VANISH_CAP_WALLS) {
+                // If an object can pass through a vanish cap wall, pass through.
+                if (gCurrentObject != NULL
+                    && (gCurrentObject->activeFlags & ACTIVE_FLAG_MOVE_THROUGH_GRATE)) {
+                    continue;
+                }
+
+                // If Mario has a vanish cap, pass through the vanish cap wall.
+                if (gMarioState->flags & MARIO_VANISH_CAP) {
+                    continue;
+                }
+            }
+        }
+		
         x1 = surf->vertex1[0];
         z1 = surf->vertex1[2];
         x2 = surf->vertex2[0];
@@ -422,16 +509,7 @@ static struct Surface *find_floor_from_list(struct SurfaceNode *surfaceNode, s32
         if ((z3 - z) * (x1 - x3) - (x3 - x) * (z1 - z3) < 0) {
             continue;
         }
-        // Determine if we are checking for the camera or not.
-        if (gCheckingSurfaceCollisionsForCamera != 0) {
-            if (surf->flags & SURFACE_FLAG_NO_CAM_COLLISION) {
-                continue;
-            }
-        }
-        // If we are not checking for the camera, ignore camera only floors.
-        else if (surf->type == SURFACE_CAMERA_BOUNDARY) {
-            continue;
-        }
+
         nx = surf->normal.x;
         ny = surf->normal.y;
         nz = surf->normal.z;

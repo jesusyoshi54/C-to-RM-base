@@ -813,7 +813,10 @@ void load_object_collision_model(void) {
 #if PUPPYPRINT_DEBUG
     OSTime first = osGetTime();
 #endif
-    s16 *collisionData = gCurrentObject->collisionData;
+    if(gCurrentObject->oNoExecCol){
+		return;
+	}
+	s16 *collisionData = gCurrentObject->collisionData;
     f32 marioDist = gCurrentObject->oDistanceToMario;
     f32 tangibleDist = gCurrentObject->oCollisionDistance;
 

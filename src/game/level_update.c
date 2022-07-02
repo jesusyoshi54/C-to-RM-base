@@ -735,7 +735,7 @@ s16 level_trigger_warp(struct MarioState *m, s32 warpOp) {
         switch (warpOp) {
             case WARP_OP_DEMO_NEXT:
             case WARP_OP_DEMO_END: sDelayedWarpTimer = 20; // Must be one line to match on -O2
-                sSourceWarpNodeId = WARP_NODE_F0;
+                sSourceWarpNodeId = WARP_NODE_SUCCESS;
                 gSavedCourseNum = COURSE_NONE;
                 val04 = FALSE;
                 play_transition(WARP_TRANSITION_FADE_INTO_STAR, 0x14, 0x00, 0x00, 0x00);
@@ -743,7 +743,7 @@ s16 level_trigger_warp(struct MarioState *m, s32 warpOp) {
 
             case WARP_OP_CREDITS_END:
                 sDelayedWarpTimer = 60;
-                sSourceWarpNodeId = WARP_NODE_F0;
+                sSourceWarpNodeId = WARP_NODE_SUCCESS;
                 val04 = FALSE;
                 gSavedCourseNum = COURSE_NONE;
                 play_transition(WARP_TRANSITION_FADE_INTO_COLOR, 0x3C, 0x00, 0x00, 0x00);
@@ -751,7 +751,7 @@ s16 level_trigger_warp(struct MarioState *m, s32 warpOp) {
 
             case WARP_OP_STAR_EXIT:
                 sDelayedWarpTimer = 32;
-                sSourceWarpNodeId = WARP_NODE_F0;
+                sSourceWarpNodeId = WARP_NODE_SUCCESS;
                 gSavedCourseNum = COURSE_NONE;
                 play_transition(WARP_TRANSITION_FADE_INTO_MARIO, 0x20, 0x00, 0x00, 0x00);
                 break;
@@ -783,16 +783,16 @@ s16 level_trigger_warp(struct MarioState *m, s32 warpOp) {
                 play_transition(WARP_TRANSITION_FADE_INTO_CIRCLE, 0x14, 0x00, 0x00, 0x00);
                 break;
 
-            case WARP_OP_UNKNOWN_01: // enter totwc
+            case WARP_OP_LOOK_UP: // enter totwc
                 sDelayedWarpTimer = 30;
-                sSourceWarpNodeId = WARP_NODE_F2;
+                sSourceWarpNodeId = WARP_NODE_LOOK_UP;
                 play_transition(WARP_TRANSITION_FADE_INTO_COLOR, 0x1E, 0xFF, 0xFF, 0xFF);
 #ifndef VERSION_JP
                 play_sound(SOUND_MENU_STAR_SOUND, gGlobalSoundSource);
 #endif
                 break;
 
-            case WARP_OP_UNKNOWN_02: // bbh enter
+            case WARP_OP_SHRINK_ENTER: // bbh enter
                 sDelayedWarpTimer = 30;
                 sSourceWarpNodeId = (m->usedObj->oBehParams & 0x00FF0000) >> 16;
                 play_transition(WARP_TRANSITION_FADE_INTO_COLOR, 0x1E, 0xFF, 0xFF, 0xFF);

@@ -43,6 +43,10 @@ OSContStatus gControllerStatuses[4];
 OSContPadEx gControllerPads[4];
 u8 gControllerBits;
 s8 gEepromProbe;
+
+s8 gGamecubeControllerPort = -1; // This is set to -1 if there's no GC controller, 0 if there's one in the first port and 1 if there's one in the second port.
+s8 gIsConsole = 0;
+
 OSMesgQueue gGameVblankQueue;
 OSMesgQueue D_80339CB8;
 OSMesg D_80339CD0;
@@ -301,10 +305,15 @@ void draw_reset_bars(void) {
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
 }
-u8 gJaboCheck = 0;
+
 #ifdef TARGET_N64
 void rendering_init(void) {
-    gGfxPool = &gGfxPools[0];
+    if (IO_READ(DPC_PIPEBUSY_REG) == 1) {
+        gIsConsole = TRUE;
+    } else {
+        gIsConsole = FALSE;
+    }
+	gGfxPool = &gGfxPools[0];
     set_segment_base_addr(1, gGfxPool->buffer);
     gGfxSPTask = &gGfxPool->spTask;
     gDisplayListHead = gGfxPool->buffer;
@@ -315,12 +324,8 @@ void rendering_init(void) {
     clear_frame_buffer(0);
     end_master_display_list();
     send_display_list(&gGfxPool->spTask);
-	//yep, its jabo (or just 1.6 lol)
-	if(gFrameBuffer0[0] == 0xff){
-		gJaboCheck = 1;
-	}
     // Skip incrementing the initial framebuffer index on emulators so that they display immediately as the Gfx task finishes
-    if ((*(volatile u32 *)0xA4100010) != 0) { // Read RDP Clock Register, has a value of zero on emulators
+    if (gIsConsole) { // Read RDP Clock Register, has a value of zero on emulators
         frameBufferIndex++;
     }
     gGlobalTimer++;
@@ -368,7 +373,7 @@ void display_and_vsync(void) {
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
 	#ifdef TARGET_N64
     // Skip swapping buffers on emulator so that they display immediately as the Gfx task finishes
-    if ((*(volatile u32 *)0xA4100010) != 0) { // Read RDP Clock Register, has a value of zero on emulators
+    if (gIsConsole) { // Read RDP Clock Register, has a value of zero on emulators
         if (++sCurrFBNum == 3) {
             sCurrFBNum = 0;
         }
@@ -531,7 +536,19 @@ void read_controller_inputs(void) {
 
     for (i = 0; i < 2; i++) {
         struct Controller *controller = &gControllers[i];
-
+		
+        u32 oldButton = controller->controllerData->button;
+        if (gIsConsole && (gGamecubeControllerPort >= 0)) {
+            u32 newButton = oldButton & ~(Z_TRIG | L_TRIG);
+            if (oldButton & Z_TRIG) {
+                newButton |= L_TRIG;
+            }
+            if (controller->controllerData->l_trig > 85) { // How far the player has to press the L trigger for it to be considered a Z press. 64 is about 25%. 127 would be about 50%.
+                newButton |= Z_TRIG;
+            }
+            controller->controllerData->button = newButton;
+        }
+		
         // if we're receiving inputs, update the controller struct
         // with the new button info.
         if (controller->controllerData != NULL) {
@@ -605,7 +622,18 @@ void init_controllers(void) {
             gControllers[cont++].controllerData = &gControllerPads[port];
         }
     }
-
+	
+	//use port 2 over port 1 if gcn is plugged in
+    if (__osControllerTypes[1] == CONT_TYPE_GCN) {
+        gGamecubeControllerPort = 1;
+        gPlayer1Controller = &gControllers[1];
+    } else {
+        if (__osControllerTypes[0] == CONT_TYPE_GCN) {
+            gGamecubeControllerPort = 0;
+        }
+        gPlayer1Controller = &gControllers[0];
+    }
+	
 #ifdef BETTERCAMERA
     // load bettercam settings from the config file
     newcam_init_settings();
