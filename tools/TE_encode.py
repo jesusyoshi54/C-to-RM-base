@@ -224,6 +224,8 @@ if __name__ == "__main__":
 			globals()[k] = Make(*v)
 		s = [a for a in f.__dict__ if type(a) == str and '__' not in a]
 		s = [[f.__dict__.get(a),a] for a in s]
+		h.write(f'#ifndef {q}_TE_H\n\
+#define {q}_TE_H\n')
 		h.write('#include "src/game/text_engine.h"\n')
 		for a in s:
 			if a[1]=='externs':
@@ -234,3 +236,4 @@ if __name__ == "__main__":
 				Place = 0
 				Ptrs = []
 				Write(o,h,*a)
+		h.write("#endif")
