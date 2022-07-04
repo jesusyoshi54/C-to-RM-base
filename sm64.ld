@@ -196,18 +196,19 @@ SECTIONS
 #if TE
 	  BUILD_DIR/src/game/text_engine.o(.text);
 #endif
-      BUILD_DIR/src/audio/synthesis.o(.text);
-      BUILD_DIR/src/audio/heap.o(.text);
-      BUILD_DIR/src/audio/load.o(.text);
+
 #ifdef VERSION_SH
       BUILD_DIR/src/audio/unk_shindou_audio_file.o(.text);
 #endif
-      BUILD_DIR/src/audio/playback.o(.text);
-      BUILD_DIR/src/audio/effects.o(.text);
-      BUILD_DIR/src/audio/seqplayer.o(.text);
 #ifdef VERSION_SH
       BUILD_DIR/libultra.a:osDriveRomInit.o(.text);
 #endif
+	  BUILD_DIR/src/audio/load.o(.text);
+	  BUILD_DIR/src/audio/synthesis.o(.text);
+      BUILD_DIR/src/audio/heap.o(.text);
+      BUILD_DIR/src/audio/playback.o(.text);
+      BUILD_DIR/src/audio/effects.o(.text);
+      BUILD_DIR/src/audio/seqplayer.o(.text);
       BUILD_DIR/src/audio/external.o(.text);
       BUILD_DIR/src/audio/port_eu.o(.text);
 

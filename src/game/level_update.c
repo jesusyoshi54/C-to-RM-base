@@ -1106,14 +1106,14 @@ s32 play_mode_paused(void) {
 	#ifdef LEVEL_SELECT
 	handle_menu_scrolling(MENU_SCROLL_HORIZONTAL, &SelIndex, 0, 2);
 	handle_menu_scrolling(MENU_SCROLL_VERTICAL, LSScrolls[SelIndex], 0, 255);
-	sprintf(buf,"DEBUG L-L SELECT DUP to Warp\n");
-	print_text(32,188,buf);
-	sprintf(buf," LE-EL %d   AREA %d   ID %d",LevelWarp,AreaWarp,WarpID);
-	print_text(32,160,buf);
+	sprintf(buf,"L-L SELECT L to Warp\n");
+	print_text(16,188,buf);
+	sprintf(buf," L-L %d   AREA %d   ID %d",LevelWarp, AreaWarp, WarpID);
+	print_text(16,160,buf);
 	//star glyph
 	sprintf(buf,"-");
-	print_text(32+110*SelIndex,160,buf);
-	if (gPlayer1Controller->buttonPressed&U_JPAD){
+	print_text(16+100*SelIndex,160,buf);
+	if (gPlayer1Controller->buttonPressed&L_TRIG){
         initiate_warp(LevelWarp,AreaWarp,WarpID, 0);
         fade_into_special_warp(0, 0);
 	}

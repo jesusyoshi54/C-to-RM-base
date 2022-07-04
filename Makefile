@@ -689,6 +689,12 @@ ifeq ($(EXT_OPTIONS_MENU),1)
   CFLAGS += -DEXT_OPTIONS_MENU -DCHEATS_ACTIONS
 endif
 
+# Check for external data
+ifeq ($(EXTERNAL_DATA),1)
+  CC_CHECK += -DEXTERNAL_DATA
+  CFLAGS += -DEXTERNAL_DATA
+endif
+
 ifeq ($(shell getconf LONG_BIT), 32)
   # Work around memory allocation bug in QEMU
   export QEMU_GUEST_BASE := 1
@@ -968,6 +974,12 @@ endif
 ifeq ($(EXT_OPTIONS_MENU),1)
   CC_CHECK += -DEXT_OPTIONS_MENU -DCHEATS_ACTIONS
   CFLAGS += -DEXT_OPTIONS_MENU -DCHEATS_ACTIONS
+endif
+
+# Check for external data
+ifeq ($(EXTERNAL_DATA),1)
+  CC_CHECK += -DEXTERNAL_DATA
+  CFLAGS += -DEXTERNAL_DATA
 endif
 
 # Check for no bzero/bcopy workaround option
@@ -1274,7 +1286,11 @@ TEXTURE_ENCODING := u8
 ifeq ($(EXTERNAL_DATA),1)
 
 $(BUILD_DIR)/%: %.png
-	$(ZEROTERM) "$(patsubst %.png,%,$^)" > $@
+	$(call print,Converting:,$<,$@)
+	$(V)$(ZEROTERM) "$(patsubst %.png,%,$^)" > $@
+$(BUILD_DIR)/%.inc.c: $(BUILD_DIR)/% %.png
+	$(call print,Converting:,$<,$@)
+	$(V)hexdump -v -e '1/1 "0x%X,"' $< > $@
 
 else
 
@@ -1282,11 +1298,11 @@ $(BUILD_DIR)/%: %.png
 	$(call print,Converting:,$<,$@)
 	$(V)$(N64GRAPHICS) -s raw -i $@ -g $< -f $(lastword $(subst ., ,$@))
 
-endif
-
 $(BUILD_DIR)/%.inc.c: %.png
 	$(call print,Converting:,$<,$@)
 	$(V)$(N64GRAPHICS) -s $(TEXTURE_ENCODING) -i $@ -g $< -f $(lastword ,$(subst ., ,$(basename $<)))
+
+endif
 
 ifeq ($(EXTERNAL_DATA),0)
 

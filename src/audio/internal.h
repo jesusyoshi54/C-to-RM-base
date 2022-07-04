@@ -256,9 +256,6 @@ struct SequencePlayer
 #if defined(VERSION_EU) || defined(VERSION_SH)
     /*       0x000*/ u8 recalculateVolume : 1;
 #endif
-#ifdef VERSION_SH
-    /*              0x000*/ u8 unkSh: 1;
-#endif
 #if defined(VERSION_JP) || defined(VERSION_US)
     /*0x001       */ s8 seqVariation;
 #endif
@@ -280,9 +277,6 @@ struct SequencePlayer
     /*0x00C, 0x00A*/ u16 tempoAcc;
 #if defined(VERSION_JP) || defined(VERSION_US)
     /*0x00E, 0x010*/ u16 fadeRemainingFrames;
-#endif
-#ifdef VERSION_SH
-    /*              0x00C*/ s16 tempoAdd;
 #endif
     /*0x010, 0x00C, 0x00E*/ s16 transposition;
     /*0x012, 0x00E, 0x010*/ u16 delay;
@@ -387,22 +381,13 @@ struct ReverbInfo {
 struct NoteAttributes
 {
     u8 reverb;
-#ifdef VERSION_SH
-    u8 unk1;
-#endif
 #if defined(VERSION_EU) || defined(VERSION_SH)
     u8 pan;
-#endif
-#ifdef VERSION_SH
-    union ReverbBits reverbBits;
 #endif
     f32 freqScale;
     f32 velocity;
 #if defined(VERSION_JP) || defined(VERSION_US)
     f32 pan;
-#endif
-#ifdef VERSION_SH
-    s16 *filter;
 #endif
 }; // size = 0x10
 
@@ -433,9 +418,6 @@ struct SequenceChannel
     /*0x02, 0x03, 0x03*/ u8 muteBehavior;
     /*0x03, 0x04, 0x04*/ u8 reverb; // or dry/wet mix
     /*0x04, ????*/ u8 notePriority; // 0-3
-#ifdef VERSION_SH
-                   u8 unkSH06; // some priority
-#endif
     /*0x05, 0x06*/ u8 bankId;
 #if defined(VERSION_EU) || defined(VERSION_SH)
     /*    , 0x07*/ u8 reverbIndex;
@@ -444,9 +426,6 @@ struct SequenceChannel
     /*    , 0x0A*/ u8 panChannelWeight; // proportion of pan that comes from the channel (0..128)
 #else
     /*0x06,     */ u8 updatesPerFrameUnused;
-#endif
-#ifdef VERSION_SH
-    /*            0x0C*/ u8 unkSH0C; // bankId
 #endif
     /*0x08, 0x0C, 0x0E*/ u16 vibratoRateStart; // initially 0x800
     /*0x0A, 0x0E, 0x10*/ u16 vibratoExtentStart;
@@ -475,19 +454,11 @@ struct SequenceChannel
     /*0x3C, 0x40*/ struct Instrument *instrument;
     /*0x40, 0x44*/ struct SequencePlayer *seqPlayer;
     /*0x44, 0x48*/ struct SequenceChannelLayer *layers[LAYERS_MAX];
-#ifndef VERSION_SH
     /*0x54, 0x58      */ s8 soundScriptIO[8]; // bridge between sound script and audio lib. For player 2,
     // [0] contains enabled, [4] contains sound ID, [5] contains reverb adjustment
-#endif
     /*0x5C, 0x60*/ struct M64ScriptState scriptState;
     /*0x78, 0x7C*/ struct AdsrSettings adsr;
     /*0x80, 0x84*/ struct NotePool notePool;
-#ifdef VERSION_SH
-    /*            0xC0*/ s8 soundScriptIO[8]; // bridge between sound script and audio lib. For player 2,
-    // [0] contains enabled, [4] contains sound ID, [5] contains reverb adjustment
-    /*            0xC8*/ u16 unkC8;
-    /*            0xCC*/ s16 *filter;
-#endif
 }; // size = 0xC0, 0xC4 in EU, 0xD0 in SH
 
 // Also known as a Track, according to debug strings.
@@ -502,9 +473,6 @@ struct SequenceChannelLayer
     /*    , 0x00*/ u8 unusedEu0b8 : 1;
     /*    , 0x00*/ u8 notePropertiesNeedInit : 1;
     /*    , 0x00*/ u8 ignoreDrumPan : 1;
-#ifdef VERSION_SH
-    /*    ,     , 0x01 */ union ReverbBits reverbBits;
-#endif
     /*    , 0x01, 0x02*/ u8 instOrWave;
 #endif
     /*0x01, 0x02, 0x03*/ u8 status; // 0x03 in SH
@@ -521,9 +489,6 @@ struct SequenceChannelLayer
     // (m64 instruction encoding only allows referring to the limited range
     // 0..0x3f; this makes 0x40..0x7f accessible as well)
     /*0x20, 0x24, 0x24*/ f32 freqScale;
-#ifdef VERSION_SH
-    /*            0x28*/ f32 unkSH28;
-#endif
     /*0x24, 0x28, 0x2C*/ f32 velocitySquare;
 #if defined(VERSION_JP) || defined(VERSION_US)
     /*0x28,     */ f32 pan; // 0..1
@@ -556,10 +521,6 @@ struct NoteSynthesisState
     /*0x01*/ u8 sampleDmaIndex;
     /*0x02*/ u8 prevHeadsetPanRight;
     /*0x03*/ u8 prevHeadsetPanLeft;
-#ifdef VERSION_SH
-    /*      0x04*/ u8 reverbVol;
-    /*      0x05*/ u8 unk5;
-#endif
     /*0x04, 0x06*/ u16 samplePosFrac;
     /*0x08*/ s32 samplePosInt;
     /*0x0C*/ struct NoteSynthesisBuffers *synthesisBuffers;
@@ -572,10 +533,6 @@ struct NotePlaybackState
     /*0x04, 0x00, 0x00*/ u8 priority;
     /*      0x01, 0x01*/ u8 waveId;
     /*      0x02, 0x02*/ u8 sampleCountIndex;
-#ifdef VERSION_SH
-    /*            0x03*/ u8 unkSH33; // bankId?
-    /*            0x04*/ u8 unkSH34;
-#endif
     /*0x08, 0x04, 0x06*/ s16 adsrVolScale;
     /*0x18, 0x08, 0x08*/ f32 portamentoFreqScale;
     /*0x1C, 0x0C, 0x0C*/ f32 vibratoFreqScale;
@@ -612,9 +569,6 @@ struct NoteSubEu
         s16 *samples;
         struct AudioBankSound *audioBankSound;
     } sound;
-#ifdef VERSION_SH
-    /*0x10*/ s16 *filter;
-#endif
 };
 struct Note
 {
@@ -630,10 +584,6 @@ struct Note
     /*0x04, 0x30, 0x30*/ u8 priority;
     /*      0x31, 0x31*/ u8 waveId;
     /*      0x32, 0x32*/ u8 sampleCountIndex;
-#ifdef VERSION_SH
-    /*            0x33*/ u8 unkSH33; // bankId?
-    /*            0x34*/ u8 unkSH34;
-#endif
     /*0x08, 0x34, 0x36*/ s16 adsrVolScale;
     /*0x18, 0x38,     */ f32 portamentoFreqScale;
     /*0x1C, 0x3C,     */ f32 vibratoFreqScale;
@@ -710,18 +660,12 @@ struct NoteSynthesisBuffers
 {
     s16 adpcmdecState[0x10];
     s16 finalResampleState[0x10];
-#ifdef VERSION_SH
-    s16 unk[0x10];
-    s16 filterBuffer[0x20];
-    s16 panSamplesBuffer[0x20];
-#else
     s16 mixEnvelopeState[0x28];
     s16 panResampleState[0x10];
     s16 panSamplesBuffer[0x20];
     s16 dummyResampleState[0x10];
 #if defined(VERSION_JP) || defined(VERSION_US)
     s16 samples[0x40];
-#endif
 #endif
 };
 
@@ -759,16 +703,8 @@ struct AudioSessionSettingsEU
     /* 0x0E */ u16 unk3; // always 0
     /* 0x10 */ u32 persistentSeqMem;
     /* 0x14 */ u32 persistentBankMem;
-#ifdef VERSION_SH
-    /*       0x18 */ u32 unk18; // always 0
-#endif
     /* 0x18, 0x1C */ u32 temporarySeqMem;
     /* 0x1C, 0x20 */ u32 temporaryBankMem;
-#ifdef VERSION_SH
-    /*       0x24 */ u32 unk24; // always 0
-    /*       0x28 */ u32 unkMem28; // always 0
-    /*       0x2C */ u32 unkMem2C; // always 0
-#endif
 }; // 0x30 on shindou
 
 struct AudioSessionSettings
@@ -839,32 +775,5 @@ struct EuAudioCmd {
 #endif
     } u2;
 };
-
-#ifdef VERSION_SH
-struct PendingDmaSample {
-    u8 medium;
-    u8 bankId;
-    u8 idx;
-    uintptr_t devAddr;
-    void *vAddr;
-    u8 *resultSampleAddr;
-    s32 state;
-    s32 remaining;
-    s8 *io;
-    /*0x1C*/ struct AudioBankSample sample;
-    /*0x2C*/ OSMesgQueue queue;
-    /*0x44*/ OSMesg mesgs[1];
-    /*0x48*/ OSIoMesg ioMesg;
-};
-
-struct UnkStruct80343D00 {
-    u32 someIndex; // array into one of the two slots below
-    struct PendingDmaSample arr[2];
-};
-
-// in external.c
-extern s32 D_SH_80343CF0;
-extern struct UnkStruct80343D00 D_SH_80343D00;
-#endif
 
 #endif // AUDIO_INTERNAL_H
