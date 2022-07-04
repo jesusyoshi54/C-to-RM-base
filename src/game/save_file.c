@@ -387,7 +387,7 @@ void save_file_do_save(s32 fileIndex) {
     if (fileIndex < 0 || fileIndex >= NUM_SAVE_FILES)
         return;
 
-    if (gSaveFileModified & !configHC)
+    if (gSaveFileModified && !configHC)
 #ifdef TEXTSAVES
     {
         // Write to text file
