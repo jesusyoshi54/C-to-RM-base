@@ -38,9 +38,9 @@ OUTPUT_ARCH (mips)
    END_SEG(name##_mio0)
 
 #define STANDARD_LEVEL(name) \
-   BEGIN_SEG(name##_segment_7, 0x07000000) \
+   BEGIN_SEG(name##_segment_7, 0x0E000000) \
    { \
-      BUILD_DIR/levels/name/leveldata.mio0.o(.data); \
+      BUILD_DIR/levels/name/leveldata.o(.data); \
       . = ALIGN(0x10); \
    } \
    END_SEG(name##_segment_7) \
@@ -1052,7 +1052,7 @@ SECTIONS
    END_SEG(intro)
    BEGIN_SEG(intro_segment_7, 0x07000000)
    {
-      BUILD_DIR/levels/intro/leveldata.mio0.o(.data);
+      BUILD_DIR/levels/intro/leveldata.o(.data);
       . = ALIGN(0x10);
    }
    END_SEG(intro_segment_7)
@@ -1093,7 +1093,7 @@ SECTIONS
    END_SEG(menu)
    BEGIN_SEG(menu_segment_7, 0x07000000)
    {
-      BUILD_DIR/levels/menu/leveldata.mio0.o(.data);
+      BUILD_DIR/levels/menu/leveldata.o(.data);
       . = ALIGN(0x10);
    }
    END_SEG(menu_segment_7)
@@ -1145,7 +1145,6 @@ SECTIONS
 #define DEFINE_LEVEL(folder,_0) CUSTOM_LEVEL(folder)
    #include "levels/custom_level_defines.h"
 #undef DEFINE_LEVEL
-
 
 
    /* 4E9FA0-? [?] */

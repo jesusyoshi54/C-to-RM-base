@@ -6278,10 +6278,7 @@ void surface_type_modes_thi(struct Camera *c) {
  * exit. Using hyperspeed, the earlier area can be directly exited from, keeping the changes it applies.
  */
 struct CameraTrigger sCamSL[] = {
-    { 1, cam_sl_snowman_head_8dir, 1119, 3584, 1125, 1177, 358, 358, -0x1D27 },
-    // This trigger surrounds the previous one
-    { 1, cam_sl_free_roam, 1119, 3584, 1125, 4096, 4096, 4096, -0x1D27 },
-    NULL_TRIGGER
+	NULL_TRIGGER
 };
 
 /**
@@ -6290,9 +6287,7 @@ struct CameraTrigger sCamSL[] = {
  * tunnel. Both sides achieve their effect by editing the camera yaw.
  */
 struct CameraTrigger sCamTHI[] = {
-    { 1, cam_thi_move_cam_through_tunnel, -4609, -2969, 6448, 100, 300, 300, 0 },
-    { 1, cam_thi_look_through_tunnel,     -4809, -2969, 6448, 100, 300, 300, 0 },
-    NULL_TRIGGER
+	NULL_TRIGGER
 };
 
 /**
@@ -6309,11 +6304,7 @@ struct CameraTrigger sCamHMC[] = {
  * radial.
  */
 struct CameraTrigger sCamSSL[] = {
-    { 1, cam_ssl_enter_pyramid_top, -2048, 1080, -1024, 150, 150, 150, 0 },
-    { 2, cam_ssl_pyramid_center, 0, -104, -104, 1248, 1536, 2950, 0 },
-    { 2, cam_ssl_pyramid_center, 0, 2500, 256, 515, 5000, 515, 0 },
-    { 3, cam_ssl_boss_room, 0, -1534, -2040, 1000, 800, 1000, 0 },
-    NULL_TRIGGER
+	NULL_TRIGGER
 };
 
 /**
@@ -6321,13 +6312,7 @@ struct CameraTrigger sCamSSL[] = {
  * the end of the ride.
  */
 struct CameraTrigger sCamRR[] = {
-    { 1, cam_rr_exit_building_side, -4197, 3819, -3087, 1769, 1490, 342, 0 },
-    { 1, cam_rr_enter_building_side, -4197, 3819, -3771, 769, 490, 342, 0 },
-    { 1, cam_rr_enter_building_window, -5603, 4834, -5209, 300, 600, 591, 0 },
-    { 1, cam_rr_enter_building, -2609, 3730, -5463, 300, 650, 577, 0 },
-    { 1, cam_rr_exit_building_top, -4196, 7343, -5155, 4500, 1000, 4500, 0 },
-    { 1, cam_rr_enter_building, -4196, 6043, -5155, 500, 300, 500, 0 },
-    NULL_TRIGGER,
+	NULL_TRIGGER
 };
 
 /**
@@ -6416,6 +6401,39 @@ struct CameraTrigger sCamTotWC[] = {
 	NULL_TRIGGER
 };
 struct CameraTrigger sCamVCUtM[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamBitFS[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamBitS[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamBowser_2[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamBowser_3[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamDDD[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamEnding[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamPSS[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamTTC[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamTTM[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamWDW[] = {
+	NULL_TRIGGER
+};
+struct CameraTrigger sCamWMOtR[] = {
 	NULL_TRIGGER
 };
 struct CameraTrigger *sCameraTriggers[LEVEL_COUNT + 1] = {
@@ -10889,16 +10907,16 @@ u8 sZoomOutAreaMasks[] = {
 	ZOOMOUT_AREA_MASK(0, 0, 0, 0, 0, 0, 0, 0), // Unused         | Unused
 	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // BBH            | CCM
 	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // CASTLE_INSIDE  | HMC
-	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 1, 0, 0), // SSL            | BOB
+	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // SSL            | BOB
 	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // SL             | WDW
-	ZOOMOUT_AREA_MASK(0, 0, 0, 0, 1, 1, 0, 0), // JRB            | THI
-	ZOOMOUT_AREA_MASK(0, 0, 0, 0, 1, 0, 0, 0), // TTC            | RR
+	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // JRB            | THI
+	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // TTC            | RR
 	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // CASTLE_GROUNDS | BITDW
 	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // VCUTM          | BITFS
 	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // SA             | BITS
-	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 0, 0, 0, 0), // LLL            | DDD
-	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 0, 0, 0, 0), // WF             | ENDING
-	ZOOMOUT_AREA_MASK(0, 0, 0, 0, 0, 0, 0, 0), // COURTYARD      | PSS
+	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // LLL            | DDD
+	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // WF             | ENDING
+	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // COURTYARD      | PSS
 	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // COTMC          | TOTWC
 	ZOOMOUT_AREA_MASK(1, 0, 0, 0, 1, 0, 0, 0), // BOWSER_1       | WMOTR
 	ZOOMOUT_AREA_MASK(0, 0, 0, 0, 1, 0, 0, 0), // Unused         | BOWSER_2

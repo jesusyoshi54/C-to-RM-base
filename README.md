@@ -1,3 +1,8 @@
+# C to RM base
+This is a fork of my base repo with makefile changes to not compress leveldata segments, and migrate them to segment 0xE.
+This is meant to be used with a tool called C to RM which will extract these level data segments and plant them inside of
+a RM rom.
+
 # sm64ex_alo
 Fork of [sm64pc/sm64ex](https://github.com/sm64pc/sm64ex/tree/nightly) with additional features. 
 

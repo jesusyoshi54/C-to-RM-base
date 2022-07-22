@@ -990,12 +990,12 @@ void geo_process_root(struct GraphNodeRoot *node, Vp *b, Vp *c, s32 clearColor) 
         gDisplayListHeap = alloc_only_pool_init(main_pool_available() - sizeof(struct AllocOnlyPool), MEMORY_POOL_LEFT);
 		#endif
         initialMatrix = alloc_display_list(sizeof(*initialMatrix));
-		
+		#ifdef F3DEX_GBI_2
         gCurLookAt = (LookAt*)alloc_display_list(sizeof(LookAt));
         bzero(gCurLookAt, sizeof(LookAt));
         gCurLookAt->l[1].l.col[1] = 0x80;
         gCurLookAt->l[1].l.colc[1] = 0x80;
-		
+		#endif
         gMatStackIndex = 0;
         gCurAnimType = ANIM_TYPE_NONE;
         vec3s_set(viewport->vp.vtrans, node->x * 4, node->y * 4, 511);

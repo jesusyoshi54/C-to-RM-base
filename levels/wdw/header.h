@@ -46,4 +46,7 @@ extern const struct MovtexQuadCollection wdw_movtex_area2_water[];
 // script
 extern const LevelScript level_wdw_entry[];
 
+
+#include "levels/wdw/header.inc.h"
+
 #endif

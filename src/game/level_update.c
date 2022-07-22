@@ -1406,6 +1406,37 @@ s32 lvl_set_current_level(UNUSED s16 arg0, s32 levelNum) {
     sWarpCheckpointActive = FALSE;
     gCurrLevelNum = levelNum;
     gCurrCourseNum = gLevelToCourseNumTable[levelNum - 1];
+	if (gCurrLevelNum == LEVEL_WMOTR) return 0;
+	if (gCurrLevelNum == LEVEL_WDW) return 0;
+	if (gCurrLevelNum == LEVEL_VCUTM) return 0;
+	if (gCurrLevelNum == LEVEL_TTM) return 0;
+	if (gCurrLevelNum == LEVEL_TTC) return 0;
+	if (gCurrLevelNum == LEVEL_TOTWC) return 0;
+	if (gCurrLevelNum == LEVEL_THI) return 0;
+	if (gCurrLevelNum == LEVEL_SSL) return 0;
+	if (gCurrLevelNum == LEVEL_SL) return 0;
+	if (gCurrLevelNum == LEVEL_SA) return 0;
+	if (gCurrLevelNum == LEVEL_RR) return 0;
+	if (gCurrLevelNum == LEVEL_PSS) return 0;
+	if (gCurrLevelNum == LEVEL_LLL) return 0;
+	if (gCurrLevelNum == LEVEL_HMC) return 0;
+	if (gCurrLevelNum == LEVEL_ENDING) return 0;
+	if (gCurrLevelNum == LEVEL_DDD) return 0;
+	if (gCurrLevelNum == LEVEL_COTMC) return 0;
+	if (gCurrLevelNum == LEVEL_CASTLE) return 0;
+	if (gCurrLevelNum == LEVEL_CASTLE_COURTYARD) return 0;
+	if (gCurrLevelNum == LEVEL_BOWSER_3) return 0;
+	if (gCurrLevelNum == LEVEL_BOWSER_2) return 0;
+	if (gCurrLevelNum == LEVEL_BOWSER_1) return 0;
+	if (gCurrLevelNum == LEVEL_BITS) return 0;
+	if (gCurrLevelNum == LEVEL_BITFS) return 0;
+	if (gCurrLevelNum == LEVEL_BITDW) return 0;
+	if (gCurrLevelNum == LEVEL_BBH) return 0;
+	if (gCurrLevelNum == LEVEL_JRB) return 0;
+	if (gCurrLevelNum == LEVEL_CCM) return 0;
+	if (gCurrLevelNum == LEVEL_WF) return 0;
+	if (gCurrLevelNum == LEVEL_BOB) return 0;
+	if (gCurrLevelNum == LEVEL_CASTLE_GROUNDS) return 0;
 
     if (gCurrDemoInput != NULL || gCurrCreditsEntry != NULL || gCurrCourseNum == COURSE_NONE) {
         return 0;

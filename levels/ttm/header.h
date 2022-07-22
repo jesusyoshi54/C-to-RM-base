@@ -111,4 +111,7 @@ extern const MacroObject ttm_seg7_area_4_macro_objs[];
 // script
 extern const LevelScript level_ttm_entry[];
 
+
+#include "levels/ttm/header.inc.h"
+
 #endif

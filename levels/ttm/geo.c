@@ -43,3 +43,5 @@
 #include "levels/ttm/star_smiley/geo.inc.c"
 #include "levels/ttm/moon_smiley/geo.inc.c"
 #include "levels/ttm/slide_exit_podium/geo.inc.c"
+
+#include "levels/ttm/geo.inc.c"

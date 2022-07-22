@@ -68,3 +68,5 @@
 #include "levels/ttm/areas/2/macro.inc.c"
 #include "levels/ttm/areas/3/macro.inc.c"
 #include "levels/ttm/areas/4/macro.inc.c"
+
+#include "levels/ttm/leveldata.inc.c"
